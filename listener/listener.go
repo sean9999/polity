@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/mdns"
 )
 
-func main() {
+func Listener() {
 	// Make a channel for results and start listening
 	entriesCh := make(chan *mdns.ServiceEntry, 4)
 	go func() {
@@ -16,6 +16,6 @@ func main() {
 	}()
 
 	// Start the lookup
-	mdns.Lookup("_foobar._tcp", entriesCh)
+	mdns.Lookup("_polity._tcp", entriesCh)
 	close(entriesCh)
 }
