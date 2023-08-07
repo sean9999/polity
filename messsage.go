@@ -2,36 +2,24 @@ package main
 
 import (
 	"fmt"
-	"net"
+
+	"github.com/google/uuid"
 )
 
 type Message struct {
-	body    string
-	subject string
-}
-
-type Envelope struct {
-	Message   Message
-	To        net.Addr
-	From      net.Addr
-	Signature []byte
+	Id      uuid.UUID
+	Thread  uuid.UUID
+	Body    string `json:"body"`
+	Subject string `json:"subject"`
 }
 
 func (m Message) String() string {
-	return fmt.Sprintf("subject: %s\nbody: %s", m.subject, m.body)
-}
-
-func (m Message) Body() string {
-	return m.body
-}
-
-func (m Message) Subject() string {
-	return m.subject
+	return fmt.Sprintf("subject: %s\nbody: %s", m.Subject, m.Body)
 }
 
 func NewMessage(subject, body string) Message {
 	return Message{
-		body:    body,
-		subject: subject,
+		Body:    body,
+		Subject: subject,
 	}
 }

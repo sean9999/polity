@@ -36,6 +36,22 @@ type Keybag struct {
 	rand io.Reader
 }
 
+/*
+	type KeybagSigner struct {
+		pubkey ed25519.PublicKey
+		bag    *Keybag
+	}
+
+	func (s KeybagSigner) Public() crypto.PublicKey {
+		return s.pubkey
+	}
+
+	func (s KeybagSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) ([]byte, error) {
+		b := *s.bag
+		s, e := b.Sign(digest, nil)
+		return s, e
+	}
+*/
 func (k Keybag) Private(algo KeybagAlgo) (crypto.PrivateKey, error) {
 
 	if algo == KeybagAlgo_rsa {
@@ -62,21 +78,26 @@ func (k Keybag) Verify(msg []byte, sig []byte) bool {
 	return ed25519.Verify(k.ed.pub, msg, sig)
 }
 
-func NewKeybag(rand io.Reader) (Keybag, error) {
+func NewKeybag(randomness io.Reader) (Keybag, error) {
 
 	var k Keybag
-	k.rand = rand
-	rsaPrivateKey, err := rsa.GenerateKey(rand, 4096)
-	if err != nil {
-		panic(err)
-	}
-	k.rsa.priv = *rsaPrivateKey
-	k.rsa.pub = rsaPrivateKey.Public().(rsa.PublicKey)
-	edpub, edPrivateKey, err := ed25519.GenerateKey(rand)
+	k.rand = randomness
+
+	edpub, edPrivateKey, err := ed25519.GenerateKey(randomness)
 	if err != nil {
 		panic(err)
 	}
 	k.ed.priv = edPrivateKey
 	k.ed.pub = edpub
+	return k, nil
+}
+
+func OldKeybag(randomness io.Reader, pubkey crypto.PublicKey, privkey crypto.PrivateKey) (Keybag, error) {
+
+	var k Keybag
+	k.rand = randomness
+
+	k.ed.priv = privkey.(ed25519.PrivateKey)
+	k.ed.pub = pubkey.(ed25519.PublicKey)
 	return k, nil
 }

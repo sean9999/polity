@@ -1,5 +1,7 @@
 package main
 
+import "github.com/google/uuid"
+
 func (node Node) Info() Config {
 	var c Config
 	c.Id = node.id
@@ -8,7 +10,7 @@ func (node Node) Info() Config {
 	return c
 }
 
-func (n Node) Id() string {
+func (n Node) Id() uuid.UUID {
 	return n.id
 }
 

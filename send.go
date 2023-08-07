@@ -2,39 +2,34 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
 )
 
-func (n Node) Spool(msg Message, recipient string) Envelope {
-	//	@todo: Package up the message into an Envelope
-	//	@note: Let's say Send() can only deal with envelopes. Not letters.
-	//	@note: spool could also sign the message
-
-	// type Envelope struct {
-	// 	Message   Message
-	// 	To        net.Addr
-	// 	From      net.Addr
-	// 	Signature []byte
-	// }
-
-	env := Envelope{}
-	return env
-}
-
-func (n Node) Send(msg Message, recipient string) error {
-
-	//envelope := Spool(msg, recipient)
-
-	raddr, err := net.ResolveUDPAddr(DefaultNetwork, recipient)
+func (n Node) Spool(msg Message, recipient NodeAddress) error {
+	fmt.Println("msg", msg)
+	fmt.Println("recipient", recipient)
+	envelope, err := NotarizeMessage(msg, n.address, recipient, n.crypto.ed.priv, randy)
 	if err != nil {
 		return err
 	}
-	msgAsString := fmt.Sprintf("%s\n%s", msg.Subject(), msg.Body())
-	_, err = n.conn.WriteTo([]byte(msgAsString), raddr)
+	n.Outbox <- envelope
+	return nil
+}
+
+func (n Node) Send(e Envelope) error {
+
+	raddr, err := net.ResolveUDPAddr(n.address.Network(), e.To.Host())
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	n.Outbox() <- msgAsString
+	bin, err := e.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	_, err = n.conn.WriteTo(bin, raddr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

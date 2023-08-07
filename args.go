@@ -15,19 +15,24 @@ func RandomAvailablePortBetween(low, high int) int {
 */
 
 type Args struct {
-	firstFriend string
-	me          string
+	firstFriend NodeAddress
+	me          NodeAddress
 	nickname    string
 	configFile  string
 }
 
 func ParseArgs() Args {
-	var firstFriend string
-	var me string
+	var firstFriend NodeAddress
+	var me NodeAddress
 	var configFile string
-	flag.StringVar(&firstFriend, "friend", "127.0.0.1:5003", "who to connect with first")
-	flag.StringVar(&me, "me", "127.0.0.1:5004", "me, myself")
-	flag.StringVar(&configFile, "config", "./config", "location of config file")
+	flag.Var(&firstFriend, "friend", "who to connect with first")
+	//flag.StringVar(&me, "me", "127.0.0.1:5004", "me, myself")
+
+	flag.Var(&me, "me", "me, myself")
+
+	//flag.Var(&me,"udp://127.0.0.1:9001", "my address")
+
+	flag.StringVar(&configFile, "config", "", "location of config file")
 	flag.Parse()
 
 	//	nickname

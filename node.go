@@ -2,57 +2,65 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"net"
 
 	"github.com/google/uuid"
 )
 
 type Node struct {
-	id       string
+	id       uuid.UUID
 	nickname string
 	ctx      context.Context
 	conn     net.PacketConn
-	address  net.Addr
-	inbox    chan string
-	outbox   chan string
-	log      chan string
+	address  NodeAddress
+	Inbox    chan Envelope
+	Outbox   chan Envelope
+	Log      chan Message
 	crypto   Keybag
 	config   Config
+	friends  []NodeAddress
 }
 
 func NewNode(args Args) Node {
 
 	//	arguments
 	me := args.me
-	//firstFriend := args.firstFriend
+	firstFriend := args.firstFriend
 	nickname := args.nickname
 
 	// channels
-	inbox := make(chan string, 128)
-	outbox := make(chan string, 128)
-	log := make(chan string, 128)
+	inbox, outbox, log := makeChannels()
 
 	//	network
-	meaddr, err := net.ResolveUDPAddr(DefaultNetwork, me)
-	barfOn(err)
-	conn, err := net.ListenPacket(DefaultNetwork, me)
+	//conn, err := net.ListenPacket(DefaultNetwork, me.Host())
+	conn, err := me.CreateConnection()
 	barfOn(err)
 
 	n := Node{
-		id:       uuid.New().String(),
+		id:       uuid.New(),
 		nickname: nickname,
 		ctx:      context.Background(),
 		conn:     conn,
-		inbox:    inbox,
-		outbox:   outbox,
-		log:      log,
+		Inbox:    inbox,
+		Outbox:   outbox,
+		Log:      log,
+		friends:  make([]NodeAddress, 0, 16),
 	}
-	n.address = meaddr
+	n.address = me
+
+	//	friends
+	if firstFriend != "" {
+		n.friends = append(n.friends, firstFriend)
+		n.SyncFriends()
+	}
 
 	// create keypairs if they were not loaded by config
 	if n.crypto.ed.pub == nil {
-		n.crypto, _ = NewKeybag(nil)
+		n.crypto, _ = NewKeybag(rand.Reader)
 	}
+
+	n.config = n.GetConfig()
 
 	return n
 }
@@ -69,20 +77,37 @@ func LoadNode(args Args) Node {
 	}
 
 	// channels
-	inbox := make(chan string, 128)
-	outbox := make(chan string, 128)
-	log := make(chan string, 128)
+	inbox, outbox, log := makeChannels()
 
 	//	network
-	conn, err := net.ListenPacket(DefaultNetwork, n.address.String())
+	me := n.address
+	conn, err := me.CreateConnection()
 	barfOn(err)
 	n.conn = conn
 
+	//	channels
 	n.ctx = context.Background()
-	n.inbox = inbox
-	n.outbox = outbox
-	n.log = log
+	n.Inbox = inbox
+	n.Outbox = outbox
+	n.Log = log
+
+	//	this is weird. Either have a struct or a method. Not both
+	n.config = n.GetConfig()
+
+	//	friends
+	n.friends = n.config.Friends
+
+	//	keybag
+	n.crypto, err = OldKeybag(rand.Reader, n.config.PublicKey, n.config.PrivateKey)
+	barfOn(err)
 
 	return n
 
+}
+
+func makeChannels() (chan Envelope, chan Envelope, chan Message) {
+	inbox := make(chan Envelope, 128)
+	outbox := make(chan Envelope, 128)
+	log := make(chan Message, 128)
+	return inbox, outbox, log
 }

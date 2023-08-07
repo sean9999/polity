@@ -2,4 +2,6 @@
 
 set -x
 
-go run . -me="127.0.0.1:5000" -friend="127.0.0.1:5001"
+NICKNAME=black-dust
+
+go run . -config=test/data/$NICKNAME.config.json

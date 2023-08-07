@@ -12,22 +12,34 @@ func main() {
 
 	if args.configFile == "" {
 		n = NewNode(args)
+
+		go func() {
+			//	save config
+			time.Sleep(time.Second * 7)
+			configFileLocation := fmt.Sprintf("test/data/%s.config.json", n.Nickname())
+			fmt.Printf("saving config file %s\n", configFileLocation)
+			err := n.config.Save(configFileLocation)
+			if err != nil {
+				panic(err)
+			}
+		}()
+
 	} else {
 		n = LoadNode(args)
 	}
 
-	fmt.Println(n.Info())
+	fmt.Println("INFO", n.Info())
+	fmt.Println("FRIENDS", n.Friends())
 
-	//fmt.Println("my address is", n.Address())
-	//fmt.Println("my first friend is", n.Introducee())
-
-	//	greet
 	go func() {
-		time.Sleep(time.Second * 5)
-		msg := NewMessage("hi there", fmt.Sprintf("my name is %s and I live at %s", n.Nickname(), n.Address()))
-		err := n.Send(msg, args.firstFriend)
-		if err != nil {
-			panic(err)
+		//	greet
+		for i, thisFriend := range n.Friends() {
+			time.Sleep(time.Second * 5)
+			msg := NewMessage("hi there", fmt.Sprintf("my name is %s and I live at %s. You are my %dth friend", n.Nickname(), n.address, i))
+			err := n.Spool(msg, thisFriend)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}()
 
@@ -35,10 +47,12 @@ func main() {
 	go n.Listen()
 	for {
 		select {
-		case inMsg := <-n.Inbox():
-			fmt.Println("INBOX:", inMsg)
-		case outMsg := <-n.Outbox():
+		case inComingEnvelope := <-n.Inbox:
+			fmt.Println("INBOX:", inComingEnvelope)
+		case outMsg := <-n.Outbox:
 			fmt.Println("OUTBOX:", outMsg)
+		case logMsg := <-n.Log:
+			fmt.Println("LOG:", logMsg)
 		}
 	}
 
