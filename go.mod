@@ -6,6 +6,7 @@ require (
 	github.com/charmbracelet/log v0.2.3
 	github.com/google/uuid v1.3.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	golang.org/x/exp v0.0.0-20230807204917-050eac23e9de
 )
 
 require (
