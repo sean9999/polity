@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 )
@@ -47,10 +48,11 @@ func (n Node) Connection() net.PacketConn {
 }
 
 func (na NodeAddress) CreateConnection() (net.PacketConn, error) {
-	conn, err := net.ListenPacket(DefaultNetwork, na.Host())
+	conn, err := net.ListenPacket(na.Network(), na.Host())
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(conn.LocalAddr().String())
 	return conn, nil
 }
 
