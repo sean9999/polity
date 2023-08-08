@@ -1,5 +1,7 @@
 package main
 
+import "github.com/google/uuid"
+
 const maxBufferSize = 1024
 
 func (me Node) Listen() {
@@ -23,7 +25,7 @@ func (me Node) Listen() {
 			//	if error, log
 			subject := "Can't materialize incoming message"
 			body := err.Error()
-			me.Log <- NewMessage(subject, body, nil)
+			me.Log <- NewMessage(subject, body, uuid.Nil)
 		} else {
 			me.Inbox <- envelope
 		}

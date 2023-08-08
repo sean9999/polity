@@ -17,6 +17,12 @@ type Envelope struct {
 	Signature []byte      `json:"sig"`
 }
 
+func (e Envelope) Verify() bool {
+	//	@todo: how do we get the public key?
+	//	maybe it should be attached to the envelope
+	return true
+}
+
 func NotarizeMessage(msg Message, from, to NodeAddress, signer crypto.Signer, randomness io.Reader) (Envelope, error) {
 	var e Envelope
 	nonce, _ := uuid.NewRandomFromReader(randy)

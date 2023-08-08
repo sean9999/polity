@@ -10,3 +10,8 @@ func (node Node) SyncFriends() error {
 	fileLocation := "./test/data/" + node.Nickname() + ".config.json"
 	return config.Save(fileLocation)
 }
+
+func (node Node) AddFriend(f NodeAddress) {
+	node.friends = append(node.friends, f)
+	node.SyncFriends()
+}
