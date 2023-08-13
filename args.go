@@ -14,6 +14,7 @@ func RandomAvailablePortBetween(low, high int) int {
 }
 */
 
+// Args is a struct representing arguments passed in to the invocation of Polity
 type Args struct {
 	firstFriend NodeAddress
 	me          NodeAddress
@@ -21,6 +22,7 @@ type Args struct {
 	configFile  string
 }
 
+// ParseArgs takes string values and produces an Args struct
 func ParseArgs() Args {
 	var firstFriend NodeAddress
 	var me NodeAddress

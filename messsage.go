@@ -10,8 +10,8 @@ import (
 type Message struct {
 	Id       uuid.UUID `json:"id"`
 	ThreadId uuid.UUID `json:"threadId"`
-	Body     string    `json:"body"`
 	Subject  string    `json:"subject"`
+	Body     string    `json:"body"`
 }
 
 func (m Message) String() string {

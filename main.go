@@ -6,10 +6,21 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 )
 
 func main() {
+
+	db, err := NewDatabaseWithConnection("127.0.0.1:6379")
+	if err != nil {
+		panic(err)
+	}
+	alreadySetup, err := EnsureDatabaseIsSetup(db)
+	if err != nil {
+		panic(err)
+	}
+	log.Info("database setup", "already set up", alreadySetup)
 
 	log := Slog(os.Stderr)
 
@@ -59,6 +70,13 @@ func main() {
 			}
 			log.Info(string(json), "event", "inbox")
 			go processEnvelope(n, inComingEnvelope)
+
+			//	log to redis
+			db.Log(inComingEnvelope)
+			if err != nil {
+				panic(err)
+			}
+
 		case outMsg := <-n.Outbox:
 			err := n.Send(outMsg)
 			if err == nil {
@@ -67,6 +85,13 @@ func main() {
 					n.Log <- MessageFromError("Coudn't json.Marshal outgoing inbox", err)
 				}
 				log.Info(string(json), "event", "outbox")
+
+				//	log to redis
+				err = db.Log(outMsg)
+				if err != nil {
+					panic(err)
+				}
+
 			} else {
 				log.Error(MessageFromError("Could not Send(Envelope)", err))
 			}

@@ -2,6 +2,8 @@
 
 set -x
 
-NICKNAME=patient-haze
+NICKNAME=icy-cherry
+
+cd ..
 
 go run . -config=test/data/$NICKNAME.config.json
