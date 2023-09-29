@@ -10,11 +10,15 @@ import (
 )
 
 type Envelope struct {
-	Message   Message     `json:"message"`
 	To        NodeAddress `json:"to"`
 	From      NodeAddress `json:"from"`
+	Message   Message     `json:"message"`
 	Nonce     uuid.UUID   `json:"nonce"`
 	Signature []byte      `json:"sig"`
+}
+
+func (e Envelope) String() string {
+	return fmt.Sprintf("from:\t%s\nto:\t%s\nsubj:\t %q\nbody:\t%s\n", e.From.Username(), e.To.Username(), e.Message.Subject, e.Message.Body)
 }
 
 func (e Envelope) Verify() bool {
@@ -25,9 +29,9 @@ func (e Envelope) Verify() bool {
 
 func MessageToEnvelope(msg Message, from, to NodeAddress) (Envelope, error) {
 	e := Envelope{
-		Message: msg,
 		To:      to,
 		From:    from,
+		Message: msg,
 	}
 	return e, nil
 }
@@ -46,12 +50,12 @@ func (e *Envelope) Notarize(signer crypto.Signer, randomness io.Reader) error {
 	return err
 }
 
-// NotarizeMessage takes a message and returns a notarized envelope
+// NotarizeMessage takes a message and returns a notarized [Envelope]
 func NotarizeMessage(msg Message, from, to NodeAddress, signer crypto.Signer, randomness io.Reader) (Envelope, error) {
 	e, err := MessageToEnvelope(msg, from, to)
 	if err != nil {
 		return e, err
 	}
 	err = e.Notarize(signer, randomness)
-	return e, nil
+	return e, err
 }

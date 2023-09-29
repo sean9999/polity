@@ -11,5 +11,5 @@ func Slog(w io.Writer) *log.Logger {
 	logger.SetReportTimestamp(false)
 	logger.SetReportCaller(false)
 	logger.SetLevel(log.DebugLevel)
-	return logger
+	return logger.WithPrefix("Barnyard")
 }

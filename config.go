@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/ed25519"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -15,6 +16,10 @@ type Config struct {
 	PublicKey  ed25519.PublicKey  `json:"pubkey"`
 	PrivateKey ed25519.PrivateKey `json:"privkey"`
 	Friends    []NodeAddress      `json:"friends"`
+}
+
+func (c Config) String() string {
+	return fmt.Sprintf("nick:\t%s\npub:\t%s\naddr:\t%s", c.Nickname, c.PublicKey, c.Address)
 }
 
 // Config.Load loads a config from a file

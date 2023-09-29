@@ -64,8 +64,13 @@ func (na *NodeAddress) Set(s string) error {
 	return nil
 }
 
-func (na NodeAddress) String() string {
-	return string(na)
+// return just the username portion if there is one, otherwise use the whole address
+func (na NodeAddress) Username() string {
+	url, _ := na.Parse()
+	if username := url.User.Username(); username != "" {
+		return username
+	}
+	return na.Host()
 }
 
 func (na *NodeAddress) UnmarshalText(text []byte) error {
@@ -77,8 +82,12 @@ func (na *NodeAddress) UnmarshalText(text []byte) error {
 	return nil
 }
 
+func (na NodeAddress) String() string {
+	return string(na)
+}
+
 func (na NodeAddress) MarshalText() (text []byte, err error) {
-	s := na.String()
+	s := string(na)
 	b := []byte(s)
 	return b, nil
 }

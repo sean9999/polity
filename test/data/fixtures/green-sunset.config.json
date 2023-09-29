@@ -1,0 +1,10 @@
+{
+	"address": "udp://green-sunset@127.0.0.1:6003",
+	"id": "66d4580b-31ed-4174-862b-c6e805ce577c",
+	"nickname": "green-sunset",
+	"pubkey": "V4oW4OoHazYzXyz5Q2jHskyg3UZvAHW5rnOl/7TuWyU=",
+	"privkey": "QiiWqfoq+jeFtQFJ4OJ0ocneMDmVAr07/qIZY+/NqLNXihbg6gdrNjNfLPlDaMeyTKDdRm8Adbmuc6X/tO5bJQ==",
+	"friends": [
+		"udp://icy-cherry@127.0.0.1:6005"
+	]
+}

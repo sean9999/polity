@@ -26,21 +26,22 @@ type Database struct {
 	Handler    *rejson.Handler
 }
 
-// SetupDatabase should be idempotent, and maybe should be called EnsureDatabaseIsSetup
-func SetupDatabase(db *Database) error {
+func InitializeDatabase(db *Database) error {
 	emptyArray := []Envelope{}
-	_, err := db.Handler.JSONSet("logs", ".", emptyArray)
+	_, err := db.Handler.JSONSet("logs", "$", emptyArray)
 	return err
 }
 
-func EnsureDatabaseIsSetup(db *Database) (bool, error) {
+func EnsureDatabaseIsInitialized(db *Database) (bool, error) {
 	keyExists := true
-	_, err := db.Handler.JSONGet("logs", ".")
-	//	@todo: check for an actual "key doesn't exist" error
-	if err != nil {
+	resp, err := db.Handler.JSONGet("logs", "$")
+
+	//	@todo: check the API for what actually get returns for "key doesn't exist"
+	if err != nil || resp == nil {
 		keyExists = false
-		err = SetupDatabase(db)
+		err = InitializeDatabase(db)
 	}
+
 	return keyExists, err
 }
 
@@ -49,7 +50,7 @@ func (db *Database) Connect(connectionString string) error {
 	rh := rejson.NewReJSONHandler()
 	conn, err := redis.Dial("tcp", *addr)
 	if err != nil {
-		return fmt.Errorf("failed to connect to redis-server @ %s", *addr)
+		return fmt.Errorf("failed to connect to redis-stack-server @ %s", *addr)
 	}
 	rh.SetRedigoClient(conn)
 	db.Connection = conn
@@ -74,7 +75,7 @@ func NewDatabaseWithConnection(connectionString string) (*Database, error) {
 func (db *Database) AllLogs() ([]Log, error) {
 	var err error
 	var logs []Log
-	res, err := db.Handler.JSONGet("logs", ".")
+	res, err := db.Handler.JSONGet("logs", "$")
 	if err != nil {
 		return logs, err
 	}
@@ -89,7 +90,7 @@ func (db *Database) AllLogs() ([]Log, error) {
 
 func (db *Database) Log(e Envelope) error {
 	var err error = nil
-	_, err = db.Handler.JSONArrAppend("logs", ".", EnvelopeToLog(e))
+	_, err = db.Handler.JSONArrAppend("logs", "$", EnvelopeToLog(e))
 	//	@todo: maybe examine actual response
 	return err
 }

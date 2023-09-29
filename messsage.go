@@ -15,7 +15,7 @@ type Message struct {
 }
 
 func (m Message) String() string {
-	return fmt.Sprintf("subject:\t%s\nbody:\t%s\nid:\t%s\nthread:\t%s", m.Subject, m.Body, m.Id, m.ThreadId)
+	return fmt.Sprintf("subj:\t%s\nbody:\t%s\nid:\t%s\ntid:\t%s", m.Subject, m.Body, m.Id, m.ThreadId)
 }
 
 func NewMessage(subject, body string, threadId uuid.UUID) Message {

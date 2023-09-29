@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -16,13 +14,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	alreadySetup, err := EnsureDatabaseIsSetup(db)
+	_, err = EnsureDatabaseIsInitialized(db)
 	if err != nil {
 		panic(err)
 	}
-	log.Info("database setup", "already set up", alreadySetup)
 
-	log := Slog(os.Stderr)
+	console.Log("cool")
 
 	args := ParseArgs()
 	var n Node
@@ -44,8 +41,7 @@ func main() {
 		n = LoadNode(args)
 	}
 
-	info, _ := json.MarshalIndent(n.GetConfig(), "", "\t")
-	log.Info(string(info), "self", true)
+	//log.Info(n.GetConfig())
 
 	go func() {
 		//	greet
@@ -63,31 +59,28 @@ func main() {
 	go n.Listen()
 	for {
 		select {
-		case inComingEnvelope := <-n.Inbox:
-			json, err := json.MarshalIndent(inComingEnvelope, "", "\t")
-			if err != nil {
-				n.Log <- MessageFromError("Coudn't json.Marshal incoming inbox", err)
-			}
-			log.Info(string(json), "event", "inbox")
-			go processEnvelope(n, inComingEnvelope)
+		case inEnvelope := <-n.Inbox:
+			//log.Infof("INBOX\n%s", inComingEnvelope)
+
+			LogEnvelope("Incoming", inEnvelope)
+
+			go processEnvelope(n, inEnvelope)
 
 			//	log to redis
-			db.Log(inComingEnvelope)
+			db.Log(inEnvelope)
 			if err != nil {
 				panic(err)
 			}
 
-		case outMsg := <-n.Outbox:
-			err := n.Send(outMsg)
+		case outEnvelope := <-n.Outbox:
+			err := n.Send(outEnvelope)
 			if err == nil {
-				json, err := json.MarshalIndent(outMsg, "", "\t")
-				if err != nil {
-					n.Log <- MessageFromError("Coudn't json.Marshal outgoing inbox", err)
-				}
-				log.Info(string(json), "event", "outbox")
+				//log.Infof("OUTBOX\n%s\n", outMsg)
+
+				LogEnvelope("Outgoing", outEnvelope)
 
 				//	log to redis
-				err = db.Log(outMsg)
+				err = db.Log(outEnvelope)
 				if err != nil {
 					panic(err)
 				}
@@ -96,12 +89,7 @@ func main() {
 				log.Error(MessageFromError("Could not Send(Envelope)", err))
 			}
 		case logMsg := <-n.Log:
-			json, err := json.MarshalIndent(logMsg, "", "\t")
-			if err == nil {
-				log.Info(string(json), "event", "log")
-			} else {
-				log.Error(err, "event", "error")
-			}
+			log.Infof("LOG\n%s\n", logMsg)
 		}
 	}
 

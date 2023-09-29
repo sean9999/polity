@@ -1,0 +1,12 @@
+{
+	"address": "udp://patient-haze@127.0.0.1:6007",
+	"id": "3a12925e-86a4-4814-834f-5f917d6b6254",
+	"nickname": "patient-haze",
+	"pubkey": "t9r22Uslk7S9QD9J229Dv+rgvedv6wf9s1pHyjFEwwI=",
+	"privkey": "TzcpXl8gDs1LvAvtTa4AlrZfK6iCOuviIU56BL29yxW32vbZSyWTtL1AP0nbb0O/6uC952/rB/2zWkfKMUTDAg==",
+	"friends": [
+		"udp://icy-cherry@127.0.0.1:6005",
+		"udp://black-dust@127.0.0.1:6001",
+		"udp://green-sunset@127.0.0.1:6003"
+	]
+}

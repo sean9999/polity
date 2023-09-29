@@ -1,0 +1,10 @@
+{
+	"address": "udp://black-dust@127.0.0.1:6001",
+	"id": "fe1ec978-f3db-427d-99bc-72d50d4ea3c9",
+	"nickname": "black-dust",
+	"pubkey": "t1qOncOLlgCsEIhYBIzKbJB0UCAQJ7MnNXHIB26Iq7M=",
+	"privkey": "JYvMqfGzhGGoNnTftP5N2P2ehi2PpqQcXKXKKMqln7+3Wo6dw4uWAKwQiFgEjMpskHRQIBAnsyc1ccgHboirsw==",
+	"friends": [
+		"udp://green-sunset@127.0.0.1:6003"
+	]
+}
