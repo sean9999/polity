@@ -11,14 +11,14 @@ type Message struct {
 	Id       uuid.UUID `json:"id"`
 	ThreadId uuid.UUID `json:"threadId"`
 	Subject  string    `json:"subject"`
-	Body     string    `json:"body"`
+	Body     []byte    `json:"body"`
 }
 
 func (m Message) String() string {
 	return fmt.Sprintf("subj:\t%s\nbody:\t%s\nid:\t%s\ntid:\t%s", m.Subject, m.Body, m.Id, m.ThreadId)
 }
 
-func NewMessage(subject, body string, threadId uuid.UUID) Message {
+func NewMessage(subject string, body []byte, threadId uuid.UUID) Message {
 	id, err := uuid.NewRandomFromReader(randy)
 	if err != nil {
 		barfOn(err)
@@ -34,7 +34,7 @@ func NewMessage(subject, body string, threadId uuid.UUID) Message {
 func MessageFromError(subject string, err error) Message {
 	body := err.Error()
 	subject = fmt.Sprintf("Error:\r%s", subject)
-	m := NewMessage(subject, body, uuid.Nil)
+	m := NewMessage(subject, []byte(body), uuid.Nil)
 	return m
 }
 

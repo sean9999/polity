@@ -10,8 +10,7 @@ The following scenario is called Black Dust, Green Sunset, Ice Cherry, Patient H
 6. Green Sunset introduces Black Dust to Ice Cherry.
 7. Patient Haze enters, saying hi to the three other nodes.
 8. The nodes say hi back.
-9. After some chatter, all is calm, and all nodes have three friends.
-
+9. After some chatter, all is calm, and all nodes have three friends (each other).
 
 To assist in debugging and observability, every node is configured to write it's log messages to a central place. let's say redis running on localhost.
 

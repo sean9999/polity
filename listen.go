@@ -25,7 +25,7 @@ func (me Node) Listen() {
 			//	if error, log
 			subject := "Can't materialize incoming message"
 			body := err.Error()
-			me.Log <- NewMessage(subject, body, uuid.Nil)
+			me.Log <- NewMessage(subject, []byte(body), uuid.Nil)
 		} else {
 			me.Inbox <- envelope
 		}

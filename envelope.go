@@ -10,11 +10,12 @@ import (
 )
 
 type Envelope struct {
-	To        NodeAddress `json:"to"`
-	From      NodeAddress `json:"from"`
-	Message   Message     `json:"message"`
-	Nonce     uuid.UUID   `json:"nonce"`
-	Signature []byte      `json:"sig"`
+	To                 NodeAddress `json:"to"`
+	From               NodeAddress `json:"from"`
+	Message            Message     `json:"message"`
+	Nonce              []byte      `json:"nonce"`
+	Signature          []byte      `json:"sig"`
+	EphemeralPublicKey []byte      `json:"eph"`
 }
 
 func (e Envelope) String() string {
@@ -43,9 +44,14 @@ func (e *Envelope) Notarize(signer crypto.Signer, randomness io.Reader) error {
 	if err != nil {
 		return err
 	}
+
+	bin, err := nonce.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	digest := fmt.Sprintf("%s\n%s", e.Message, nonce)
 	sig := ed25519.Sign(signer.(ed25519.PrivateKey), []byte(digest))
-	e.Nonce = nonce
+	e.Nonce = bin
 	e.Signature = sig
 	return err
 }

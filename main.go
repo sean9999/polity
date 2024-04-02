@@ -47,7 +47,10 @@ func main() {
 		//	greet
 		for _, thisFriend := range n.Friends() {
 			time.Sleep(time.Second * 5)
-			msg := NewMessage("will you be my friend?", fmt.Sprintf("my name is %s and I live at %s.", n.Nickname(), n.address), uuid.Nil)
+
+			sentance := fmt.Sprintf("my name is %s and I live at %s.", n.Nickname(), n.address)
+
+			msg := NewMessage("will you be my friend?", []byte(sentance), uuid.Nil)
 			err := n.Spool(msg, thisFriend)
 			if err != nil {
 				panic(err)

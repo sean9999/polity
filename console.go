@@ -71,7 +71,7 @@ func LogEnvelope(whichway string, e Envelope) {
 		Str("From", e.From.Username()).
 		Str("To", e.From.Username()).
 		Str("Subject", e.Message.Subject).
-		Str("Body", e.Message.Body).
+		Str("Body", string(e.Message.Body)).
 		Msg(whichway)
 
 }
