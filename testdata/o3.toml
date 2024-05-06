@@ -1,0 +1,7 @@
+peer = []
+
+[self]
+  priv = "cfa4e433cb2035c98f6964777cd9fd693c952c26440181ac9e0d180f520fff28"
+  pub = "b4927509b725f08e88304c514e89fecc7516fcf8147f1f9d1ef8f6f02e0500f59479e97c3769ca3f650efdfabc5d8164652f76711e32f833473ec7dbeaf3116b"
+  nick = "delicate-smoke"
+  addr = "udp://[::]:1010101"

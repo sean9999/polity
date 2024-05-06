@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../go-oracle"
+		},
+		{
+			"path": "../go-flargs"
+		}
+	],
+	"settings": {}
+}

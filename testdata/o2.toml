@@ -1,0 +1,9 @@
+[self]
+  priv = "93972c6520816d35b6d4b727bf3c630ad45316dd61d64b0a9f1ab196e18afc26"
+  pub = "07c01cf6d675fc13facd2a4522aefbfafe71ac6d1c22774ff812981cf85b319dcbf1b7ee8b3bf40c5328e640dfaaeaf3d18caa52e4de26553888efa154742016"
+  nick = "holy-glade"
+  addr = "udp://[::]:90000"
+
+[[peer]]
+  nick = "dawn-haze"
+  pub = "b510d7ab79bd0a29351ec87e7eaa35e6e2596470861668746a1fb709ff31e301fc010f1a0ba1e466757b189fab1e3ca6a118f1ed8967d8d9789209a341f84833"
