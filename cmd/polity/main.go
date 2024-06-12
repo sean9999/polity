@@ -21,28 +21,36 @@ func main() {
 		panic(err)
 	}
 
-	// dump
+	// lun := polity3.LocalUdpNetwork{
+	// 	Pubkey: me.EncryptionPublicKey.Bytes(),
+	// }
+
+	// info about me
 	me.Dump()
 
-	//	run loop
+	//	listen for messages
 	ch, err := me.Listen()
 	if err != nil {
 		panic(err)
 	}
 	for msg := range ch {
 
+		//	heard a message
 		fmt.Println("")
 
+		//	the message's sender
 		if msg.Sender != nil {
 			fmt.Println("sender: ", msg.Sender.String())
 		}
 
+		//	the message itself
 		if msg.Plain != nil {
 			fmt.Println(msg.Plain.Type)
 			fmt.Println(msg.Plain.Headers)
 			fmt.Println(string(msg.Plain.PlainTextData))
 		}
 
+		//	if it's encrypted, decrypt it
 		if msg.Cipher != nil {
 			thePem, err := msg.Cipher.MarshalPEM()
 			if err != nil {
@@ -50,8 +58,9 @@ func main() {
 			} else {
 				fmt.Println(string(thePem))
 			}
-
 		}
+
+		//	TODO: if it's signed, verify it
 
 	}
 

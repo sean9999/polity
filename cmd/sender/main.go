@@ -27,6 +27,7 @@ func main() {
 		panic(err)
 	}
 
+	//	show everything public about me
 	me.Dump()
 
 	// proverbs
@@ -35,7 +36,7 @@ func main() {
 		InputStream:  nil,
 		OutputStream: new(bytes.Buffer),
 		ErrorStream:  nil,
-		RandSource:   rand.NewSource(time.Now().UnixNano()),
+		Randomness:   rand.NewSource(time.Now().UnixNano()),
 		Filesystem:   nil,
 		Variables:    nil,
 	}
@@ -43,19 +44,22 @@ func main() {
 	cmd.LoadAndRun()
 	proverb := env.GetOutput()
 
-	//	message
+	//	compose a message
 	msg := me.Compose("the proverb is", proverb)
 
-	recipient, err := net.ResolveUDPAddr("udp", "[::]:49038")
+	//	my friend
+	recipient, err := net.ResolveUDPAddr("udp", "[::]:55315")
 	if err != nil {
 		panic(err)
 	}
+
+	//	send the message i composed, to my friend
 	err = me.Send(msg, recipient)
 	if err != nil {
 		panic(err)
 	}
 
-	//	tear down down
+	//	tear down
 	me.Close()
 	fmt.Println(string(proverb))
 

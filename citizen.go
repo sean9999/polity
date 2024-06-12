@@ -24,10 +24,12 @@ type Peer struct {
 	Address net.Addr
 }
 
+// dump info
 func (c *Citizen) Dump() {
 	fmt.Printf("%#v\n%#v", c.config, c.Address)
 }
 
+// close the connection
 func (p *Citizen) Close() error {
 	err := p.conn.Close()
 	close(p.inbox)
@@ -36,16 +38,16 @@ func (p *Citizen) Close() error {
 
 // Up ensures a network connection is created, creating it if necessary. It is idempotent
 func (c *Citizen) Up() error {
-	if c.Address == nil {
-		pc, err := net.ListenPacket("udp", ":0")
-		if err != nil {
-			//	if the connection fails, close the channel
-			close(c.inbox)
-			return NewPolityError("could not start UDP connection", err)
-		}
-		c.conn = pc
-		c.Address = pc.LocalAddr()
+	//if c.Address == nil {
+	pc, err := net.ListenPacket("udp", "[::1]:0")
+	if err != nil {
+		//	if the connection fails, close the channel
+		close(c.inbox)
+		return NewPolityError("could not start UDP connection", err)
 	}
+	c.conn = pc
+	c.Address = pc.LocalAddr()
+	//}
 	return nil
 }
 
