@@ -2,7 +2,7 @@
   priv = "93972c6520816d35b6d4b727bf3c630ad45316dd61d64b0a9f1ab196e18afc26"
   pub = "07c01cf6d675fc13facd2a4522aefbfafe71ac6d1c22774ff812981cf85b319dcbf1b7ee8b3bf40c5328e640dfaaeaf3d18caa52e4de26553888efa154742016"
   nick = "holy-glade"
-  addr = "udp://[::]:9000"
+  addr = "udp://[::]:52848"
 
 [[peer]]
   nick = "dawn-haze"

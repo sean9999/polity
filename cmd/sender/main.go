@@ -48,7 +48,7 @@ func main() {
 	msg := me.Compose("the proverb is", proverb)
 
 	//	my friend
-	recipient, err := net.ResolveUDPAddr("udp", "[::]:55315")
+	recipient, err := net.ResolveUDPAddr("udp", "[::]:53059")
 	if err != nil {
 		panic(err)
 	}

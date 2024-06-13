@@ -26,7 +26,7 @@ func main() {
 	// }
 
 	// info about me
-	me.Dump()
+	//me.Dump()
 
 	//	listen for messages
 	ch, err := me.Listen()
