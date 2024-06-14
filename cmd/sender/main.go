@@ -29,13 +29,13 @@ func main() {
 
 	me.Dump()
 
-	// proverbs
+	// get a random Go proverb
 	proverbParams := new(proverbs.Params)
 	env := &flargs.Environment{
 		InputStream:  nil,
 		OutputStream: new(bytes.Buffer),
 		ErrorStream:  nil,
-		RandSource:   rand.NewSource(time.Now().UnixNano()),
+		Randomness:   rand.NewSource(time.Now().UnixNano()),
 		Filesystem:   nil,
 		Variables:    nil,
 	}
@@ -45,7 +45,6 @@ func main() {
 
 	//	message
 	msg := me.Compose("the proverb is", proverb)
-
 	recipient, err := net.ResolveUDPAddr("udp", "[::]:49038")
 	if err != nil {
 		panic(err)

@@ -33,9 +33,9 @@ func main() {
 
 		fmt.Println("")
 
-		if msg.Sender != nil {
-			fmt.Println("sender: ", msg.Sender.String())
-		}
+		// if msg.Sender != nil {
+		// 	fmt.Println("sender: ", msg.Sender)
+		// }
 
 		if msg.Plain != nil {
 			fmt.Println(msg.Plain.Type)

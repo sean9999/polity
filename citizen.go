@@ -65,6 +65,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 	c.Up()
 	//	the first message sent is to myself. I want to know my own address
 	msg := c.Compose("my address is", []byte(c.Address.String()))
+	msg.Sender = c.Address
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
