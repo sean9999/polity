@@ -19,7 +19,7 @@ type SelfConfig struct {
 }
 
 type CitizenConfig struct {
-	handle io.ReadWriter
+	handle io.ReadWriteCloser
 	Self   SelfConfig          `toml:"self" json:"self"`
 	Peers  []map[string]string `toml:"peer" json:"peer"`
 }
@@ -31,11 +31,13 @@ func (cc *CitizenConfig) String() string {
 
 // save config to file or whatever the storage backend is
 func (cc *CitizenConfig) Save() error {
+	defer cc.String()
 	e := toml.NewEncoder(cc.handle)
 	return e.Encode(cc)
+
 }
 
-func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
+func ConfigFrom(rw io.ReadWriteCloser) (*CitizenConfig, error) {
 	if rw == nil {
 		return &ZeroConf, errors.New("nil reader")
 	}

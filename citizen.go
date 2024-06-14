@@ -137,7 +137,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 // 	}
 // }
 
-func NewCitizen(rw io.ReadWriter) (*Citizen, error) {
+func NewCitizen(rw io.ReadWriteCloser) (*Citizen, error) {
 
 	//	construct
 

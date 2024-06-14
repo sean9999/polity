@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sean9999/go-oracle"
 	"github.com/sean9999/polity3"
 )
 
@@ -28,6 +29,12 @@ func main() {
 	// info about me
 	//me.Dump()
 
+	fmt.Println("my peers are...")
+	for _, pr := range me.Peers() {
+		j, _ := pr.MarshalJSON()
+		fmt.Printf("%s\n", j)
+	}
+
 	//	listen for messages
 	ch, err := me.Listen()
 	if err != nil {
@@ -36,7 +43,7 @@ func main() {
 	for msg := range ch {
 
 		//	heard a message
-		fmt.Println("")
+		fmt.Println()
 
 		//	the message's sender
 		if msg.Sender != nil {
@@ -46,7 +53,7 @@ func main() {
 		//	the message itself
 		if msg.Plain != nil {
 			fmt.Println(msg.Plain.Type)
-			fmt.Println(msg.Plain.Headers)
+			//fmt.Println(msg.Plain.Headers)
 			fmt.Println(string(msg.Plain.PlainTextData))
 		}
 
@@ -60,7 +67,29 @@ func main() {
 			}
 		}
 
+		if msg.Sender != nil {
+			sender, err := oracle.PeerFromHex([]byte(msg.Plain.Headers["pubkey"]))
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			isGood := me.Verify(msg.Plain, sender)
+
+			fmt.Println("isGood", isGood)
+			//fmt.Println(sender.MarshalJSON())
+
+			if isGood {
+				me.AddPeer(sender)
+				me.Save()
+			}
+		} else {
+			fmt.Println("msg.Sender is nil")
+		}
+
 		//	TODO: if it's signed, verify it
+		// if msg.Plain.Signature != nil {
+		// 	me.Verify(msg.Plain, msg.Sender)
+		// }
 
 	}
 

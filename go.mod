@@ -4,6 +4,7 @@ go 1.22.2
 
 require (
 	github.com/BurntSushi/toml v1.3.2
+	github.com/google/uuid v1.6.0
 	github.com/sean9999/go-flargs v1.2.1
 	github.com/sean9999/go-oracle v1.2.2
 )
