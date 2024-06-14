@@ -1,11 +1,10 @@
 package polity3
 
 import (
-	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"net"
-	"net/url"
 
 	"github.com/sean9999/go-oracle"
 )
@@ -13,9 +12,7 @@ import (
 type Citizen struct {
 	*oracle.Oracle
 	config  *CitizenConfig
-	conn    net.PacketConn
-	Address net.Addr
-	Peers   map[string]Peer
+	network Network
 	inbox   chan Message
 }
 
@@ -24,29 +21,19 @@ type Peer struct {
 	Address net.Addr
 }
 
+// dump info
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n%#v", c.config, c.Address)
+	fmt.Printf("%#v\n%#v", c.config, c.network)
 }
 
+// close the connection
 func (p *Citizen) Close() error {
-	err := p.conn.Close()
-	close(p.inbox)
-	return err
+	return p.network.Down()
 }
 
 // Up ensures a network connection is created, creating it if necessary. It is idempotent
 func (c *Citizen) Up() error {
-	if c.Address == nil {
-		pc, err := net.ListenPacket("udp", ":0")
-		if err != nil {
-			//	if the connection fails, close the channel
-			close(c.inbox)
-			return NewPolityError("could not start UDP connection", err)
-		}
-		c.conn = pc
-		c.Address = pc.LocalAddr()
-	}
-	return nil
+	return c.network.Up()
 }
 
 //	save the config file.
@@ -71,7 +58,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 	buffer := make([]byte, messageBufferSize)
 	go func() {
 		for {
-			n, addr, err := c.conn.ReadFrom(buffer)
+			n, addr, err := c.network.Connection().ReadFrom(buffer)
 			if err != nil {
 				//	@todo: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
@@ -110,7 +97,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 	}
 
 	var conn net.PacketConn
-	if c.conn == nil {
+	if c.network.Connection() == nil {
 		//	create an ephemeral connection if we don't have a long standing one
 		conn, err := net.ListenPacket("udp", ":0")
 		if err != nil {
@@ -118,7 +105,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 		}
 		defer conn.Close()
 	} else {
-		conn = c.conn
+		conn = c.network.Connection()
 	}
 
 	bin, err := msg.MarshalBinary()
@@ -132,30 +119,64 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 	return nil
 }
 
-func NewCitizen(rw io.ReadWriter) (*Citizen, error) {
-	orc := oracle.New(rand.Reader)
+// type CitizenOption func(*Citizen)
+
+// func WithNetwork(n Network) CitizenOption {
+// 	return func(c *Citizen) {
+// 		c.network = n
+// 	}
+// }
+// func WithConfig(rw io.ReadWriter) CitizenOption {
+// 	return func(c *Citizen) {
+// 		orc := oracle.New(rand.Reader)
+// 		k, err := ConfigFrom(rw)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 		c.Oracle = orc
+// 		c.config = k
+// 	}
+// }
+
+func NewCitizen(rw io.ReadWriteCloser) (*Citizen, error) {
+
+	//	construct
+
+	orc, err := oracle.From(rw)
+	if err != nil {
+		return nil, err
+	}
+	//orc := oracle.New(rand.Reader)
 	inbox := make(chan Message, 1)
 	k, err := ConfigFrom(rw)
 	if err != nil {
 		return nil, err
 	}
-	citizen := &Citizen{Oracle: orc, config: k, inbox: inbox}
-	// convert string into net.Addr
-	if k.Self.Address != "" {
-		addr1, err := url.Parse(k.Self.Address)
-		if err != nil {
-			return nil, err
-		}
-		scheme := addr1.Scheme
-		host := addr1.Host
-
-		addr2, err := net.ResolveUDPAddr(scheme, host)
-		if err != nil {
-			return nil, err
-		}
-		citizen.Address = addr2
-	} else {
-		citizen.Up()
+	citizen := &Citizen{
+		inbox:   inbox,
+		config:  k,
+		Oracle:  orc,
+		network: NewLocalNetwork(orc.EncryptionPublicKey.Bytes()),
 	}
+
+	//	initialize
+	if err := citizen.init(); err != nil {
+		return nil, err
+	}
+
 	return citizen, nil
+}
+
+func (c *Citizen) init() error {
+
+	//	certain props cannot be nil
+	if c.config == nil {
+		return errors.New("nil config")
+	}
+	if c.Oracle == nil {
+		return errors.New("nil oracle")
+	}
+
+	//	bring the network up (aquire an address and start listening)
+	return c.network.Up()
 }

@@ -1,15 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"math/rand"
 	"net"
 	"os"
-	"time"
 
-	"github.com/sean9999/go-flargs"
-	"github.com/sean9999/go-flargs/proverbs"
 	"github.com/sean9999/polity3"
 )
 
@@ -27,35 +22,22 @@ func main() {
 		panic(err)
 	}
 
-	me.Dump()
+	//	show everything public about me
+	//me.Dump()
 
-	// get a random Go proverb
-	proverbParams := new(proverbs.Params)
-	env := &flargs.Environment{
-		InputStream:  nil,
-		OutputStream: new(bytes.Buffer),
-		ErrorStream:  nil,
-		Randomness:   rand.NewSource(time.Now().UnixNano()),
-		Filesystem:   nil,
-		Variables:    nil,
-	}
-	cmd := flargs.NewCommand(proverbParams, env)
-	cmd.LoadAndRun()
-	proverb := env.GetOutput()
-
-	//	message
-	msg := me.Compose("the proverb is", proverb)
-	recipient, err := net.ResolveUDPAddr("udp", "[::]:49038")
 	if err != nil {
 		panic(err)
 	}
+
+	//	send the message I composed, to my friend
 	err = me.Send(msg, recipient)
 	if err != nil {
 		panic(err)
 	}
 
-	//	tear down down
+	//	tear down
 	me.Close()
-	fmt.Println(string(proverb))
+
+	fmt.Println(string(msg.Plain.PlainTextData))
 
 }
