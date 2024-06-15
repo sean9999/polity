@@ -17,7 +17,7 @@ func main() {
 	}
 
 	//	me
-	me, err := polity.NewCitizen(f)
+	me, err := polity.CitizenFrom(f)
 	if err != nil {
 		panic(err)
 	}

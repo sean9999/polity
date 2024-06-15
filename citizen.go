@@ -143,7 +143,33 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 // 	}
 // }
 
-func NewCitizen(rw io.ReadWriter) (*Citizen, error) {
+func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
+
+	orc := oracle.New(randy)
+	err := orc.Export(config)
+	if err != nil {
+		return nil, err
+	}
+	inbox := make(chan Message, 1)
+	k, err := ConfigFrom(config)
+	if err != nil {
+		return nil, err
+	}
+	citizen := &Citizen{
+		inbox:   inbox,
+		config:  k,
+		Oracle:  orc,
+		Network: NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
+	}
+
+	if err := citizen.init(); err != nil {
+		return nil, err
+	}
+
+	return citizen, nil
+}
+
+func CitizenFrom(rw io.ReadWriter) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
@@ -161,7 +187,6 @@ func NewCitizen(rw io.ReadWriter) (*Citizen, error) {
 		Network: NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
 	}
 
-	//	initialize
 	if err := citizen.init(); err != nil {
 		return nil, err
 	}
@@ -179,6 +204,6 @@ func (c *Citizen) init() error {
 		return errors.New("nil oracle")
 	}
 
-	//	bring the network up (aquire an address and start listening)
+	//	aquire an address and start listening
 	return c.Network.Up()
 }
