@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-// a network composed of IPV6 localhost addresses using different ports
+// LocalUdp6Net is a network composed of IPV6 localhost addresses using different ports
 type LocalUdp6Net struct {
 	Port int
 	Conn net.PacketConn
@@ -69,7 +69,7 @@ func (lun *LocalUdp6Net) AddressFromPubkey(pk []byte) net.Addr {
 	return &ua
 }
 
-func NewLocalNetwork(pk []byte) *LocalUdp6Net {
+func NewLocalUdp6Net(pk []byte) *LocalUdp6Net {
 	lun := &LocalUdp6Net{}
 	lun.AddressFromPubkey(pk)
 	return lun

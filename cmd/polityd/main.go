@@ -59,7 +59,7 @@ func main() {
 
 		//	if it's signed, verify it
 		if msg.Sender != nil {
-			sender, err := oracle.PeerFromHex([]byte(msg.Plain.Headers["pubkey"]))
+			sender, err := polity.PeerFromHex([]byte(msg.Plain.Headers["pubkey"]))
 			if err != nil {
 				fmt.Println(err)
 			}

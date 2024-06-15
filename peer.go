@@ -1,6 +1,7 @@
 package polity
 
 import (
+	"crypto/ed25519"
 	"net"
 
 	"github.com/sean9999/go-oracle"
@@ -17,6 +18,10 @@ var NoPeer Peer
 func (p Peer) Address() net.Addr {
 	lun := LocalUdp6Net{}
 	return lun.AddressFromPubkey(p[:])
+}
+
+func (p Peer) SigningKey() ed25519.PublicKey {
+	return p.SigningKey()
 }
 
 func PeerFromHex(hex []byte) (Peer, error) {

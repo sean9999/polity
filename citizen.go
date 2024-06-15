@@ -16,14 +16,16 @@ type Citizen struct {
 	inbox   chan Message
 }
 
-// dump info
+func (c *Citizen) AddPeer(p Peer) error {
+	return c.Oracle.AddPeer(oracle.Peer(p))
+}
+
 func (c *Citizen) Dump() {
 	fmt.Printf("%#v\n%#v", c.config, c.Network)
 }
 
-// close the connection
 func (p *Citizen) Shutdown() error {
-	if handle, closable := p.config.handle.(io.Closer); closable {
+	if handle, canClose := p.config.handle.(io.Closer); canClose {
 		handle.Close()
 	}
 	close(p.inbox)
@@ -141,15 +143,12 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 // 	}
 // }
 
-func NewCitizen(rw io.ReadWriteCloser) (*Citizen, error) {
-
-	//	construct
+func NewCitizen(rw io.ReadWriter) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
 		return nil, err
 	}
-	//orc := oracle.New(rand.Reader)
 	inbox := make(chan Message, 1)
 	k, err := ConfigFrom(rw)
 	if err != nil {
@@ -159,7 +158,7 @@ func NewCitizen(rw io.ReadWriteCloser) (*Citizen, error) {
 		inbox:   inbox,
 		config:  k,
 		Oracle:  orc,
-		Network: NewLocalNetwork(orc.EncryptionPublicKey.Bytes()),
+		Network: NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	//	initialize
