@@ -1,4 +1,4 @@
-package polity3
+package polity
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ type SelfConfig struct {
 }
 
 type CitizenConfig struct {
-	handle io.ReadWriteCloser
+	handle io.ReadWriter
 	Self   SelfConfig          `toml:"self" json:"self"`
 	Peers  []map[string]string `toml:"peer" json:"peer"`
 }
@@ -31,13 +31,12 @@ func (cc *CitizenConfig) String() string {
 
 // save config to file or whatever the storage backend is
 func (cc *CitizenConfig) Save() error {
-	defer cc.String()
 	e := toml.NewEncoder(cc.handle)
-	return e.Encode(cc)
-
+	e.Encode(cc)
+	return nil
 }
 
-func ConfigFrom(rw io.ReadWriteCloser) (*CitizenConfig, error) {
+func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
 	if rw == nil {
 		return &ZeroConf, errors.New("nil reader")
 	}

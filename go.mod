@@ -1,4 +1,4 @@
-module github.com/sean9999/polity3
+module github.com/sean9999/polity
 
 go 1.22.2
 

@@ -1,4 +1,4 @@
-package polity3
+package polity
 
 import (
 	"errors"
@@ -12,28 +12,27 @@ import (
 type Citizen struct {
 	*oracle.Oracle
 	config  *CitizenConfig
-	network Network
+	Network Network
 	inbox   chan Message
-}
-
-type Peer struct {
-	oracle.Peer
-	Address net.Addr
 }
 
 // dump info
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n%#v", c.config, c.network)
+	fmt.Printf("%#v\n%#v", c.config, c.Network)
 }
 
 // close the connection
-func (p *Citizen) Close() error {
-	return p.network.Down()
+func (p *Citizen) Shutdown() error {
+	if handle, closable := p.config.handle.(io.Closer); closable {
+		handle.Close()
+	}
+	close(p.inbox)
+	return p.Network.Down()
 }
 
 // Up ensures a network connection is created, creating it if necessary. It is idempotent
 func (c *Citizen) Up() error {
-	return c.network.Up()
+	return c.Network.Up()
 }
 
 //	save the config file.
@@ -51,14 +50,14 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 	c.Up()
 	//	the first message sent is to myself. I want to know my own address
-	msg := c.Compose("my address is", []byte(c.Address.String()))
-	msg.Sender = c.Address
+	msg := c.Compose("my address is", []byte(c.Network.Address().String()))
+	msg.Sender = c.Network.Address()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
 	go func() {
 		for {
-			n, addr, err := c.network.Connection().ReadFrom(buffer)
+			n, addr, err := c.Network.Connection().ReadFrom(buffer)
 			if err != nil {
 				//	@todo: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
@@ -74,13 +73,13 @@ func (c *Citizen) Listen() (chan Message, error) {
 }
 
 func (p Peer) AsMap() map[string]string {
-	m := p.Peer.AsMap()
-	m["address"] = p.Address.String()
+	m := p.AsMap()
+	m["address"] = p.Address().String()
 	return m
 }
 
-func (c *Citizen) Compose(subj string, body []byte) Message {
-	pt := c.Oracle.Compose(subj, body)
+func (c *Citizen) Compose(subj Subject, body []byte) Message {
+	pt := c.Oracle.Compose(string(subj), body)
 	m := Message{
 		Plain: pt,
 	}
@@ -88,6 +87,10 @@ func (c *Citizen) Compose(subj string, body []byte) Message {
 }
 
 func (c *Citizen) Send(msg Message, recipient net.Addr) error {
+
+	if err := msg.Problem(); err != nil {
+		return err
+	}
 
 	c.Up()
 
@@ -97,7 +100,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 	}
 
 	var conn net.PacketConn
-	if c.network.Connection() == nil {
+	if c.Network.Connection() == nil {
 		//	create an ephemeral connection if we don't have a long standing one
 		conn, err := net.ListenPacket("udp", ":0")
 		if err != nil {
@@ -105,7 +108,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 		}
 		defer conn.Close()
 	} else {
-		conn = c.network.Connection()
+		conn = c.Network.Connection()
 	}
 
 	bin, err := msg.MarshalBinary()
@@ -156,7 +159,7 @@ func NewCitizen(rw io.ReadWriteCloser) (*Citizen, error) {
 		inbox:   inbox,
 		config:  k,
 		Oracle:  orc,
-		network: NewLocalNetwork(orc.EncryptionPublicKey.Bytes()),
+		Network: NewLocalNetwork(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	//	initialize
@@ -178,5 +181,5 @@ func (c *Citizen) init() error {
 	}
 
 	//	bring the network up (aquire an address and start listening)
-	return c.network.Up()
+	return c.Network.Up()
 }

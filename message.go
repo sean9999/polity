@@ -1,7 +1,8 @@
-package polity3
+package polity
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 
 	"github.com/sean9999/go-oracle"
@@ -13,10 +14,25 @@ import (
 // this value is used for de-serialization as an optimisation.
 const messageBufferSize = 4096
 
+var ErrNilMsg = errors.New("nil message")
+var ErrOverAbundantMsg = errors.New("overabundant message")
+
 type Message struct {
 	Sender net.Addr
 	Plain  *oracle.PlainText
 	Cipher *oracle.CipherText
+}
+
+func (m Message) Problem() error {
+	//	it is a problem if both Plain and Cipher have data
+	//	or if they both don't
+	if m.Plain == nil && m.Cipher == nil {
+		return ErrNilMsg
+	}
+	if m.Plain != nil && m.Cipher != nil {
+		return ErrOverAbundantMsg
+	}
+	return nil
 }
 
 func (msg *Message) MarshalBinary() ([]byte, error) {

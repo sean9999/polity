@@ -1,4 +1,4 @@
-package polity3
+package polity
 
 import (
 	"fmt"

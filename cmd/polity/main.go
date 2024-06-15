@@ -1,100 +1,112 @@
 package main
 
 import (
+	"bytes"
+	cryptorand "crypto/rand"
 	"fmt"
+	mathrand "math/rand"
+	"net"
 	"os"
+	"time"
 
+	"github.com/sean9999/go-flargs"
+	"github.com/sean9999/go-flargs/proverbs"
 	"github.com/sean9999/go-oracle"
-	"github.com/sean9999/polity3"
+	polity "github.com/sean9999/polity"
 )
+
+var randy = mathrand.NewSource(time.Now().UnixMicro())
+
+func sendAssertion(me *polity.Citizen, them net.Addr) error {
+	msg := me.Assert()
+	return me.Send(msg, them)
+}
+
+func sendProverb(me *polity.Citizen, them net.Addr) error {
+	// proverbs
+	proverbParams := new(proverbs.Params)
+	env := &flargs.Environment{
+		InputStream:  nil,
+		OutputStream: new(bytes.Buffer),
+		ErrorStream:  nil,
+		Randomness:   randy,
+		Filesystem:   nil,
+		Variables:    nil,
+	}
+	cmd := flargs.NewCommand(proverbParams, env)
+	cmd.LoadAndRun()
+	proverb := env.GetOutput()
+
+	//      message
+	msg := me.Compose(polity.SubjGoProverb, proverb)
+	err := msg.Plain.Sign(cryptorand.Reader, me.PrivateSigningKey())
+	if err != nil {
+		return err
+	}
+	return me.Send(msg, them)
+}
+
+func killYourself(me *polity.Citizen, them net.Addr) error {
+	msg := me.Compose(polity.SubjKillYourself, []byte("go ahead and kill yourself"))
+	err := msg.Plain.Sign(cryptorand.Reader, me.PrivateSigningKey())
+	if err != nil {
+		return err
+	}
+	return me.Send(msg, them)
+}
+
+func sendSecret(me *polity.Citizen, them oracle.Peer) error {
+	msg := me.Compose(polity.SubjGenericMsg, []byte("all your base are belong to us."))
+	pt, err := me.Encrypt(msg.Plain, them)
+	if err != nil {
+		return err
+	}
+	msg.Cipher = pt
+	msg.Plain = nil
+	recipient := me.Network.AddressFromPubkey(them.Bytes())
+	return me.Send(msg, recipient)
+}
 
 func main() {
 
 	//	my config
-	f, err := os.Open("testdata/o1.toml")
+	f, err := os.OpenFile("testdata/holy-glade.toml", os.O_RDWR, 0600)
 	if err != nil {
 		panic(err)
 	}
 
 	//	me
-	me, err := polity3.NewCitizen(f)
+	me, err := polity.NewCitizen(f)
 	if err != nil {
 		panic(err)
 	}
 
-	// lun := polity3.LocalUdpNetwork{
-	// 	Pubkey: me.EncryptionPublicKey.Bytes(),
-	// }
-
-	// info about me
-	//me.Dump()
-
-	fmt.Println("my peers are...")
-	for _, pr := range me.Peers() {
-		j, _ := pr.MarshalJSON()
-		fmt.Printf("%s\n", j)
-	}
-
-	//	listen for messages
-	ch, err := me.Listen()
+	//	them
+	recipient, err := net.ResolveUDPAddr("udp", "[::1]:53059")
 	if err != nil {
 		panic(err)
 	}
-	for msg := range ch {
 
-		//	heard a message
-		fmt.Println()
-
-		//	the message's sender
-		if msg.Sender != nil {
-			fmt.Println("sender: ", msg.Sender.String())
-		}
-
-		//	the message itself
-		if msg.Plain != nil {
-			fmt.Println(msg.Plain.Type)
-			//fmt.Println(msg.Plain.Headers)
-			fmt.Println(string(msg.Plain.PlainTextData))
-		}
-
-		//	if it's encrypted, decrypt it
-		if msg.Cipher != nil {
-			thePem, err := msg.Cipher.MarshalPEM()
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(string(thePem))
-			}
-		}
-
-		if msg.Sender != nil {
-			sender, err := oracle.PeerFromHex([]byte(msg.Plain.Headers["pubkey"]))
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			isGood := me.Verify(msg.Plain, sender)
-
-			fmt.Println("isGood", isGood)
-			//fmt.Println(sender.MarshalJSON())
-
-			if isGood {
-				me.AddPeer(sender)
-				me.Save()
-			}
-		} else {
-			fmt.Println("msg.Sender is nil")
-		}
-
-		//	TODO: if it's signed, verify it
-		// if msg.Plain.Signature != nil {
-		// 	me.Verify(msg.Plain, msg.Sender)
-		// }
-
+	time.Sleep(time.Second * 1)
+	err = sendAssertion(me, recipient)
+	if err != nil {
+		panic(err)
 	}
 
-	//	tearing down
-	me.Close()
+	time.Sleep(time.Second * 1)
+	err = sendProverb(me, recipient)
+	if err != nil {
+		panic(err)
+	}
+
+	time.Sleep(time.Second * 1)
+	err = killYourself(me, recipient)
+	if err != nil {
+		panic(err)
+	}
+	//	tear down
+	me.Shutdown()
+
 	fmt.Println("goodbye")
 
 }
