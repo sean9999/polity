@@ -18,11 +18,58 @@ var ErrNilMsg = errors.New("nil message")
 var ErrOverAbundantMsg = errors.New("overabundant message")
 
 type Message struct {
-	Sender net.Addr
-	Plain  *oracle.PlainText
-	Cipher *oracle.CipherText
+	SenderAddress net.Addr
+	Plain         *oracle.PlainText
+	Cipher        *oracle.CipherText
 }
 
+func (m Message) Sender() Peer {
+	if m.isPlain() {
+		p, err := PeerFromHex([]byte(m.Plain.Headers["pubkey"]))
+		if err != nil {
+			return NoPeer
+		}
+		return p
+	}
+	if m.isCiper() {
+		p, err := PeerFromHex([]byte(m.Cipher.Headers["pubkey"]))
+		if err != nil {
+			return NoPeer
+		}
+		return p
+	}
+	return NoPeer
+}
+
+func (m Message) Body() string {
+	if m.isPlain() {
+		return string(m.Plain.PlainTextData)
+	}
+	return ""
+}
+
+func (m Message) isPlain() bool {
+	return (m.Plain != nil)
+}
+
+func (m Message) isCiper() bool {
+	return (m.Cipher != nil)
+}
+
+func (m Message) Subject() Subject {
+	var subj string
+	var ok bool
+	if m.isPlain() {
+		subj, ok = m.Plain.Headers["subject"]
+	}
+	if m.isCiper() {
+		subj, ok = m.Plain.Headers["subject"]
+	}
+	if ok {
+		return Subject(subj)
+	}
+	return NoSubject
+}
 func (m Message) Problem() error {
 	//	it is a problem if both Plain and Cipher have data
 	//	or if they both don't

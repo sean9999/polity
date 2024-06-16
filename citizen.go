@@ -16,6 +16,12 @@ type Citizen struct {
 	inbox   chan Message
 }
 
+func (c *Citizen) Verify(msg Message) bool {
+	sender := msg.Sender()
+	return c.Oracle.Verify(msg.Plain, sender)
+}
+
+// add a peer to our list of peers, persisting to config
 func (c *Citizen) AddPeer(p Peer) error {
 	return c.Oracle.AddPeer(oracle.Peer(p))
 }
@@ -37,23 +43,21 @@ func (c *Citizen) Up() error {
 	return c.Network.Up()
 }
 
-//	save the config file.
-//
-// We may have more information than we did before.
-// We may have an address for ourself.
-// We may have any number of new friends.
-// Some friends may have new addresses.
+// save the config file.
 func (c *Citizen) Save() error {
 	return c.config.Save()
 }
 
-// the  main run loop. listens for [Messages] and pushes them to Citizen.inbox
+// Listen for [Messages] and pushes them to Citizen.inbox
 func (c *Citizen) Listen() (chan Message, error) {
 
 	c.Up()
-	//	the first message sent is to myself. I want to know my own address
-	msg := c.Compose("my address is", []byte(c.Network.Address().String()))
-	msg.Sender = c.Network.Address()
+
+	//	the first message sent is to myself.
+	//	I want to know my own address and nickname
+	body := fmt.Sprintf("my address is %s\nmy nickname is %s\n", c.Network.Address().String(), c.Nickname())
+	msg := c.Compose(SubjHelloSelf, []byte(body))
+	msg.SenderAddress = c.Network.Address()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
@@ -67,7 +71,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 			}
 			var msg Message
 			msg.UnmarshalBinary(buffer[:n])
-			msg.Sender = addr
+			msg.SenderAddress = addr
 			c.inbox <- msg
 		}
 	}()
@@ -124,25 +128,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 	return nil
 }
 
-// type CitizenOption func(*Citizen)
-
-// func WithNetwork(n Network) CitizenOption {
-// 	return func(c *Citizen) {
-// 		c.network = n
-// 	}
-// }
-// func WithConfig(rw io.ReadWriter) CitizenOption {
-// 	return func(c *Citizen) {
-// 		orc := oracle.New(rand.Reader)
-// 		k, err := ConfigFrom(rw)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 		c.Oracle = orc
-// 		c.config = k
-// 	}
-// }
-
+// create a new citizen and pesist her config
 func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
 
 	orc := oracle.New(randy)
@@ -169,6 +155,7 @@ func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
 	return citizen, nil
 }
 
+// read a config file and spin up a Citizen
 func CitizenFrom(rw io.ReadWriter) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
@@ -204,6 +191,6 @@ func (c *Citizen) init() error {
 		return errors.New("nil oracle")
 	}
 
-	//	aquire an address and start listening
+	//	acquire an address and start listening
 	return c.Network.Up()
 }

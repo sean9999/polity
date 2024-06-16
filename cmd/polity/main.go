@@ -13,12 +13,13 @@ import (
 func main() {
 
 	home, _ := os.UserHomeDir()
-
 	env := flargs.NewCLIEnvironment("/")
 
 	app := &cli.App{
-		Name:    "polity",
-		Version: "v0.1.1",
+		Name:                 "polity",
+		Version:              "v0.1.1",
+		EnableBashCompletion: true,
+		Description:          "polity is an organized group of social agents",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
@@ -45,6 +46,19 @@ func main() {
 				Usage: "display info about self",
 				Action: func(cCtx *cli.Context) error {
 					return subcommand.Info(env, cCtx)
+				},
+			},
+			{
+				Name:  "proverb",
+				Usage: "send a proverb to someone",
+				Action: func(cCtx *cli.Context) error {
+					return subcommand.Proverb(env, cCtx)
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "to",
+						Usage: "who to send a proverb to",
+					},
 				},
 			},
 		},

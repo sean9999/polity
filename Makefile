@@ -9,11 +9,11 @@ info:
 binaries: bin/polityd bin/polity
 	mkdir -p bin
 
-bin/goracle:
-	go build -v -o bin/goracle -ldflags="-X 'main.Version=$(REF)'" cmd/goracle/**.go
+bin/polity:
+	go build -v -o bin/polity -ldflags="-X 'main.Version=$(REF)'" cmd/polity/**.go
 	
-bin/pemreader:	
-	go build -v -o bin/pemreader -ldflags="-X 'main.Version=$(REF)'" cmd/pemreader/**.go
+bin/polityd:	
+	go build -v -o bin/polityd -ldflags="-X 'main.Version=$(REF)'" cmd/polityd/**.go
 
 tidy:
 	go mod tidy

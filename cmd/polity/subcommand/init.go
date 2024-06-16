@@ -30,7 +30,7 @@ func Init(env *flargs.Environment, ctx *cli.Context) error {
 		if info.IsDir() {
 			return CliError{1, "config file can't be dir", nil}
 		}
-		if info.Size() > 0 {
+		if info.Size() > 1 {
 			return CliError{1, "file is not blank", nil}
 		}
 	}

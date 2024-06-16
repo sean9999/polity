@@ -8,8 +8,13 @@ func (subj Subject) String() string {
 }
 
 const (
-	SubjAssertion    Subject = "I assert myself"
-	SubjKillYourself Subject = "kill yourself"
-	SubjGoProverb    Subject = "a go proverb is"
-	SubjGenericMsg   Subject = "generic message"
+	NoSubject          Subject = ""
+	SubjAssertion      Subject = "I assert myself"
+	SubjKillYourself   Subject = "kill yourself"
+	SubjGoProverb      Subject = "a go proverb is"
+	SubjGenericMsg     Subject = "generic message"
+	SubjStartMarcoPolo Subject = "do you want to play marco polo?"
+	SubjMarco          Subject = "marco!"
+	SubjPolo           Subject = "polo!"
+	SubjHelloSelf      Subject = "hello to myself"
 )
