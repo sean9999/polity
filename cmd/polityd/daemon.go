@@ -42,6 +42,8 @@ func Daemon(cli *cli.Context) error {
 			err = handleProverb(me, msg)
 		case polity.SubjHelloSelf:
 			err = handleStartup(me, msg)
+		case polity.SubjMarco, polity.SubjStartMarcoPolo:
+			err = handleMarco(me, msg)
 		default:
 			err = handleGeneric(me, msg)
 		}
@@ -50,7 +52,7 @@ func Daemon(cli *cli.Context) error {
 		}
 	}
 
-	msg := fmt.Sprintf("config is %q and format is %q", cli.String("config"), cli.String("format"))
+	msg := fmt.Sprintf("config is %q and format is %q\n", cli.String("config"), cli.String("format"))
 	fmt.Println(msg)
 
 	return nil

@@ -24,11 +24,11 @@ func (lun *LocalUdp6Net) Address() net.Addr {
 	return lun.Addr
 }
 
-func (lun *LocalUdp6Net) Down() error {
+func (lun *LocalUdp6Net) Leave() error {
 	return lun.Conn.Close()
 }
 
-func (lun *LocalUdp6Net) Up() error {
+func (lun *LocalUdp6Net) Join() error {
 
 	//	if Up() has already been run, no problem.
 	if lun.Conn != nil {

@@ -7,8 +7,8 @@ import (
 	"github.com/sean9999/go-oracle"
 )
 
-// a Peer is another Citizen.
-// We know only public information about it
+// a Peer is a Citizen that is not ourself, whose identity we have verified
+// and whose pubkey we have saved.
 type Peer oracle.Peer
 
 // zero value means no Peer
@@ -20,8 +20,12 @@ func (p Peer) Address() net.Addr {
 	return lun.AddressFromPubkey(p[:])
 }
 
+func (p Peer) Oracle() oracle.Peer {
+	return oracle.Peer(p)
+}
+
 func (p Peer) SigningKey() ed25519.PublicKey {
-	return p.SigningKey()
+	return p.Oracle().SigningKey()
 }
 
 func PeerFromHex(hex []byte) (Peer, error) {

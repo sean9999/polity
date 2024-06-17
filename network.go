@@ -7,7 +7,7 @@ import (
 type Network interface {
 	Connection() net.PacketConn
 	Address() net.Addr // this must be deterministic
-	Up() error
-	Down() error
+	Join() error
+	Leave() error
 	AddressFromPubkey([]byte) net.Addr
 }

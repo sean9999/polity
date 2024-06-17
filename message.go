@@ -25,14 +25,22 @@ type Message struct {
 
 func (m Message) Sender() Peer {
 	if m.isPlain() {
-		p, err := PeerFromHex([]byte(m.Plain.Headers["pubkey"]))
+		pk, ok := m.Plain.Headers["pubkey"]
+		if !ok {
+			return NoPeer
+		}
+		p, err := PeerFromHex([]byte(pk))
 		if err != nil {
 			return NoPeer
 		}
 		return p
 	}
 	if m.isCiper() {
-		p, err := PeerFromHex([]byte(m.Cipher.Headers["pubkey"]))
+		pk, ok := m.Cipher.Headers["pubkey"]
+		if !ok {
+			return NoPeer
+		}
+		p, err := PeerFromHex([]byte(pk))
 		if err != nil {
 			return NoPeer
 		}
@@ -104,7 +112,6 @@ func (msg *Message) MarshalBinary() ([]byte, error) {
 }
 
 func (msg *Message) UnmarshalBinary(data []byte) error {
-
 	m := map[string][]byte{}
 	err := json.Unmarshal(data, &m)
 	if err != nil {

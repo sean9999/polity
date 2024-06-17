@@ -61,6 +61,19 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "marco",
+				Usage: "play marco in a marco polo game",
+				Action: func(cCtx *cli.Context) error {
+					return subcommand.Marco(env, cCtx)
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "with",
+						Usage: "who to play marco polo with",
+					},
+				},
+			},
 		},
 	}
 

@@ -17,4 +17,6 @@ const (
 	SubjMarco          Subject = "marco!"
 	SubjPolo           Subject = "polo!"
 	SubjHelloSelf      Subject = "hello to myself"
+	SubjHowAreYou      Subject = "how are you?"
+	SubjGoodThanks     Subject = "good, thanks"
 )

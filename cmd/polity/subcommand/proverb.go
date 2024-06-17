@@ -14,6 +14,7 @@ import (
 // Send proverbs to all my friends
 func Proverb(env *flargs.Environment, ctx *cli.Context) error {
 
+	//	load or barf
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
 	}
@@ -27,11 +28,22 @@ func Proverb(env *flargs.Environment, ctx *cli.Context) error {
 		return err
 	}
 
+	//	fail with no peers
+	if len(me.Peers()) == 0 {
+		return errors.New("no peers to send proverbs to.")
+	}
+
+	//	iterate and send
 	for nick, peer := range me.Peers() {
-		fmt.Println(nick)
-		msg := me.Compose(polity.SubjGoProverb, []byte(proverbs.RandomProverb()))
+		proverb := proverbs.RandomProverb()
+		msg := me.Compose(polity.SubjGoProverb, []byte(proverb))
 		me.Sign(msg.Plain)
-		me.Send(msg, polity.Peer(peer).Address())
+		err = me.Send(msg, polity.Peer(peer).Address())
+		if err != nil {
+			fmt.Fprintf(env.ErrorStream, "could not send proverb to %s. %s\n", nick, err)
+		} else {
+			fmt.Fprintf(env.OutputStream, "sent proverb to %s\n", nick)
+		}
 	}
 
 	return nil

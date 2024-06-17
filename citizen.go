@@ -18,7 +18,15 @@ type Citizen struct {
 
 func (c *Citizen) Verify(msg Message) bool {
 	sender := msg.Sender()
+	if sender == NoPeer {
+		return false
+	}
 	return c.Oracle.Verify(msg.Plain, sender)
+}
+
+func (c *Citizen) Peer(nick string) (Peer, error) {
+	p, er := c.Oracle.Peer(nick)
+	return Peer(p), er
 }
 
 // add a peer to our list of peers, persisting to config
@@ -31,16 +39,19 @@ func (c *Citizen) Dump() {
 }
 
 func (p *Citizen) Shutdown() error {
+	//	if we have an open file handle or some other resource that needs closing, close it
 	if handle, canClose := p.config.handle.(io.Closer); canClose {
 		handle.Close()
 	}
+	//	close the channel
 	close(p.inbox)
-	return p.Network.Down()
+	//	leave the network
+	return p.Network.Leave()
 }
 
-// Up ensures a network connection is created, creating it if necessary. It is idempotent
+// join the network
 func (c *Citizen) Up() error {
-	return c.Network.Up()
+	return c.Network.Join()
 }
 
 // save the config file.
@@ -93,7 +104,6 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 }
 
 func (c *Citizen) Send(msg Message, recipient net.Addr) error {
-
 	if err := msg.Problem(); err != nil {
 		return err
 	}
@@ -105,22 +115,20 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 		return err
 	}
 
-	var conn net.PacketConn
-	if c.Network.Connection() == nil {
-		//	create an ephemeral connection if we don't have a long standing one
-		conn, err := net.ListenPacket("udp", ":0")
-		if err != nil {
-			return err
-		}
-		defer conn.Close()
-	} else {
-		conn = c.Network.Connection()
+	//	create an ephemeral connection if we don't have a long standing one
+	conn, err := net.ListenPacket("udp", ":0")
+	if err != nil {
+		return err
 	}
+	defer conn.Close()
 
 	bin, err := msg.MarshalBinary()
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(conn.LocalAddr())
+
 	_, err = conn.WriteTo(bin, raddr)
 	if err != nil {
 		return err
@@ -191,6 +199,6 @@ func (c *Citizen) init() error {
 		return errors.New("nil oracle")
 	}
 
-	//	acquire an address and start listening
-	return c.Network.Up()
+	return nil
+
 }
