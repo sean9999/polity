@@ -127,7 +127,7 @@ func (c *Citizen) Send(msg Message, recipient net.Addr) error {
 		return err
 	}
 
-	fmt.Println(conn.LocalAddr())
+	//fmt.Println(conn.LocalAddr())
 
 	_, err = conn.WriteTo(bin, raddr)
 	if err != nil {

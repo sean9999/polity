@@ -19,4 +19,5 @@ const (
 	SubjHelloSelf      Subject = "hello to myself"
 	SubjHowAreYou      Subject = "how are you?"
 	SubjGoodThanks     Subject = "good, thanks"
+	SubjWhoDoYouKnow   Subject = "who do you know?"
 )

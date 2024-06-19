@@ -42,7 +42,7 @@ func Daemon(cli *cli.Context) error {
 			err = handleProverb(me, msg)
 		case polity.SubjHelloSelf:
 			err = handleStartup(me, msg)
-		case polity.SubjMarco, polity.SubjStartMarcoPolo:
+		case polity.SubjStartMarcoPolo, polity.SubjMarco, polity.SubjPolo:
 			err = handleMarco(me, msg)
 		default:
 			err = handleGeneric(me, msg)
