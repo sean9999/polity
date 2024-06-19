@@ -2,6 +2,8 @@ module github.com/sean9999/polity
 
 go 1.22.2
 
+toolchain go1.22.4
+
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/google/uuid v1.6.0
