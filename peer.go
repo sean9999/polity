@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
+	"github.com/sean9999/polity/network"
 )
 
 // a Peer is a Citizen that is not ourself, whose identity we have verified
@@ -16,9 +17,14 @@ type Peer oracle.Peer
 var NoPeer Peer
 
 // stable, deterministic address
-func (p Peer) Address() net.Addr {
-	lun := LocalUdp6Net{}
-	return lun.AddressFromPubkey(p[:])
+func (p Peer) Address(net network.Network) net.Addr {
+	return net.AddressFromPubkey(p[:])
+}
+
+func (p Peer) AsMap(net network.Network) map[string]string {
+	m := p.Oracle().AsMap()
+	m["address"] = p.Address(net).String()
+	return m
 }
 
 func (p Peer) Equal(q Peer) bool {

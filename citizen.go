@@ -8,12 +8,13 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
+	"github.com/sean9999/polity/network"
 )
 
 type Citizen struct {
 	*oracle.Oracle
 	config  *CitizenConfig
-	Network Network
+	Network network.Network
 	inbox   chan Message
 }
 
@@ -86,7 +87,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 		for {
 			n, addr, err := c.Network.Connection().ReadFrom(buffer)
 			if err != nil {
-				//	@todo: is this a failure condition that chould trigger Close()?
+				//	TODO: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
 				continue
 			}
@@ -97,12 +98,6 @@ func (c *Citizen) Listen() (chan Message, error) {
 		}
 	}()
 	return c.inbox, nil
-}
-
-func (p Peer) AsMap() map[string]string {
-	m := p.Oracle().AsMap()
-	m["address"] = p.Address().String()
-	return m
 }
 
 func (c *Citizen) Equal(p Peer) bool {
@@ -126,7 +121,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.Address().String())
+	raddr, err := net.ResolveUDPAddr("udp", recipient.Address(c.Network).String())
 	if err != nil {
 		return err
 	}
@@ -169,7 +164,7 @@ func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
 		inbox:   inbox,
 		config:  k,
 		Oracle:  orc,
-		Network: NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
+		Network: network.NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	if err := citizen.init(); err != nil {
@@ -195,7 +190,7 @@ func CitizenFrom(rw io.ReadWriter) (*Citizen, error) {
 		inbox:   inbox,
 		config:  k,
 		Oracle:  orc,
-		Network: NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
+		Network: network.NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	if err := citizen.init(); err != nil {

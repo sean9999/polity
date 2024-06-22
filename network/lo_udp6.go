@@ -1,4 +1,4 @@
-package polity
+package network
 
 import (
 	"errors"
@@ -44,7 +44,7 @@ func (lun *LocalUdp6Net) Join() error {
 	pc, err := net.ListenPacket("udp", lun.Addr.String())
 
 	if err != nil {
-		return NewPolityError("could not start UDP connection", err)
+		return err
 	}
 	lun.Conn = pc
 	return nil

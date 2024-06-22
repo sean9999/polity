@@ -1,4 +1,4 @@
-package polity
+package network
 
 import (
 	"net"
