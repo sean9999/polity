@@ -38,7 +38,7 @@ func Proverb(env *flargs.Environment, ctx *cli.Context) error {
 		proverb := proverbs.RandomProverb()
 		msg := me.Compose(polity.SubjGoProverb, []byte(proverb))
 		me.Sign(msg.Plain)
-		err = me.Send(msg, polity.Peer(peer).Address())
+		err = me.Send(msg, peer)
 		if err != nil {
 			fmt.Fprintf(env.ErrorStream, "could not send proverb to %s. %s\n", nick, err)
 		} else {

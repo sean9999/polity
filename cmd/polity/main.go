@@ -74,6 +74,32 @@ func main() {
 					},
 				},
 			},
+			{
+				Name:  "howdee",
+				Usage: "say howdee to someone",
+				Action: func(cCtx *cli.Context) error {
+					return subcommand.Howdee(env, cCtx)
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "to",
+						Usage: "who to say howdee to",
+					},
+				},
+			},
+			{
+				Name:  "introduce",
+				Usage: "introduce yourself to another peer",
+				Action: func(cCtx *cli.Context) error {
+					return subcommand.Introduce(env, cCtx)
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "pubkey",
+						Usage: "pubkey to to send introduction to",
+					},
+				},
+			},
 		},
 	}
 

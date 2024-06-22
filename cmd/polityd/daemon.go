@@ -9,9 +9,19 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func helloEverybody(me *polity.Citizen) {
+	var err error
+	for nick, peer := range me.Peers() {
+		msg := me.Compose(polity.SubjImBack, nil)
+		err = me.Send(msg, polity.Peer(peer))
+		fmt.Printf("hello %s (%v)\n", nick, err)
+	}
+}
+
 func Daemon(cli *cli.Context) error {
 
-	fd, err := os.Open(cli.String("config"))
+	fd, err := os.OpenFile(cli.String("config"), os.O_RDWR, 0600)
+
 	if err != nil {
 		return err
 	}
@@ -21,6 +31,9 @@ func Daemon(cli *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	//	tell all my friends i'm back from the dead
+	go helloEverybody(me)
 
 	msgs, err := me.Listen()
 	if err != nil {
@@ -44,6 +57,12 @@ func Daemon(cli *cli.Context) error {
 			err = handleStartup(me, msg)
 		case polity.SubjStartMarcoPolo, polity.SubjMarco, polity.SubjPolo:
 			err = handleMarco(me, msg)
+		case polity.SubjHowdee, polity.SubjWhoDoYouKnow:
+			err = handleHowdee(me, msg)
+		case polity.SubjAssertion:
+			err = handleAssertion(me, msg)
+		case polity.SubjImBack:
+			err = handleWelcomeBack(me, msg)
 		default:
 			err = handleGeneric(me, msg)
 		}

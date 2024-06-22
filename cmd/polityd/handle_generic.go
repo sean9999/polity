@@ -21,3 +21,20 @@ func handleStartup(_ *polity.Citizen, msg polity.Message) error {
 	fmt.Println(body)
 	return nil
 }
+
+func handleWelcomeBack(me *polity.Citizen, msg polity.Message) error {
+
+	//	say welcome back to my friend, back from vacation
+	response := me.Compose(polity.SubjWelcomeBack, nil)
+	me.Send(response, msg.Sender())
+
+	//	tell my friends i'm happy because my friend is back
+	for nick, thisPeer := range me.Peers() {
+		//	there is no point in telling the one who just came back. They know.
+		if !thisPeer.Equal(msg.Sender()) {
+			fmt.Printf("dear %s, huzzah! my friend %s is back\n", nick, msg.Sender().Nickname())
+		}
+	}
+	return nil
+
+}

@@ -82,7 +82,7 @@ func handleMarco(me *polity.Citizen, msg polity.Message) error {
 	}
 	if c.Num < upperBound {
 		response := me.Compose(c.Who, []byte(c.Serialize()))
-		me.Send(response, msg.Sender().Address())
+		me.Send(response, msg.Sender())
 	} else {
 		//	mister even prints out
 		stopime = time.Now()
@@ -98,7 +98,7 @@ func handleMarco(me *polity.Citizen, msg polity.Message) error {
 		if c.Num == upperBound {
 			//	mister odd prints out
 			response := me.Compose(polity.SubjStartMarcoPolo, []byte(c.Serialize()))
-			me.Send(response, msg.Sender().Address())
+			me.Send(response, msg.Sender())
 		}
 	}
 	return nil

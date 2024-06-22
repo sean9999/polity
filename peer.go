@@ -3,6 +3,7 @@ package polity
 import (
 	"crypto/ed25519"
 	"net"
+	"slices"
 
 	"github.com/sean9999/go-oracle"
 )
@@ -18,6 +19,14 @@ var NoPeer Peer
 func (p Peer) Address() net.Addr {
 	lun := LocalUdp6Net{}
 	return lun.AddressFromPubkey(p[:])
+}
+
+func (p Peer) Equal(q Peer) bool {
+	return slices.Equal(p[:], q[:])
+}
+
+func (p Peer) Nickname() string {
+	return oracle.Peer(p).Nickname()
 }
 
 func (p Peer) Oracle() oracle.Peer {

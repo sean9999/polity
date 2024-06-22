@@ -17,7 +17,11 @@ const (
 	SubjMarco          Subject = "marco!"
 	SubjPolo           Subject = "polo!"
 	SubjHelloSelf      Subject = "hello to myself"
-	SubjHowAreYou      Subject = "how are you?"
-	SubjGoodThanks     Subject = "good, thanks"
+	SubjHowdee         Subject = "hi, how are you?"
+	SubjGoodThanks     Subject = "i am operating within normal parameters"
+	SubjStatusReport   Subject = "this is my status report"
 	SubjWhoDoYouKnow   Subject = "who do you know?"
+	SubjImBack         Subject = "I'm back. What's new?"
+	SubjWelcomeBack    Subject = "welcome back. Here's what's new"
+	SubjectNewFriend   Subject = "I have a new friend."
 )

@@ -1,23 +1,22 @@
 package subcommand
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
 	"github.com/urfave/cli/v2"
 )
 
-// play marco polo
-func Marco(env *flargs.Environment, ctx *cli.Context) error {
+func Howdee(env *flargs.Environment, ctx *cli.Context) error {
 
-	//	load or barf
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
 	}
+
 	fd, err := os.Open(ctx.String("config"))
 	if err != nil {
 		return err
@@ -28,21 +27,20 @@ func Marco(env *flargs.Environment, ctx *cli.Context) error {
 		return err
 	}
 
+	j, err := json.MarshalIndent(me.Peers(), "", "\t")
+	if err != nil {
+		return err
+	}
+
 	//	peer
-	peer, err := me.Peer(ctx.String("with"))
+	peer, err := me.Peer(ctx.String("to"))
 	if err != nil {
-		fmt.Println("oh no!", ctx.String("with"))
+		fmt.Println("oh no!", ctx.String("to"))
 		return err
 	}
 
-	gameId, err := uuid.NewRandom()
-	if err != nil {
-		return err
-	}
-	body := fmt.Sprintf("%s\n/%s\n%d\n", gameId.String(), polity.SubjStartMarcoPolo, 0)
+	//	these are my friends. Who are your friends?
+	msg := me.Compose(polity.SubjWhoDoYouKnow, j)
 
-	msg := me.Compose(polity.SubjStartMarcoPolo, []byte(body))
-	me.Send(msg, peer)
-
-	return nil
+	return me.Send(msg, peer)
 }

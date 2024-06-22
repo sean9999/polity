@@ -36,7 +36,7 @@ docs: pkgsite
 	pkgsite -open .
 
 publish:
-	GOPROXY=https://proxy.golang.org/cached-only,direct go list -m ${REPO}@${SEMVER}
+	GOPROXY=https://proxy.golang.org,direct go list -m ${REPO}@${SEMVER}
 
 test:
 	go test ./...

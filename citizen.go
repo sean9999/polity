@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"slices"
 
 	"github.com/sean9999/go-oracle"
 )
@@ -24,9 +25,18 @@ func (c *Citizen) Verify(msg Message) bool {
 	return c.Oracle.Verify(msg.Plain, sender)
 }
 
+func (c *Citizen) Peers() map[string]Peer {
+	ps := c.Oracle.Peers()
+	peers := make(map[string]Peer, len(ps))
+	for nick, op := range ps {
+		peers[nick] = Peer(op)
+	}
+	return peers
+}
+
 func (c *Citizen) Peer(nick string) (Peer, error) {
-	p, er := c.Oracle.Peer(nick)
-	return Peer(p), er
+	p, err := c.Oracle.Peer(nick)
+	return Peer(p), err
 }
 
 // add a peer to our list of peers, persisting to config
@@ -39,17 +49,17 @@ func (c *Citizen) Dump() {
 }
 
 func (p *Citizen) Shutdown() error {
-	//	if we have an open file handle or some other resource that needs closing, close it
+	//	if we have an open file handle or some other resource that can close, close it
 	if handle, canClose := p.config.handle.(io.Closer); canClose {
 		handle.Close()
 	}
 	//	close the channel
 	close(p.inbox)
-	//	leave the network
+	//	leave the network (ie: de-register)
 	return p.Network.Leave()
 }
 
-// join the network
+// join the network (ie: acquire an address)
 func (c *Citizen) Up() error {
 	return c.Network.Join()
 }
@@ -90,9 +100,15 @@ func (c *Citizen) Listen() (chan Message, error) {
 }
 
 func (p Peer) AsMap() map[string]string {
-	m := p.AsMap()
+	m := p.Oracle().AsMap()
 	m["address"] = p.Address().String()
 	return m
+}
+
+func (c *Citizen) Equal(p Peer) bool {
+	p1 := c.AsPeer().Bytes()
+	p2 := p.Oracle().Bytes()
+	return slices.Equal(p1, p2)
 }
 
 func (c *Citizen) Compose(subj Subject, body []byte) Message {
@@ -103,19 +119,19 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 	return m
 }
 
-func (c *Citizen) Send(msg Message, recipient net.Addr) error {
+func (c *Citizen) Send(msg Message, recipient Peer) error {
 	if err := msg.Problem(); err != nil {
 		return err
 	}
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.String())
+	raddr, err := net.ResolveUDPAddr("udp", recipient.Address().String())
 	if err != nil {
 		return err
 	}
 
-	//	create an ephemeral connection if we don't have a long standing one
+	//	pick a random port for origination
 	conn, err := net.ListenPacket("udp", ":0")
 	if err != nil {
 		return err
