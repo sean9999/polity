@@ -1,10 +1,13 @@
 package polity
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"net"
 
+	"github.com/google/uuid"
 	"github.com/sean9999/go-oracle"
 )
 
@@ -17,10 +20,45 @@ const messageBufferSize = 4096
 var ErrNilMsg = errors.New("nil message")
 var ErrOverAbundantMsg = errors.New("overabundant message")
 
+var NoMessage Message
+
+var ZeroUUID uuid.UUID
+
 type Message struct {
+	Id            uuid.UUID
+	ThreadId      uuid.UUID
 	SenderAddress net.Addr
 	Plain         *oracle.PlainText
 	Cipher        *oracle.CipherText
+}
+
+func (m Message) Digest() ([]byte, error) {
+
+	// a Message's digest is unique to it's sender
+	// but by implication, not it's receiver.
+	buf := bytes.NewBuffer(m.Sender().Oracle().Bytes())
+
+	//	if there is plain text, hash it
+	if m.Plain != nil {
+		digest, err := m.Plain.Digest()
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(digest)
+	}
+
+	//	if there is ciphertext, hash it
+	if m.Cipher != nil {
+		digest, err := m.Cipher.Digest()
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(digest)
+	}
+
+	//	do the hash
+	dig := sha256.New()
+	return dig.Sum(buf.Bytes()), nil
 }
 
 func (m Message) Sender() Peer {
@@ -81,6 +119,7 @@ func (m Message) Subject() Subject {
 func (m Message) Problem() error {
 	//	it is a problem if both Plain and Cipher have data
 	//	or if they both don't
+	//	meaning a Message may be either encrypted or plain, but not both and not neither.
 	if m.Plain == nil && m.Cipher == nil {
 		return ErrNilMsg
 	}
@@ -91,7 +130,6 @@ func (m Message) Problem() error {
 }
 
 func (msg *Message) MarshalBinary() ([]byte, error) {
-
 	j := map[string][]byte{
 		"plain":  nil,
 		"cipher": nil,
@@ -134,4 +172,43 @@ func (msg *Message) UnmarshalBinary(data []byte) error {
 		msg.Cipher = ct
 	}
 	return nil
+}
+
+// type messageOptionFunction func(any) MessageOption
+type MessageOption func(*Message)
+
+func WithSender(addr net.Addr) MessageOption {
+	return func(msg *Message) {
+		msg.SenderAddress = addr
+	}
+}
+
+func WithPlainText(pt *oracle.PlainText) MessageOption {
+	return func(msg *Message) {
+		msg.Plain = pt
+	}
+}
+
+func WithCipherText(ct *oracle.CipherText) MessageOption {
+	return func(msg *Message) {
+		msg.Cipher = ct
+	}
+}
+
+func NewMessage(opts ...MessageOption) Message {
+	uid, err := uuid.NewV7()
+	if err != nil {
+		panic(err)
+	}
+	msg := Message{
+		Id: uid,
+	}
+	for _, opt := range opts {
+		opt(&msg)
+	}
+	return msg
+}
+
+func (a Message) Preceeds(b Message) bool {
+	return a.Id.Time() < b.Id.Time()
 }

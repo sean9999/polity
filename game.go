@@ -22,12 +22,9 @@ func (c *Citizen) StartMarcoPolo() Message {
 }
 
 func (c *Citizen) Marco(msg Message) Message {
-
 	myMsg := new(oracle.PlainText)
 	myMsg.Clone(msg.Plain)
-	response := Message{
-		Plain: myMsg,
-	}
+	response := NewMessage(WithPlainText(myMsg))
+	response.ThreadId = response.Id
 	return response
-
 }

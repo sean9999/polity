@@ -7,10 +7,11 @@ import (
 
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
+	"github.com/sean9999/polity/connection"
 	"github.com/urfave/cli/v2"
 )
 
-func Introduce(env *flargs.Environment, ctx *cli.Context) error {
+func Introduce(env *flargs.Environment, ctx *cli.Context, newConn connection.Constructor) error {
 
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
@@ -21,7 +22,7 @@ func Introduce(env *flargs.Environment, ctx *cli.Context) error {
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd)
+	me, err := polity.CitizenFrom(fd, newConn)
 	if err != nil {
 		return err
 	}

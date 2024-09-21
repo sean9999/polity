@@ -12,7 +12,7 @@ func handleAssertion(me *polity.Citizen, msg polity.Message) error {
 		//	are we already friends? if so, bail.
 		peer, _ := me.Peer(msg.Sender().Nickname())
 		if peer.Equal(polity.NoPeer) {
-			//	send an assertion in response. We want to be friends
+			//	send an assertion in response. We want to be mutual friends
 			err := me.Send(me.Assert(), msg.Sender())
 			if err != nil {
 				return err

@@ -8,16 +8,19 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/sean9999/go-oracle"
+	realfs "github.com/sean9999/go-real-fs"
 )
 
 var ZeroConf CitizenConfig
 var ErrInvalidConfig = errors.New("invalid config")
 
+// a SelfConfig is an [oracle.Self] with an address
 type SelfConfig struct {
 	oracle.Self
 	Address string `toml:"addr" json:"addr"`
 }
 
+// a CitizenConfig is a SelfConfig, along with it's peers and a file handle
 type CitizenConfig struct {
 	handle io.ReadWriter
 	Self   SelfConfig          `toml:"self" json:"self"`
@@ -50,8 +53,8 @@ func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
 	return &conf, nil
 }
 
-func ConfigFromFile(path string) (*CitizenConfig, error) {
-	f, err := os.Open(path)
+func ConfigFromFile(filesystem realfs.WritableFs, path string) (*CitizenConfig, error) {
+	f, err := filesystem.OpenFile(path, os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}

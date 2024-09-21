@@ -7,6 +7,7 @@ import (
 
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity/cmd/polity/subcommand"
+	"github.com/sean9999/polity/connection"
 	"github.com/urfave/cli/v2"
 )
 
@@ -14,6 +15,8 @@ func main() {
 
 	home, _ := os.UserHomeDir()
 	env := flargs.NewCLIEnvironment("/")
+
+	var conn connection.Constructor = connection.NewLocalUdp6
 
 	app := &cli.App{
 		Name:                 "polity",
@@ -38,7 +41,7 @@ func main() {
 				Aliases: []string{"create"},
 				Usage:   "initialize",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Init(env, cCtx)
+					return subcommand.Init(env, cCtx, conn)
 				},
 			},
 			{
@@ -52,7 +55,7 @@ func main() {
 				Name:  "proverb",
 				Usage: "send a proverb to someone",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Proverb(env, cCtx)
+					return subcommand.Proverb(env, cCtx, conn)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -65,7 +68,7 @@ func main() {
 				Name:  "marco",
 				Usage: "play marco in a marco polo game",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Marco(env, cCtx)
+					return subcommand.Marco(env, cCtx, conn)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -78,7 +81,7 @@ func main() {
 				Name:  "howdee",
 				Usage: "say howdee to someone",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Howdee(env, cCtx)
+					return subcommand.Howdee(env, cCtx, conn)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -91,7 +94,7 @@ func main() {
 				Name:  "introduce",
 				Usage: "introduce yourself to another peer",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Introduce(env, cCtx)
+					return subcommand.Introduce(env, cCtx, conn)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{

@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../go-flargs"
+		},
+		{
+			"path": "../go-real-fs"
 		}
 	],
 	"settings": {
