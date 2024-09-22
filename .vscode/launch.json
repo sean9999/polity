@@ -19,6 +19,16 @@
 			"args": ["-config", "testdata/falling-wave.toml", "info"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
-		}
+		},
+		{
+			"name": "daemon",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/cmd/polityd/",
+			"args": ["-config", "testdata/falling-wave.toml"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}"
+		},
 	]
 }

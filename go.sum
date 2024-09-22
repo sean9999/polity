@@ -1,3 +1,5 @@
+catinello.eu/mac-ll v0.0.0-20230916075041-a3ccb0862736 h1:tr9Vs7KlFkeAN8orZzou9E012MxbJ9kwW9Yhxswhxqg=
+catinello.eu/mac-ll v0.0.0-20230916075041-a3ccb0862736/go.mod h1:2X61UEaTyWLBwGbFRYgCWe/2McHehRQjqW/ICPZQOyM=
 github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/amazon-ion/ion-go v1.5.0 h1:fxsAyFda8N9HsM2xYbQSxJ3Qi/oLn0xzLoiXWG3bseg=
@@ -42,3 +44,5 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+v.io/x/lib v0.1.20 h1:n/pUwVLoS/OwAok9kxLSJCMB7x9pSj63fd/rEFJXFis=
+v.io/x/lib v0.1.20/go.mod h1:z6Vomd+cIPr5HJrIBZQ3xGVUSONwyc/v/877vxtSZNE=

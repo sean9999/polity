@@ -28,13 +28,13 @@ func Daemon(cli *cli.Context) error {
 	}
 	fd.Seek(0, 0)
 
-	me, err := polity.CitizenFrom(fd, connection.NewLocalUdp6)
+	me, err := polity.CitizenFrom(fd, connection.NewLANUdp6)
 	if err != nil {
 		return err
 	}
 
 	//	tell all my friends i'm back from the dead
-	go helloEverybody(me)
+	//go helloEverybody(me)
 
 	msgs, err := me.Listen()
 	if err != nil {

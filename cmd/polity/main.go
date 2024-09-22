@@ -16,7 +16,7 @@ func main() {
 	home, _ := os.UserHomeDir()
 	env := flargs.NewCLIEnvironment("/")
 
-	var conn connection.Constructor = connection.NewLocalUdp6
+	var conn connection.Constructor = connection.NewLANUdp6
 
 	app := &cli.App{
 		Name:                 "polity",

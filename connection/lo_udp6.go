@@ -16,7 +16,7 @@ type LocalUdp6 struct {
 // ensure this struct satisfies the Connection interface
 var _ Connection = (*LocalUdp6)(nil)
 
-var buf []byte = make([]byte, 4098)
+//var buf []byte = make([]byte, 4098)
 
 func (lun *LocalUdp6) Connection() net.PacketConn {
 	return lun.PacketConn

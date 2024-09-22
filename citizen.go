@@ -77,7 +77,10 @@ func (c *Citizen) Save() error {
 // Listen for [Messages] and pushes them to Citizen.inbox
 func (c *Citizen) Listen() (chan Message, error) {
 
-	c.Up()
+	err := c.Up()
+	if err != nil {
+		return nil, err
+	}
 
 	//	the first message sent is to myself.
 	//	I want to know my own address and nickname
@@ -93,7 +96,8 @@ func (c *Citizen) Listen() (chan Message, error) {
 			if err != nil {
 				//	TODO: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
-				continue
+				panic(err)
+				//continue
 			}
 			var msg Message
 			msg.UnmarshalBinary(buffer[:n])
