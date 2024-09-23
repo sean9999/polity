@@ -44,13 +44,36 @@ func (c *Citizen) Peer(nick string) (Peer, error) {
 	return Peer(p), err
 }
 
+func (c *Citizen) Config() CitizenConfig {
+
+	oconf := c.Oracle.Config()
+	self := SelfConfig{
+		oconf.Self,
+		c.Connection.Address(),
+	}
+	peersMap := map[string]peerConfig{}
+
+	for nick, peer := range c.Peers() {
+		peersMap[nick] = peer.Config(c.Connection)
+	}
+
+	conf := CitizenConfig{
+		connection: c.Connection,
+		handle:     c.Handle,
+		Self:       self,
+		Peers:      peersMap,
+	}
+	return conf
+
+}
+
 // add a peer to our list of peers, persisting to config
 func (c *Citizen) AddPeer(p Peer) error {
 	return c.Oracle.AddPeer(oracle.Peer(p))
 }
 
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n%#v", c.config, c.Connection)
+	fmt.Printf("%#v\n\n%#v\n\n", c.config, c.Connection)
 }
 
 func (p *Citizen) Shutdown() error {
@@ -155,10 +178,10 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 func NewCitizen(config io.ReadWriter, randy io.Reader, conn connection.Constructor) (*Citizen, error) {
 
 	orc := oracle.New(randy)
-	err := orc.Export(config, false)
-	if err != nil {
-		return nil, err
-	}
+	// err := orc.Export(config, false)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	inbox := make(chan Message, 1)
 	k, err := ConfigFrom(config)
 	if err != nil {
@@ -174,6 +197,8 @@ func NewCitizen(config io.ReadWriter, randy io.Reader, conn connection.Construct
 	if err := citizen.init(); err != nil {
 		return nil, err
 	}
+
+	//citizen.Export(w io.ReadWriter, andClose bool)
 
 	return citizen, nil
 }

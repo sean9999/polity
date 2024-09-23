@@ -20,7 +20,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "config",
-				Value: filepath.Join(home, ".config", "polity", "config.toml"),
+				Value: filepath.Join(home, ".config", "polity", "config.json"),
 				Usage: "config file",
 			},
 			&cli.StringFlag{

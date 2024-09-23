@@ -2,6 +2,8 @@ package polity
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
 	"net"
@@ -20,16 +22,51 @@ type Peer oracle.Peer
 // zero value means no Peer
 var NoPeer Peer
 
+type peerConfig struct {
+	oracle.PeerConfig
+	Address net.Addr `json:"addr,omitempty"`
+}
+
+func (c peerConfig) toPeer() Peer {
+	var p Peer
+	hex.Decode(p[:], []byte(c.PeerConfig.PublicKey))
+	return p
+}
+
+func (p Peer) Config(conn connection.Connection) peerConfig {
+	conf := peerConfig{
+		oracle.Peer(p).Config(),
+		conn.Address(),
+	}
+	return conf
+}
+
+func (p Peer) MarshalJSON() ([]byte, error) {
+	//m := p.AsMap(connection.NewLocalUdp6(p[:]))
+
+	conn := connection.NewLANUdp6(p[:])
+
+	conf := p.Config(conn)
+	return json.MarshalIndent(conf, "", "\t")
+}
+
+func (p Peer) UnmarshalJSON(b []byte) error {
+	var conf peerConfig
+	json.Unmarshal(b, &conf)
+	_, err := hex.Decode(p[:], []byte(conf.PeerConfig.PublicKey))
+	return err
+}
+
 // stable, deterministic address
 func (p Peer) Address(conn connection.Connection) net.Addr {
 	return conn.AddressFromPubkey(p[:])
 }
 
-func (p Peer) AsMap(conn connection.Connection) map[string]string {
-	m := p.Oracle().AsMap()
-	m["address"] = p.Address(conn).String()
-	return m
-}
+// func (p Peer) AsMap(conn connection.Connection) map[string]string {
+// 	m := p.Oracle().AsMap()
+// 	m["address"] = p.Address(conn).String()
+// 	return m
+// }
 
 func (p Peer) Equal(q Peer) bool {
 	return slices.Equal(p[:], q[:])

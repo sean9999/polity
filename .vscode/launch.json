@@ -16,7 +16,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
-			"args": ["-config", "testdata/falling-wave.toml", "info"],
+			"args": ["-config", "testdata/falling-wave.json", "info"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
@@ -26,7 +26,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polityd/",
-			"args": ["-config", "testdata/falling-wave.toml"],
+			"args": ["-config", "testdata/falling-wave.json"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},

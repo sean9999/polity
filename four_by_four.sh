@@ -16,13 +16,13 @@ then
 	tmux split-window	-h
 
 	tmux select-pane	-t "$SESSION":0.0
-	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_1.toml" Enter
+	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_1.json" Enter
 	tmux select-pane	-t "$SESSION":0.1
-	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_2.toml" Enter
+	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_2.json" Enter
 	tmux select-pane	-t "$SESSION":0.2
-	tmux send-keys		-t "$SESSION" "alias $USER_1='go run ./cmd/polity/*.go --config=testdata/$USER_1.toml'" Enter
+	tmux send-keys		-t "$SESSION" "alias $USER_1='go run ./cmd/polity/*.go --config=testdata/$USER_1.json'" Enter
 	tmux select-pane	-t "$SESSION":0.3
-	tmux send-keys		-t "$SESSION" "alias $USER_2='go run ./cmd/polity/*.go --config=testdata/$USER_2.toml'" Enter
+	tmux send-keys		-t "$SESSION" "alias $USER_2='go run ./cmd/polity/*.go --config=testdata/$USER_2.json'" Enter
 
 fi
 
