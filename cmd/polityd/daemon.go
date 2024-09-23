@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/sean9999/polity"
+	"github.com/sean9999/polity/connection"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,7 +28,7 @@ func Daemon(cli *cli.Context) error {
 	}
 	fd.Seek(0, 0)
 
-	me, err := polity.CitizenFrom(fd)
+	me, err := polity.CitizenFrom(fd, connection.NewLocalUdp6)
 	if err != nil {
 		return err
 	}
@@ -42,14 +43,6 @@ func Daemon(cli *cli.Context) error {
 
 	for msg := range msgs {
 		var err error
-
-		/*
-			if err := msg.Problem(); err != nil {
-				log.Panicln("msg was not valid", err)
-				continue
-			}
-		*/
-
 		switch msg.Subject() {
 		case polity.SubjGoProverb:
 			err = handleProverb(me, msg)

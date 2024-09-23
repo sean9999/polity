@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/sean9999/go-oracle"
+	realfs "github.com/sean9999/go-real-fs"
 )
 
 var ZeroConf CitizenConfig
@@ -50,8 +51,8 @@ func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
 	return &conf, nil
 }
 
-func ConfigFromFile(path string) (*CitizenConfig, error) {
-	f, err := os.Open(path)
+func ConfigFromFile(filesystem realfs.WritableFs, path string) (*CitizenConfig, error) {
+	f, err := filesystem.OpenFile(path, os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}

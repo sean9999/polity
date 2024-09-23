@@ -20,14 +20,14 @@ func handleHowdee(me *polity.Citizen, msg polity.Message) error {
 
 	//	loop through friends, adding anyone new
 	for nick, he := range pm {
-		qeer, _ := me.Peer(nick)
+		peer, _ := me.Peer(nick)
 		switch {
 		case me.Equal(he):
 			fmt.Printf("%s is me\n", me.Nickname())
-		case qeer != polity.NoPeer:
-			fmt.Printf("%s is already a peer of mine\n", qeer.Nickname())
+		case peer != polity.NoPeer:
+			fmt.Printf("%s is already a peer of mine\n", peer.Nickname())
 		default:
-			me.AddPeer(qeer)
+			me.AddPeer(peer)
 			fmt.Printf("I just added %s as a friend\n", he.Nickname())
 		}
 	}

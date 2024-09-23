@@ -8,14 +8,18 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
-	"github.com/sean9999/polity/network"
+	"github.com/sean9999/polity/connection"
 )
+
+// a Spool is an ordered series of messages with a a definite lifecycle
+type Spool chan Message
 
 type Citizen struct {
 	*oracle.Oracle
-	config  *CitizenConfig
-	Network network.Network
-	inbox   chan Message
+	config     *CitizenConfig
+	Connection connection.Connection
+	inbox      Spool
+	spindle    chan Spool
 }
 
 func (c *Citizen) Verify(msg Message) bool {
@@ -46,7 +50,7 @@ func (c *Citizen) AddPeer(p Peer) error {
 }
 
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n%#v", c.config, c.Network)
+	fmt.Printf("%#v\n%#v", c.config, c.Connection)
 }
 
 func (p *Citizen) Shutdown() error {
@@ -57,12 +61,12 @@ func (p *Citizen) Shutdown() error {
 	//	close the channel
 	close(p.inbox)
 	//	leave the network (ie: de-register)
-	return p.Network.Leave()
+	return p.Connection.Leave()
 }
 
 // join the network (ie: acquire an address)
 func (c *Citizen) Up() error {
-	return c.Network.Join()
+	return c.Connection.Join()
 }
 
 // save the config file.
@@ -77,15 +81,15 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 	//	the first message sent is to myself.
 	//	I want to know my own address and nickname
-	body := fmt.Sprintf("my address is %s\nmy nickname is %s\n", c.Network.Address().String(), c.Nickname())
+	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", c.Connection.Address().String(), c.Nickname())
 	msg := c.Compose(SubjHelloSelf, []byte(body))
-	msg.SenderAddress = c.Network.Address()
+	msg.SenderAddress = c.Connection.Address()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
 	go func() {
 		for {
-			n, addr, err := c.Network.Connection().ReadFrom(buffer)
+			n, addr, err := c.Connection.ReadFrom(buffer)
 			if err != nil {
 				//	TODO: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
@@ -108,9 +112,7 @@ func (c *Citizen) Equal(p Peer) bool {
 
 func (c *Citizen) Compose(subj Subject, body []byte) Message {
 	pt := c.Oracle.Compose(string(subj), body)
-	m := Message{
-		Plain: pt,
-	}
+	m := NewMessage(WithPlainText(pt))
 	return m
 }
 
@@ -121,7 +123,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.Address(c.Network).String())
+	raddr, err := net.ResolveUDPAddr("udp", recipient.Address(c.Connection).String())
 	if err != nil {
 		return err
 	}
@@ -138,8 +140,6 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 		return err
 	}
 
-	//fmt.Println(conn.LocalAddr())
-
 	_, err = conn.WriteTo(bin, raddr)
 	if err != nil {
 		return err
@@ -148,10 +148,10 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 }
 
 // create a new citizen and pesist her config
-func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
+func NewCitizen(config io.ReadWriter, randy io.Reader, conn connection.Constructor) (*Citizen, error) {
 
 	orc := oracle.New(randy)
-	err := orc.Export(config)
+	err := orc.Export(config, true)
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +161,10 @@ func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
 		return nil, err
 	}
 	citizen := &Citizen{
-		inbox:   inbox,
-		config:  k,
-		Oracle:  orc,
-		Network: network.NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
+		inbox:      inbox,
+		config:     k,
+		Oracle:     orc,
+		Connection: conn(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	if err := citizen.init(); err != nil {
@@ -175,7 +175,7 @@ func NewCitizen(config io.ReadWriter, randy io.Reader) (*Citizen, error) {
 }
 
 // read a config file and spin up a Citizen
-func CitizenFrom(rw io.ReadWriter) (*Citizen, error) {
+func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
@@ -187,10 +187,10 @@ func CitizenFrom(rw io.ReadWriter) (*Citizen, error) {
 		return nil, err
 	}
 	citizen := &Citizen{
-		inbox:   inbox,
-		config:  k,
-		Oracle:  orc,
-		Network: network.NewLocalUdp6Net(orc.EncryptionPublicKey.Bytes()),
+		inbox:      inbox,
+		config:     k,
+		Oracle:     orc,
+		Connection: conn(orc.EncryptionPublicKey.Bytes()),
 	}
 
 	if err := citizen.init(); err != nil {
