@@ -10,18 +10,23 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
-	"github.com/sean9999/polity/connection"
 )
 
 var ErrWrongByteLength = errors.New("wrong number of bytes")
 
 // a Peer is a Citizen that is not ourself, whose identity we have verified,
 // whose pubkey we have saved, and whose private key we should not know.
-type Peer oracle.Peer
+//type Peer oracle.Peer
+
+type Peer struct {
+	Oracle  oracle.Peer
+	Address net.Addr
+}
 
 // zero value means no Peer
 var NoPeer Peer
 
+// peerConfig is an intermediary object suitable for serialization
 type peerConfig struct {
 	oracle.PeerConfig
 	Address net.Addr `json:"addr,omitempty"`
@@ -29,39 +34,44 @@ type peerConfig struct {
 
 func (c peerConfig) toPeer() Peer {
 	var p Peer
-	hex.Decode(p[:], []byte(c.PeerConfig.PublicKey))
+	hex.Decode(p.Oracle[:], []byte(c.PeerConfig.PublicKey))
+	p.Address = c.Address
 	return p
 }
 
-func (p Peer) Config(conn connection.Connection) peerConfig {
+func (p Peer) Config() peerConfig {
 	conf := peerConfig{
-		oracle.Peer(p).Config(),
-		conn.Address(),
+		oracle.Peer(p.Oracle).Config(),
+		p.Address,
 	}
 	return conf
 }
 
 func (p Peer) MarshalJSON() ([]byte, error) {
-	//m := p.AsMap(connection.NewLocalUdp6(p[:]))
-
-	conn := connection.NewLANUdp6(p[:], nil)
-
-	conf := p.Config(conn)
+	conf := p.Config()
 	return json.MarshalIndent(conf, "", "\t")
 }
 
 func (p Peer) UnmarshalJSON(b []byte) error {
 	var conf peerConfig
-	json.Unmarshal(b, &conf)
-	_, err := hex.Decode(p[:], []byte(conf.PeerConfig.PublicKey))
+	err := json.Unmarshal(b, &conf)
+	if err != nil {
+		return err
+	}
+	p.Address = conf.Address
+	orc, err := oracle.PeerFromHex([]byte(conf.PublicKey))
+	if err != nil {
+		return err
+	}
+	p.Oracle = orc
 	return err
 }
 
 // stable, deterministic address
-func (p Peer) Address(conn connection.Connection) net.Addr {
-	addr, _ := conn.AddressFromPubkey(p[:], nil)
-	return addr
-}
+// func (p Peer) Address(conn connection.Connection) net.Addr {
+// 	addr, _ := conn.AddressFromPubkey(p[:], nil)
+// 	return addr
+// }
 
 // func (p Peer) AsMap(conn connection.Connection) map[string]string {
 // 	m := p.Oracle().AsMap()
@@ -70,19 +80,19 @@ func (p Peer) Address(conn connection.Connection) net.Addr {
 // }
 
 func (p Peer) Equal(q Peer) bool {
-	return slices.Equal(p[:], q[:])
+	return slices.Equal(p.Oracle[:], q.Oracle[:])
 }
 
 func (p Peer) Nickname() string {
-	return oracle.Peer(p).Nickname()
+	return oracle.Peer(p.Oracle).Nickname()
 }
 
-func (p Peer) Oracle() oracle.Peer {
-	return oracle.Peer(p)
-}
+// func (p Peer) Oracle() oracle.Peer {
+// 	return oracle.Peer(p)
+// }
 
 func (p Peer) SigningKey() ed25519.PublicKey {
-	return p.Oracle().SigningKey()
+	return p.Oracle.SigningKey()
 }
 
 func PeerFromHex(hex []byte) (Peer, error) {
@@ -90,7 +100,10 @@ func PeerFromHex(hex []byte) (Peer, error) {
 	if err != nil {
 		return NoPeer, err
 	}
-	return Peer(op), nil
+	p := Peer{
+		Oracle: op,
+	}
+	return p, nil
 }
 
 func PeerFromBytes(b []byte) (Peer, error) {
@@ -98,13 +111,13 @@ func PeerFromBytes(b []byte) (Peer, error) {
 		return NoPeer, ErrWrongByteLength
 	}
 	p := Peer{}
-	copy(p[:], b)
+	copy(p.Oracle[:], b)
 	return p, nil
 }
 
 func NewPeer(randy io.Reader) (Peer, error) {
 	var p Peer
-	i, err := randy.Read(p[:])
+	i, err := randy.Read(p.Oracle[:])
 	if err != nil {
 		return NoPeer, err
 	}

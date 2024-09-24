@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"slices"
 
 	"github.com/sean9999/go-oracle"
@@ -21,6 +22,7 @@ type Citizen struct {
 	Connection connection.Connection
 	inbox      Spool
 	spindle    chan Spool
+	peers      map[string]Peer
 }
 
 func (c *Citizen) Verify(msg Message) bool {
@@ -32,17 +34,15 @@ func (c *Citizen) Verify(msg Message) bool {
 }
 
 func (c *Citizen) Peers() map[string]Peer {
-	ps := c.Oracle.Peers()
-	peers := make(map[string]Peer, len(ps))
-	for nick, op := range ps {
-		peers[nick] = Peer(op)
-	}
-	return peers
+	return c.peers
 }
 
 func (c *Citizen) Peer(nick string) (Peer, error) {
-	p, err := c.Oracle.Peer(nick)
-	return Peer(p), err
+	p, exists := c.peers[nick]
+	if !exists {
+		return NoPeer, errors.New("peer doesn't exist")
+	}
+	return p, nil
 }
 
 func (c *Citizen) Config() CitizenConfig {
@@ -55,7 +55,7 @@ func (c *Citizen) Config() CitizenConfig {
 	peersMap := map[string]peerConfig{}
 
 	for nick, peer := range c.Peers() {
-		peersMap[nick] = peer.Config(c.Connection)
+		peersMap[nick] = peer.Config()
 	}
 
 	conf := CitizenConfig{
@@ -78,7 +78,7 @@ func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 	peersMap := map[string]peerConfig{}
 
 	for nick, peer := range c.Peers() {
-		peersMap[nick] = peer.Config(c.Connection)
+		peersMap[nick] = peer.Config()
 	}
 	conf := CitizenConfig{
 		Self:  self,
@@ -92,7 +92,8 @@ func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 
 // add a peer to our list of peers, persisting to config
 func (c *Citizen) AddPeer(p Peer) error {
-	return c.Oracle.AddPeer(oracle.Peer(p))
+	c.peers[p.Nickname()] = p
+	return nil
 }
 
 func (c *Citizen) Dump() {
@@ -156,7 +157,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 func (c *Citizen) Equal(p Peer) bool {
 	p1 := c.AsPeer().Bytes()
-	p2 := p.Oracle().Bytes()
+	p2 := p.Oracle.Bytes()
 	return slices.Equal(p1, p2)
 }
 
@@ -173,7 +174,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.Address(c.Connection).String())
+	raddr, err := net.ResolveUDPAddr("udp", recipient.Address.String())
 	if err != nil {
 		return err
 	}
@@ -227,6 +228,10 @@ func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error
 	if err != nil {
 		return nil, err
 	}
+
+	f := rw.(*os.File)
+	f.Seek(0, 0)
+
 	inbox := make(chan Message, 1)
 	k, err := ConfigFrom(rw)
 	if err != nil {

@@ -36,7 +36,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polityd/",
-			"args": ["-config", "testdata/falling-wave.json"],
+			"args": ["-config", "testdata/dark-haze.json"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
