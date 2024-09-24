@@ -17,7 +17,7 @@ type Connection interface {
 	Address() net.Addr // this is a permanent, stable, deterministic address at which messages can be received
 	Join() error       // open the connection, and do any initialization
 	Leave() error      // close the connection, and do any tear-down
-	AddressFromPubkey([]byte) net.Addr
+	AddressFromPubkey([]byte, net.Addr) (net.Addr, error)
 }
 
-type Constructor func([]byte) Connection
+type Constructor func(pubkey []byte, suggestedAddress net.Addr) Connection

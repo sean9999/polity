@@ -1,6 +1,7 @@
 package polity
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -49,7 +50,7 @@ func (c *Citizen) Config() CitizenConfig {
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.Connection.Address(),
+		c.Connection.Address().String(),
 	}
 	peersMap := map[string]peerConfig{}
 
@@ -64,6 +65,28 @@ func (c *Citizen) Config() CitizenConfig {
 		Peers:      peersMap,
 	}
 	return conf
+
+}
+
+func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
+
+	oconf := c.Oracle.Config()
+	self := SelfConfig{
+		oconf.Self,
+		c.Connection.Address().String(),
+	}
+	peersMap := map[string]peerConfig{}
+
+	for nick, peer := range c.Peers() {
+		peersMap[nick] = peer.Config(c.Connection)
+	}
+	conf := CitizenConfig{
+		Self:  self,
+		Peers: peersMap,
+	}
+	enc := json.NewEncoder(rw)
+	enc.SetIndent("", "\t")
+	return enc.Encode(conf)
 
 }
 
@@ -175,30 +198,24 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 }
 
 // create a new citizen and pesist her config
-func NewCitizen(config io.ReadWriter, randy io.Reader, conn connection.Constructor) (*Citizen, error) {
+func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citizen, error) {
 
 	orc := oracle.New(randy)
 	// err := orc.Export(config, false)
 	// if err != nil {
 	// 	return nil, err
 	// }
-	inbox := make(chan Message, 1)
-	k, err := ConfigFrom(config)
-	if err != nil {
-		return nil, err
-	}
+	inbox := make(Spool, 1)
+	spindle := make(chan Spool, 1)
+
 	citizen := &Citizen{
 		inbox:      inbox,
-		config:     k,
+		spindle:    spindle,
 		Oracle:     orc,
-		Connection: conn(orc.EncryptionPublicKey.Bytes()),
+		Connection: connConstructor(orc.EncryptionPublicKey.Bytes(), nil),
 	}
 
-	if err := citizen.init(); err != nil {
-		return nil, err
-	}
-
-	//citizen.Export(w io.ReadWriter, andClose bool)
+	//	@todo: sanity checking
 
 	return citizen, nil
 }
@@ -215,11 +232,15 @@ func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error
 	if err != nil {
 		return nil, err
 	}
+
+	//	might be nil. That's ok. It's just a suggestion
+	addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
+
 	citizen := &Citizen{
 		inbox:      inbox,
 		config:     k,
 		Oracle:     orc,
-		Connection: conn(orc.EncryptionPublicKey.Bytes()),
+		Connection: conn(orc.EncryptionPublicKey.Bytes(), addr),
 	}
 
 	if err := citizen.init(); err != nil {

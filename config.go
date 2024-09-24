@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net"
 	"os"
 
 	"github.com/sean9999/go-oracle"
@@ -18,7 +17,7 @@ var ErrInvalidConfig = errors.New("invalid config")
 // a SelfConfig is an [oracle.Self] with an address
 type SelfConfig struct {
 	oracle.SelfConfig
-	Address net.Addr `json:"addr"`
+	Address string `json:"addr"`
 }
 
 // a CitizenConfig is a SelfConfig, along with it's peers and a file handle

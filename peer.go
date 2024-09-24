@@ -44,7 +44,7 @@ func (p Peer) Config(conn connection.Connection) peerConfig {
 func (p Peer) MarshalJSON() ([]byte, error) {
 	//m := p.AsMap(connection.NewLocalUdp6(p[:]))
 
-	conn := connection.NewLANUdp6(p[:])
+	conn := connection.NewLANUdp6(p[:], nil)
 
 	conf := p.Config(conn)
 	return json.MarshalIndent(conf, "", "\t")
@@ -59,7 +59,8 @@ func (p Peer) UnmarshalJSON(b []byte) error {
 
 // stable, deterministic address
 func (p Peer) Address(conn connection.Connection) net.Addr {
-	return conn.AddressFromPubkey(p[:])
+	addr, _ := conn.AddressFromPubkey(p[:], nil)
+	return addr
 }
 
 // func (p Peer) AsMap(conn connection.Connection) map[string]string {

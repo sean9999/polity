@@ -21,6 +21,16 @@
 			"cwd": "${workspaceFolder}"
 		},
 		{
+			"name": "init",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/cmd/polity/",
+			"args": ["init"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}"
+		},
+		{
 			"name": "daemon",
 			"type": "go",
 			"request": "launch",
