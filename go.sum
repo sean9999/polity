@@ -21,6 +21,8 @@ github.com/sean9999/go-flargs v1.3.3 h1:VAo5oxV2OXw/QZ9fBMdnoVhvTXTuNohIulDmlzsA
 github.com/sean9999/go-flargs v1.3.3/go.mod h1:uFPr2vtYoHLEJU2fn/u4jXk7A2j8Xag8Uyn2kbcVYd8=
 github.com/sean9999/go-oracle v1.4.3 h1:v1hIA1DdXqTWLi5mvfa22SEwSWLlHgZwfIiPbkp4w1E=
 github.com/sean9999/go-oracle v1.4.3/go.mod h1:azuff/rNaGLetmLHh+WFrhfXsgqybN3oJHKhq66zDAk=
+github.com/sean9999/go-oracle v1.6.1 h1:SloPPqh7uX0Gxb9GLE06sgzWC9ixrS849nDzqI/QNbM=
+github.com/sean9999/go-oracle v1.6.1/go.mod h1:azuff/rNaGLetmLHh+WFrhfXsgqybN3oJHKhq66zDAk=
 github.com/sean9999/go-real-fs v0.0.5 h1:9+1cJmlG3PhDJWD+bP35zqtvhImd2L2rlYEkmU85qBQ=
 github.com/sean9999/go-real-fs v0.0.5/go.mod h1:0BlMZzzhH7gqL7W0KH4RDAWvbtEIoXskxKZTiPi7bx4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

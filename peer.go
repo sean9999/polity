@@ -52,7 +52,7 @@ func (p Peer) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(conf, "", "\t")
 }
 
-func (p Peer) UnmarshalJSON(b []byte) error {
+func (p *Peer) UnmarshalJSON(b []byte) error {
 	var conf peerConfig
 	err := json.Unmarshal(b, &conf)
 	if err != nil {
