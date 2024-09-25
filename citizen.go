@@ -174,10 +174,10 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.Address.String())
-	if err != nil {
-		return err
-	}
+	// raddr, err := net.ResolveUDPAddr("udp", recipient.Address.String())
+	// if err != nil {
+	// 	return err
+	// }
 
 	//	pick a random port for origination
 	conn, err := net.ListenPacket("udp", ":0")
@@ -191,7 +191,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 		return err
 	}
 
-	_, err = conn.WriteTo(bin, raddr)
+	_, err = conn.WriteTo(bin, recipient.Address)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citiz
 }
 
 // read a config file and spin up a Citizen
-func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error) {
+func CitizenFrom(rw io.ReadWriter, connectionConstructor connection.Constructor) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
@@ -241,11 +241,17 @@ func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error
 	//	might be nil. That's ok. It's just a suggestion
 	addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
 
+	conn := connectionConstructor(orc.EncryptionPublicKey.Bytes(), addr)
+
+	if conn == nil {
+		return nil, errors.New("could not create connection")
+	}
+
 	citizen := &Citizen{
 		inbox:      inbox,
 		config:     k,
 		Oracle:     orc,
-		Connection: conn(orc.EncryptionPublicKey.Bytes(), addr),
+		Connection: conn,
 	}
 
 	if err := citizen.init(); err != nil {
