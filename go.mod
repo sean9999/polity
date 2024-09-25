@@ -5,7 +5,6 @@ go 1.22.3
 toolchain go1.22.4
 
 require (
-	github.com/BurntSushi/toml v1.4.0
 	github.com/google/uuid v1.6.0
 	github.com/sean9999/go-flargs v1.3.3
 	github.com/sean9999/go-oracle v1.4.3
@@ -15,6 +14,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/amazon-ion/ion-go v1.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
