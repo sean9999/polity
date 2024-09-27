@@ -70,7 +70,7 @@ func (m mac) Postfix() string {
 // 	return macll.Forward(m.String())
 // }
 
-func (lan *LanUdp6) AddressFromPubkey(_ []byte) net.Addr {
+func (lan *LanUdp6) AddressFromPubkey(_ []byte, suggestedAddr net.Addr) (net.Addr, error) {
 
 	//	@NOTE: pubkey cannot actually be used here.
 	//	Address is chosen based on available IPV6 addresses.
@@ -78,14 +78,26 @@ func (lan *LanUdp6) AddressFromPubkey(_ []byte) net.Addr {
 	state, _ := netstate.GetAccessibleIPs()
 	ll6 := state.Filter(netstate.IsUnicastIPv6).Filter(isLinkLocalAndRoutable).Filter(isNotWeird)
 
-	my_addr := ll6[0]
+	var my_addr netstate.Address
+
+	if len(ll6) == 0 {
+		return nil, errors.New("There were no link local UDP6 devices")
+	}
+	my_addr = ll6[0]
+	if suggestedAddr != nil && len(ll6) > 1 {
+		for _, thisAddr := range ll6 {
+			if thisAddr.String() == suggestedAddr.String() {
+				my_addr = thisAddr
+			}
+		}
+	}
 
 	ua := net.UDPAddr{
 		IP:   net.ParseIP(my_addr.String()),
 		Port: UDP6_LAN_PORT,
 		Zone: my_addr.Interface().Name(),
 	}
-	return &ua
+	return &ua, nil
 }
 
 func (lan *LanUdp6) Address() net.Addr {
@@ -124,8 +136,20 @@ func (lan *LanUdp6) Leave() error {
 	return lan.PacketConn.Close()
 }
 
-func NewLANUdp6(pubkey []byte) Connection {
+func NewLANUdp6(pubkey []byte, suggestedAddress net.Addr) Connection {
 	lan := &LanUdp6{}
-	lan.Addr = lan.AddressFromPubkey(pubkey).(*net.UDPAddr)
+	addr, err := lan.AddressFromPubkey(pubkey, suggestedAddress)
+	uaddr, ok := addr.(*net.UDPAddr)
+	if !ok {
+		return nil
+	}
+	if err != nil {
+		return nil
+	}
+	lan.Addr = uaddr
+	err = lan.Join()
+	if err != nil {
+		return nil
+	}
 	return lan
 }

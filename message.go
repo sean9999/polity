@@ -36,7 +36,7 @@ func (m Message) Digest() ([]byte, error) {
 
 	// a Message's digest is unique to it's sender
 	// but by implication, not it's receiver.
-	buf := bytes.NewBuffer(m.Sender().Oracle().Bytes())
+	buf := bytes.NewBuffer(m.Sender().Oracle.Bytes())
 
 	//	if there is plain text, hash it
 	if m.Plain != nil {

@@ -1,10 +1,12 @@
 package polity
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"slices"
 
 	"github.com/sean9999/go-oracle"
@@ -20,6 +22,7 @@ type Citizen struct {
 	Connection connection.Connection
 	inbox      Spool
 	spindle    chan Spool
+	peers      map[string]Peer
 }
 
 func (c *Citizen) Verify(msg Message) bool {
@@ -31,26 +34,70 @@ func (c *Citizen) Verify(msg Message) bool {
 }
 
 func (c *Citizen) Peers() map[string]Peer {
-	ps := c.Oracle.Peers()
-	peers := make(map[string]Peer, len(ps))
-	for nick, op := range ps {
-		peers[nick] = Peer(op)
-	}
-	return peers
+	return c.peers
 }
 
 func (c *Citizen) Peer(nick string) (Peer, error) {
-	p, err := c.Oracle.Peer(nick)
-	return Peer(p), err
+	p, exists := c.peers[nick]
+	if !exists {
+		return NoPeer, errors.New("peer doesn't exist")
+	}
+	return p, nil
+}
+
+func (c *Citizen) Config() CitizenConfig {
+
+	oconf := c.Oracle.Config()
+	self := SelfConfig{
+		oconf.Self,
+		c.Connection.Address().String(),
+	}
+	peersMap := map[string]peerConfig{}
+
+	for nick, peer := range c.Peers() {
+		peersMap[nick] = peer.Config()
+	}
+
+	conf := CitizenConfig{
+		connection: c.Connection,
+		handle:     c.Handle,
+		Self:       self,
+		Peers:      peersMap,
+	}
+	return conf
+
+}
+
+func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
+
+	oconf := c.Oracle.Config()
+	self := SelfConfig{
+		oconf.Self,
+		c.Connection.Address().String(),
+	}
+	peersMap := map[string]peerConfig{}
+
+	for nick, peer := range c.Peers() {
+		peersMap[nick] = peer.Config()
+	}
+	conf := CitizenConfig{
+		Self:  self,
+		Peers: peersMap,
+	}
+	enc := json.NewEncoder(rw)
+	enc.SetIndent("", "\t")
+	return enc.Encode(conf)
+
 }
 
 // add a peer to our list of peers, persisting to config
 func (c *Citizen) AddPeer(p Peer) error {
-	return c.Oracle.AddPeer(oracle.Peer(p))
+	c.peers[p.Nickname()] = p
+	return nil
 }
 
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n%#v", c.config, c.Connection)
+	fmt.Printf("%#v\n\n%#v\n\n", c.config, c.Connection)
 }
 
 func (p *Citizen) Shutdown() error {
@@ -110,7 +157,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 func (c *Citizen) Equal(p Peer) bool {
 	p1 := c.AsPeer().Bytes()
-	p2 := p.Oracle().Bytes()
+	p2 := p.Oracle.Bytes()
 	return slices.Equal(p1, p2)
 }
 
@@ -127,10 +174,10 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	c.Up()
 
-	raddr, err := net.ResolveUDPAddr("udp", recipient.Address(c.Connection).String())
-	if err != nil {
-		return err
-	}
+	// raddr, err := net.ResolveUDPAddr("udp", recipient.Address.String())
+	// if err != nil {
+	// 	return err
+	// }
 
 	//	pick a random port for origination
 	conn, err := net.ListenPacket("udp", ":0")
@@ -144,7 +191,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 		return err
 	}
 
-	_, err = conn.WriteTo(bin, raddr)
+	_, err = conn.WriteTo(bin, recipient.Address)
 	if err != nil {
 		return err
 	}
@@ -152,49 +199,59 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 }
 
 // create a new citizen and pesist her config
-func NewCitizen(config io.ReadWriter, randy io.Reader, conn connection.Constructor) (*Citizen, error) {
+func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citizen, error) {
 
 	orc := oracle.New(randy)
-	err := orc.Export(config, false)
-	if err != nil {
-		return nil, err
-	}
-	inbox := make(chan Message, 1)
-	k, err := ConfigFrom(config)
-	if err != nil {
-		return nil, err
-	}
+	// err := orc.Export(config, false)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	inbox := make(Spool, 1)
+	spindle := make(chan Spool, 1)
+
 	citizen := &Citizen{
 		inbox:      inbox,
-		config:     k,
+		spindle:    spindle,
 		Oracle:     orc,
-		Connection: conn(orc.EncryptionPublicKey.Bytes()),
+		Connection: connConstructor(orc.EncryptionPublicKey.Bytes(), nil),
 	}
 
-	if err := citizen.init(); err != nil {
-		return nil, err
-	}
+	//	@todo: sanity checking
 
 	return citizen, nil
 }
 
 // read a config file and spin up a Citizen
-func CitizenFrom(rw io.ReadWriter, conn connection.Constructor) (*Citizen, error) {
+func CitizenFrom(rw io.ReadWriter, connectionConstructor connection.Constructor) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
 		return nil, err
 	}
+
+	f := rw.(*os.File)
+	f.Seek(0, 0)
+
 	inbox := make(chan Message, 1)
 	k, err := ConfigFrom(rw)
 	if err != nil {
 		return nil, err
 	}
+
+	//	might be nil. That's ok. It's just a suggestion
+	addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
+
+	conn := connectionConstructor(orc.EncryptionPublicKey.Bytes(), addr)
+
+	if conn == nil {
+		return nil, errors.New("could not create connection")
+	}
+
 	citizen := &Citizen{
 		inbox:      inbox,
 		config:     k,
 		Oracle:     orc,
-		Connection: conn(orc.EncryptionPublicKey.Bytes()),
+		Connection: conn,
 	}
 
 	if err := citizen.init(); err != nil {

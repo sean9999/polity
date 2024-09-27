@@ -52,7 +52,10 @@ func (lun *LocalUdp6) Join() error {
 	return nil
 }
 
-func (lun *LocalUdp6) AddressFromPubkey(pk []byte) net.Addr {
+func (lun *LocalUdp6) AddressFromPubkey(pk []byte, _ net.Addr) (net.Addr, error) {
+
+	//	suggested address makes no difference here
+	//	because loopback is always available
 
 	//	modular arithmetic across the ephermal port range
 	//	TODO: Investigate if this is a good or bad idea
@@ -66,11 +69,21 @@ func (lun *LocalUdp6) AddressFromPubkey(pk []byte) net.Addr {
 		IP:   net.ParseIP("::1"),
 		Port: int(port),
 	}
-	return &ua
+	return &ua, nil
 }
 
-func NewLocalUdp6(pubkey []byte) Connection {
+func NewLocalUdp6(pubkey []byte, _ net.Addr) Connection {
 	lun := &LocalUdp6{}
-	lun.Addr = lun.AddressFromPubkey(pubkey).(*net.UDPAddr)
+
+	addr, err := lun.AddressFromPubkey(pubkey, nil)
+	if err != nil {
+		return nil
+	}
+	uaddr, ok := addr.(*net.UDPAddr)
+	if !ok {
+		return nil
+	}
+	lun.Addr = uaddr
+	lun.Join()
 	return lun
 }

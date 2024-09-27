@@ -22,7 +22,7 @@ install:
 	go install ./cmd/polity
 	go install ./cmd/polityd
 	mkdir -p ${HOME}/.config/polity
-	touch ${HOME}/.config/polity/conf.toml
+	touch ${HOME}/.config/polity/config.json
 
 clean:
 	go clean

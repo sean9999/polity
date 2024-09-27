@@ -1,0 +1,9 @@
+{
+	"self": {
+		"nick": "billowing-water",
+		"pub": "1692c1beaa4021f60487acfaaf98fb5069c0b9bd9531585895009ca5730b5f62b4208154d0f5b39b37d62c7cc9ebff1e7f4d6425d68a154af5f6c93ab6e1a12e",
+		"priv": "29efe55d5ab6ebbc8ab2a065e7a07525ca2cbac2c549f7e38ccc957f3866c544",
+		"addr": "[fe80::1c36:52f3:d771:58a1%en0]:9005"
+	},
+	"peers": {}
+}

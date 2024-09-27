@@ -1,0 +1,9 @@
+{
+	"self": {
+		"nick": "dark-haze",
+		"pub": "d3d3d6744d41dd15e37d4edda5f62d428e6354027622560fe41c94308264df642d336f2b7324242e68f39698933f16217b7521c76c9036c5f161591a43326b06",
+		"priv": "02074eea215b5399db426b38e0010f8f6100dade7b46f580f8c7bd800b18fedc",
+		"addr": "[fe80::1c36:52f3:d771:58a1%en0]:9005"
+	},
+	"peers": {}
+}

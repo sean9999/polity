@@ -34,7 +34,10 @@ func TestMac(t *testing.T) {
 
 	want := "[fe80::70bc:b183:266d]:9005"
 
-	got := lan.AddressFromPubkey(pub)
+	got, err := lan.AddressFromPubkey(pub, nil)
+	if err != nil {
+		t.Error(err)
+	}
 	if got.String() != want {
 		t.Errorf("wanted %s but got %s", want, got)
 	}
@@ -44,8 +47,8 @@ func TestMac(t *testing.T) {
 		Port: 9005,
 	}
 
-	if lan.AddressFromPubkey(pub).String() != wantIp.String() {
-		t.Errorf("%s was the wrong thing. %s was the right", lan.AddressFromPubkey(pub), wantIp)
+	if got.String() != wantIp.String() {
+		t.Errorf("%s was the wrong thing. %s was the right", got, wantIp)
 	}
 
 }

@@ -16,7 +16,17 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
-			"args": ["-config", "testdata/falling-wave.toml", "info"],
+			"args": ["-config", "testdata/falling-wave.json", "info"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "init",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceFolder}/cmd/polity/",
+			"args": ["init"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
@@ -26,7 +36,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polityd/",
-			"args": ["-config", "testdata/falling-wave.toml"],
+			"args": ["-config", "testdata/dark-haze.json"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
