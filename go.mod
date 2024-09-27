@@ -5,10 +5,9 @@ go 1.22.3
 toolchain go1.22.4
 
 require (
-	github.com/BurntSushi/toml v1.4.0
 	github.com/google/uuid v1.6.0
 	github.com/sean9999/go-flargs v1.3.3
-	github.com/sean9999/go-oracle v1.6.1
+	github.com/sean9999/go-oracle v1.6.2
 	github.com/sean9999/go-real-fs v0.0.5
 	github.com/urfave/cli/v2 v2.27.2
 	v.io/x/lib v0.1.20
