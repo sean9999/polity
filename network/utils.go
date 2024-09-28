@@ -12,6 +12,7 @@ import (
 )
 
 var ErrNetworkUp = errors.New("can't bring network up")
+var ErrConnection = errors.New("couldn't create connection")
 
 func isNotPublic(a netstate.Address) bool {
 	return !netstate.IsPublicUnicastIPv6(a)

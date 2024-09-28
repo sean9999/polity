@@ -253,7 +253,7 @@ func CitizenFrom(rw io.ReadWriter, network network.Network) (*Citizen, error) {
 
 	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
 	if err != nil {
-		return nil, errors.New("could not create connection")
+		return nil, fmt.Errorf("could not create connection: %w", err)
 	}
 
 	citizen := &Citizen{

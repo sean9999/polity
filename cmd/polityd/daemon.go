@@ -28,9 +28,11 @@ func Daemon(cli *cli.Context) error {
 	}
 	fd.Seek(0, 0)
 
-	lan := network.NewLanUdp6Network()
+	//lan := network.NewLanUdp6Network()
 
-	me, err := polity.CitizenFrom(fd, lan)
+	unixd := network.NewUnixDatagramNetwork()
+
+	me, err := polity.CitizenFrom(fd, unixd)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"os"
-	"os/user"
 
 	"github.com/sean9999/go-oracle"
 )
@@ -16,7 +15,8 @@ var _ Network = (*SocketNet)(nil)
 var _ Connection = (*SocketConn)(nil)
 
 func touch(filename string) error {
-	//	implement unix touch
+
+	//	implement unix mkdir -p + touch
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		file, err := os.Create(filename)
 		if err != nil {
@@ -32,6 +32,13 @@ func touch(filename string) error {
 	return nil
 }
 
+func NewUnixDatagramNetwork() *SocketNet {
+	home, _ := os.UserHomeDir()
+	return &SocketNet{
+		root: fmt.Sprintf("%s/polity/run", home),
+	}
+}
+
 type SocketNet struct {
 	root   string
 	name   string
@@ -42,20 +49,18 @@ func (net *SocketNet) Name() string {
 	return "unix/datagram"
 }
 
-func (net *SocketNet) Up(_ net.Addr) error {
+func (network *SocketNet) Up(_ net.Addr) error {
 
-	net.status = StatusInitializing
-
-	u, err := user.Current()
-	if err != nil {
-		net.status = StatusDown
-		return fmt.Errorf("%w: %w: can't get current user", ErrNetworkUp, err)
+	if network.status == StatusUp {
+		return nil
 	}
-	root := fmt.Sprintf("/var/run/%s/polity", u.Uid)
-	err = touch(root)
+
+	network.status = StatusInitializing
+
+	err := os.MkdirAll(network.root, 0660)
 	if err != nil {
-		net.status = StatusDown
-		return fmt.Errorf("%w: %w: can't touch file", ErrNetworkUp, err)
+		network.status = StatusDown
+		return fmt.Errorf("%w: %w: can't make run dir", ErrNetworkUp, err)
 	}
 
 	return nil
@@ -71,17 +76,28 @@ func (net *SocketNet) Status() NetworkStatus {
 
 func (network *SocketNet) CreateConnection(b []byte, _ net.Addr) (Connection, error) {
 
+	err := network.Up(nil)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrConnection, err)
+	}
+
 	var p oracle.Peer
 	copy(p[:], b)
 
+	socketLocation := fmt.Sprintf("%s/%s", network.root, p.Nickname())
+	// err = touch(socketLocation)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("%w: %w", ErrConnection, err)
+	// }
+
 	addr := net.UnixAddr{
-		Name: fmt.Sprintf("%s/%s", network.root, p.Nickname()),
+		Name: socketLocation,
 		Net:  "unixgram",
 	}
 
 	pc, err := net.ListenUnixgram("unixgram", &addr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrConnection, err)
 	}
 
 	conn := SocketConn{
@@ -99,9 +115,9 @@ type SocketConn struct {
 	nickname string
 }
 
-func (c *SocketConn) Close() error {
-	return nil
-}
+// func (c *SocketConn) Close() error {
+// 	return os.Remove(c.LocalAddr().String())
+// }
 
 func (c *SocketConn) Network() Network {
 	return c.network

@@ -1,14 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
+
+	// Create a channel to receive OS signals
+	sigChan := make(chan os.Signal, 1)
+
+	// Notify the channel when an interrupt (Ctrl+C) or termination signal is received
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	home, _ := os.UserHomeDir()
 
@@ -37,4 +46,14 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+
+	// Block until a signal is received
+	sig := <-sigChan
+
+	fmt.Printf("\nReceived signal: %s. Cleaning up...\n", sig)
+
+	// Perform cleanup tasks here, if needed
+
+	fmt.Println("Program exited gracefully")
+
 }
