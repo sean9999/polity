@@ -10,7 +10,8 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
-	"github.com/sean9999/polity/connection"
+
+	"github.com/sean9999/polity/network"
 )
 
 // a Spool is an ordered series of messages with a a definite lifecycle
@@ -19,7 +20,7 @@ type Spool chan Message
 type Citizen struct {
 	*oracle.Oracle
 	config     *CitizenConfig
-	Connection connection.Connection
+	Connection network.Connection
 	inbox      Spool
 	spindle    chan Spool
 	peers      map[string]Peer
@@ -50,7 +51,7 @@ func (c *Citizen) Config() CitizenConfig {
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.Connection.Address().String(),
+		c.Connection.LocalAddr().String(),
 	}
 	peersMap := map[string]peerConfig{}
 
@@ -73,7 +74,7 @@ func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.Connection.Address().String(),
+		c.Connection.LocalAddr().String(),
 	}
 	peersMap := map[string]peerConfig{}
 
@@ -108,12 +109,14 @@ func (p *Citizen) Shutdown() error {
 	//	close the channel
 	close(p.inbox)
 	//	leave the network (ie: de-register)
-	return p.Connection.Leave()
+	return p.Connection.Close()
 }
 
 // join the network (ie: acquire an address)
+//
+//	@TODO: this is superflous. get rid of it
 func (c *Citizen) Up() error {
-	return c.Connection.Join()
+	return nil
 }
 
 // save the config file.
@@ -121,7 +124,7 @@ func (c *Citizen) Save() error {
 	return c.config.Save()
 }
 
-// Listen for [Messages] and pushes them to Citizen.inbox
+// Listen for [Message]s and push them to Citizen.inbox
 func (c *Citizen) Listen() (chan Message, error) {
 
 	err := c.Up()
@@ -131,9 +134,9 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 	//	the first message sent is to myself.
 	//	I want to know my own address and nickname
-	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", c.Connection.Address().String(), c.Nickname())
+	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", c.Connection.LocalAddr(), c.Nickname())
 	msg := c.Compose(SubjHelloSelf, []byte(body))
-	msg.SenderAddress = c.Connection.Address()
+	msg.SenderAddress = c.Connection.LocalAddr()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
@@ -199,7 +202,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 }
 
 // create a new citizen and pesist her config
-func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citizen, error) {
+func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
 
 	orc := oracle.New(randy)
 	// err := orc.Export(config, false)
@@ -209,11 +212,16 @@ func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citiz
 	inbox := make(Spool, 1)
 	spindle := make(chan Spool, 1)
 
+	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
+	if err != nil {
+		return nil, err
+	}
+
 	citizen := &Citizen{
 		inbox:      inbox,
 		spindle:    spindle,
 		Oracle:     orc,
-		Connection: connConstructor(orc.EncryptionPublicKey.Bytes(), nil),
+		Connection: conn,
 	}
 
 	//	@todo: sanity checking
@@ -222,7 +230,7 @@ func NewCitizen(randy io.Reader, connConstructor connection.Constructor) (*Citiz
 }
 
 // read a config file and spin up a Citizen
-func CitizenFrom(rw io.ReadWriter, connectionConstructor connection.Constructor) (*Citizen, error) {
+func CitizenFrom(rw io.ReadWriter, network network.Network) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
@@ -239,11 +247,12 @@ func CitizenFrom(rw io.ReadWriter, connectionConstructor connection.Constructor)
 	}
 
 	//	might be nil. That's ok. It's just a suggestion
-	addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
+	//addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
 
-	conn := connectionConstructor(orc.EncryptionPublicKey.Bytes(), addr)
+	//conn := network(orc.EncryptionPublicKey.Bytes(), addr)
 
-	if conn == nil {
+	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
+	if err != nil {
 		return nil, errors.New("could not create connection")
 	}
 

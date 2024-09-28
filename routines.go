@@ -10,8 +10,9 @@ import (
 
 func (c *Citizen) Assert() Message {
 
+	//	cryptographic proof that I am me
 	bodyAsText := "Hi.\nI'm %s.\nMy pubkey is %s.\nMy stable address is %s.\nA nonce I've never used before is %s.\n"
-	body := fmt.Sprintf(bodyAsText, c.Nickname(), c.PublicKeyAsHex(), c.Connection.Address(), uuid.Must(uuid.NewRandom()))
+	body := fmt.Sprintf(bodyAsText, c.Nickname(), c.PublicKeyAsHex(), c.Connection.LocalAddr(), uuid.Must(uuid.NewRandom()))
 	msg := c.Compose(SubjAssertion, []byte(body))
 	msg.ThreadId = msg.Id
 	msg.Plain.Headers["pubkey"] = string(c.PublicKeyAsHex())

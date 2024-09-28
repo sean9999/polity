@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/sean9999/polity"
-	"github.com/sean9999/polity/connection"
+	"github.com/sean9999/polity/network"
 	"github.com/urfave/cli/v2"
 )
 
@@ -28,7 +28,9 @@ func Daemon(cli *cli.Context) error {
 	}
 	fd.Seek(0, 0)
 
-	me, err := polity.CitizenFrom(fd, connection.NewLANUdp6)
+	lan := network.NewLanUdp6Network()
+
+	me, err := polity.CitizenFrom(fd, lan)
 	if err != nil {
 		return err
 	}

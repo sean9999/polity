@@ -8,7 +8,7 @@ import (
 
 	"github.com/sean9999/go-oracle"
 	realfs "github.com/sean9999/go-real-fs"
-	"github.com/sean9999/polity/connection"
+	"github.com/sean9999/polity/network"
 )
 
 var ZeroConf CitizenConfig
@@ -22,7 +22,7 @@ type SelfConfig struct {
 
 // a CitizenConfig is a SelfConfig, along with it's peers and a file handle
 type CitizenConfig struct {
-	connection connection.Connection
+	connection network.Connection
 	handle     io.ReadWriter
 	Self       SelfConfig            `json:"self"`
 	Peers      map[string]peerConfig `json:"peers"`

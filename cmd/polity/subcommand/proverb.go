@@ -8,12 +8,12 @@ import (
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/go-flargs/proverbs"
 	"github.com/sean9999/polity"
-	"github.com/sean9999/polity/connection"
+	"github.com/sean9999/polity/network"
 	"github.com/urfave/cli/v2"
 )
 
 // Send proverbs to all my friends
-func Proverb(env *flargs.Environment, ctx *cli.Context, conn connection.Constructor) error {
+func Proverb(env *flargs.Environment, ctx *cli.Context, net network.Network) error {
 
 	//	load or barf
 	if ctx.String("config") == "" {
@@ -24,7 +24,7 @@ func Proverb(env *flargs.Environment, ctx *cli.Context, conn connection.Construc
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd, conn)
+	me, err := polity.CitizenFrom(fd, net)
 	if err != nil {
 		return err
 	}

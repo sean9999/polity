@@ -5,12 +5,12 @@ import (
 
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
-	"github.com/sean9999/polity/connection"
+	"github.com/sean9999/polity/network"
 	"github.com/urfave/cli/v2"
 )
 
 // Init creates a new Citizen. You must pass in a valid path to a file where the private key information will be held.
-func Init(env *flargs.Environment, ctx *cli.Context, connConstuctor connection.Constructor) error {
+func Init(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
 
 	// if ctx.String("config") == "" {
 	// 	return errors.New("nil config")
@@ -38,7 +38,7 @@ func Init(env *flargs.Environment, ctx *cli.Context, connConstuctor connection.C
 
 	//	create a new citizen and write it to the file
 	randy := rand.New(env.Randomness)
-	me, err := polity.NewCitizen(randy, connConstuctor)
+	me, err := polity.NewCitizen(randy, network)
 	if err != nil {
 		return CliError{1, "can't create new citizen", err}
 	}
