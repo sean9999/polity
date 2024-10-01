@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
 )
 
@@ -64,7 +65,7 @@ func NewMarcoPoloGame() MarcoPoloBody {
 	}
 }
 
-func handleMarco(me *polity.Citizen, msg polity.Message) error {
+func handleMarco(env *flargs.Environment, me *polity.Citizen, msg polity.Message) error {
 	upperBound := 4096
 
 	b := new(MarcoPoloBody)

@@ -11,8 +11,12 @@ import (
 	"v.io/x/lib/netstate"
 )
 
+// Known networks are "tcp", "tcp4" (IPv4-only), "tcp6" (IPv6-only), "udp", "udp4" (IPv4-only), "udp6" (IPv6-only), "ip", "ip4" (IPv4-only), "ip6" (IPv6-only), "unix", "unixgram" and "unixpacket". 
+
 var ErrNetworkUp = errors.New("can't bring network up")
 var ErrConnection = errors.New("couldn't create connection")
+
+var ErrNotImplemented = errors.New("not implemented")
 
 func isNotPublic(a netstate.Address) bool {
 	return !netstate.IsPublicUnicastIPv6(a)

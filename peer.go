@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/sean9999/go-oracle"
+	"github.com/sean9999/polity/network"
 )
 
 var ErrWrongByteLength = errors.New("wrong number of bytes")
@@ -45,6 +46,10 @@ func (p Peer) Config() peerConfig {
 		p.Address,
 	}
 	return conf
+}
+
+func (p Peer) Bytes() []byte {
+	return p.Oracle[:]
 }
 
 func (p Peer) MarshalJSON() ([]byte, error) {
@@ -95,7 +100,7 @@ func (p Peer) SigningKey() ed25519.PublicKey {
 	return p.Oracle.SigningKey()
 }
 
-func PeerFromHex(hex []byte) (Peer, error) {
+func PeerFromHex(hex []byte, network network.Network, addr net.Addr) (Peer, error) {
 	op, err := oracle.PeerFromHex(hex)
 	if err != nil {
 		return NoPeer, err
@@ -103,15 +108,27 @@ func PeerFromHex(hex []byte) (Peer, error) {
 	p := Peer{
 		Oracle: op,
 	}
+	p.Address = addr
+
+	if addr == nil && network != nil {
+		p.Address = network.CreateAddress(p.Bytes())
+	}
 	return p, nil
 }
 
-func PeerFromBytes(b []byte) (Peer, error) {
+func PeerFromBytes(b []byte, network network.Network, addr net.Addr) (Peer, error) {
 	if len(b) != 64 {
 		return NoPeer, ErrWrongByteLength
 	}
 	p := Peer{}
 	copy(p.Oracle[:], b)
+
+	p.Address = addr
+
+	if addr == nil && network != nil {
+		p.Address = network.CreateAddress(b)
+	}
+
 	return p, nil
 }
 

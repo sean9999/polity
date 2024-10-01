@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
 )
 
-func handleHowdee(me *polity.Citizen, msg polity.Message) error {
+func handleHowdee(env *flargs.Environment, me *polity.Citizen, msg polity.Message) error {
 
 	//	expect JSON formatted map of peers
 	var pm map[string]polity.Peer

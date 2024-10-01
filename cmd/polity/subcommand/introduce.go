@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func Introduce(env *flargs.Environment, ctx *cli.Context, net network.Network) error {
+func Introduce(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
 
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
@@ -22,13 +22,13 @@ func Introduce(env *flargs.Environment, ctx *cli.Context, net network.Network) e
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd, net)
+	me, err := polity.CitizenFrom(fd, network, false)
 	if err != nil {
 		return err
 	}
 
 	//	peer
-	peer, err := polity.PeerFromHex([]byte(ctx.String("pubkey")))
+	peer, err := polity.PeerFromHex([]byte(ctx.String("pubkey")), network, nil)
 	if err != nil {
 		fmt.Println("not a valid peer", ctx.String("pubkey"))
 		return err

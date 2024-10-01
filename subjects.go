@@ -23,5 +23,6 @@ const (
 	SubjWhoDoYouKnow   Subject = "who do you know?"
 	SubjImBack         Subject = "I'm back. What's new?"
 	SubjWelcomeBack    Subject = "welcome back. Here's what's new"
-	SubjectNewFriend   Subject = "I have a new friend."
+	SubjNewFriend      Subject = "I have a new friend."
+	SubjSendThis       Subject = "send this message "
 )

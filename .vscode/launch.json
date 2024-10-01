@@ -2,21 +2,22 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "listener",
+			"name": "info",
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
+			"args": ["-config", "testdata/billowing-water.json", "info"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
 		{
-			"name": "cmd",
+			"name": "introduce",
 			"type": "go",
 			"request": "launch",
-			"mode": "debug",
+			"mode": "auto",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
-			"args": ["-config", "testdata/falling-wave.json", "info"],
+			"args": ["-config", "testdata/billowing-water.json", "introduce", "--pubkey", "1134ddca2bae3298988489a149b9c7ca5cc2e611e32a1de9943388c0d9e112ee4c41fb9df1ead69619dbf76c078f9b09bd2c987b69126a508de2ece0a8a3e959"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
@@ -31,7 +32,17 @@
 			"cwd": "${workspaceFolder}"
 		},
 		{
-			"name": "daemon",
+			"name": "rough bird listeneing",
+			"type": "go",
+			"request": "launch",
+			"mode":  "auto",
+			"program": "${workspaceFolder}/cmd/polityd/",
+			"args": ["-config", "testdata/rough-bird.json"],
+			"console": "integratedTerminal",
+			"cwd": "${workspaceFolder}"
+		}
+		{
+			"name": "dark haze listening",
 			"type": "go",
 			"request": "launch",
 			"mode": "debug",

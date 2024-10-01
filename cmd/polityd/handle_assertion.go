@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/polity"
 )
 
-func handleAssertion(me *polity.Citizen, msg polity.Message) error {
+func handleAssertion(env *flargs.Environment, me *polity.Citizen, msg polity.Message) error {
 	if me.Verify(msg) {
 		//	are we already friends? if so, bail.
 		peer, _ := me.Peer(msg.Sender().Nickname())

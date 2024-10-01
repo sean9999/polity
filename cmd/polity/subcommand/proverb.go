@@ -24,7 +24,7 @@ func Proverb(env *flargs.Environment, ctx *cli.Context, net network.Network) err
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd, net)
+	me, err := polity.CitizenFrom(fd, net, false)
 	if err != nil {
 		return err
 	}

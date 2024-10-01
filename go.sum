@@ -17,6 +17,8 @@ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sean9999/go-flargs v1.3.3 h1:VAo5oxV2OXw/QZ9fBMdnoVhvTXTuNohIulDmlzsAnAQ=
 github.com/sean9999/go-flargs v1.3.3/go.mod h1:uFPr2vtYoHLEJU2fn/u4jXk7A2j8Xag8Uyn2kbcVYd8=
+github.com/sean9999/go-flargs v1.4.0 h1:97de8X545hGZiHQ9gxgjkBKvXZ+5a5v5MB3GI+urR8I=
+github.com/sean9999/go-flargs v1.4.0/go.mod h1:uFPr2vtYoHLEJU2fn/u4jXk7A2j8Xag8Uyn2kbcVYd8=
 github.com/sean9999/go-oracle v1.6.2 h1:196Jq0eZ5/UocaRwR/Dhkq/ysiaGDvTZba5hDOS6X7E=
 github.com/sean9999/go-oracle v1.6.2/go.mod h1:azuff/rNaGLetmLHh+WFrhfXsgqybN3oJHKhq66zDAk=
 github.com/sean9999/go-real-fs v0.0.5 h1:9+1cJmlG3PhDJWD+bP35zqtvhImd2L2rlYEkmU85qBQ=

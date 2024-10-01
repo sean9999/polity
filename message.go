@@ -67,7 +67,7 @@ func (m Message) Sender() Peer {
 		if !ok {
 			return NoPeer
 		}
-		p, err := PeerFromHex([]byte(pk))
+		p, err := PeerFromHex([]byte(pk), nil, nil)
 		if err != nil {
 			return NoPeer
 		}
@@ -78,7 +78,7 @@ func (m Message) Sender() Peer {
 		if !ok {
 			return NoPeer
 		}
-		p, err := PeerFromHex([]byte(pk))
+		p, err := PeerFromHex([]byte(pk), nil, nil)
 		if err != nil {
 			return NoPeer
 		}

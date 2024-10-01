@@ -12,7 +12,6 @@ var _ Connection = (*LocalUdp6Conn)(nil)
 // LocalUdp6 is a network composed of IPV6 localhost addresses
 // distinguished by using different ports
 type LocalUdp6Net struct {
-	name            string
 	loopbackAddress string
 }
 
@@ -23,14 +22,21 @@ type LocalUdp6Conn struct {
 
 func NewLocalUdpNetwork() *LocalUdp6Net {
 	lo := LocalUdp6Net{
-		name:            "loopback/udp/ipv6",
 		loopbackAddress: "::1",
 	}
 	return &lo
 }
 
 func (lo *LocalUdp6Net) Name() string {
-	return lo.name
+	return "udp6"
+}
+
+func (lo *LocalUdp6Net) Namespace() string {
+	return "loopback/udp/ipv6"
+}
+
+func (lo *LocalUdp6Net) DestinationAddress(_ []byte, _ net.Addr) (net.Addr, error) {
+	return nil, nil
 }
 
 func (lo *LocalUdp6Net) Up(_ net.Addr) error {
@@ -39,6 +45,7 @@ func (lo *LocalUdp6Net) Up(_ net.Addr) error {
 }
 
 func (lo *LocalUdp6Net) Down() error {
+	//	we don't actually want to bring down the loopback device
 	return nil
 }
 
@@ -46,16 +53,26 @@ func (lo *LocalUdp6Net) Status() NetworkStatus {
 	return StatusUp
 }
 
-func (lo *LocalUdp6Net) CreateConnection(pk []byte, _ net.Addr) (Connection, error) {
+// func (lo *LocalUdp6Net) GetConnection(_ []byte, _ net.Addr) (Connection, error) {
+// 	return nil, ErrNotImplemented
+// }
 
-	//	suggested address is not needed here
-	//	loopback is the IP. port is deterministically chosen
+func (lo *LocalUdp6Net) OutboundConnection(fromConn Connection, toAddr net.Addr) (Connection, error) {
+	pc, err := net.DialUDP("udp6", nil, toAddr.(*net.UDPAddr))
+	if err != nil {
+		return nil, err
+	}
+	conn := LocalUdp6Conn{
+		network:    lo,
+		PacketConn: pc,
+	}
+	return &conn, nil
+}
 
-	//	modular arithmetic across the ephermal port range
-	//	TODO: Investigate if this is a good or bad idea
+func (lo *LocalUdp6Net) CreateAddress(pubkey []byte) net.Addr {
 	lowbound := uint64(49152)
 	highbound := uint64(65535)
-	pubkeyAsNum := big.NewInt(0).SetBytes(pk).Uint64()
+	pubkeyAsNum := big.NewInt(0).SetBytes(pubkey).Uint64()
 	port := (pubkeyAsNum % (highbound - lowbound)) + lowbound
 
 	//	*net.UDPAddr implements net.Addr
@@ -63,6 +80,12 @@ func (lo *LocalUdp6Net) CreateConnection(pk []byte, _ net.Addr) (Connection, err
 		IP:   net.ParseIP(lo.loopbackAddress),
 		Port: int(port),
 	}
+	return &ua
+}
+
+func (lo *LocalUdp6Net) CreateConnection(pubkey []byte, _ net.Addr) (Connection, error) {
+
+	ua := lo.CreateAddress(pubkey)
 
 	pc, err := net.ListenPacket("udp", ua.String())
 	if err != nil {

@@ -3,8 +3,8 @@
 SESSION="main"
 SESSIONEXISTS=$(tmux list-sessions | grep -w "$SESSION")
 
-USER_1="falling-wave"
-USER_2="dawn-haze"
+USER_1="billowing-water"
+USER_2="dark-haze"
 
 if [ "$SESSIONEXISTS" = "" ]
 then

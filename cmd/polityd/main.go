@@ -1,25 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 
+	"github.com/sean9999/go-flargs"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
 
-	// Create a channel to receive OS signals
-	sigChan := make(chan os.Signal, 1)
+	env := flargs.NewCLIEnvironment("/")
 
-	// Notify the channel when an interrupt (Ctrl+C) or termination signal is received
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
 
 	app := &cli.App{
 		Name:                 "polity",
@@ -39,21 +36,12 @@ func main() {
 			},
 		},
 		Action: func(cCtx *cli.Context) error {
-			return Daemon(cCtx)
+			return Daemon(env, cCtx)
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(env.Arguments); err != nil {
 		log.Fatal(err)
 	}
-
-	// Block until a signal is received
-	sig := <-sigChan
-
-	fmt.Printf("\nReceived signal: %s. Cleaning up...\n", sig)
-
-	// Perform cleanup tasks here, if needed
-
-	fmt.Println("Program exited gracefully")
 
 }

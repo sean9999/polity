@@ -16,7 +16,9 @@ func main() {
 	home, _ := os.UserHomeDir()
 	env := flargs.NewCLIEnvironment("/")
 
-	lan := network.NewLanUdp6Network()
+	//lan := network.NewLanUdp6Network()
+
+	myNetwork := network.NewUnixDatagramNetwork()
 
 	//var conn network.ConnectionConstructor = network.NewLANUdp6
 
@@ -43,7 +45,7 @@ func main() {
 				Aliases: []string{"create"},
 				Usage:   "initialize",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Init(env, cCtx, lan)
+					return subcommand.Init(env, cCtx, myNetwork)
 				},
 			},
 			{
@@ -57,7 +59,7 @@ func main() {
 				Name:  "proverb",
 				Usage: "send a proverb to someone",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Proverb(env, cCtx, lan)
+					return subcommand.Proverb(env, cCtx, myNetwork)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -70,7 +72,7 @@ func main() {
 				Name:  "marco",
 				Usage: "play marco in a marco polo game",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Marco(env, cCtx, lan)
+					return subcommand.Marco(env, cCtx, myNetwork)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -83,7 +85,7 @@ func main() {
 				Name:  "howdee",
 				Usage: "say howdee to someone",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Howdee(env, cCtx, lan)
+					return subcommand.Howdee(env, cCtx, myNetwork)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -96,7 +98,7 @@ func main() {
 				Name:  "introduce",
 				Usage: "introduce yourself to another peer",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Introduce(env, cCtx, lan)
+					return subcommand.Introduce(env, cCtx, myNetwork)
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{

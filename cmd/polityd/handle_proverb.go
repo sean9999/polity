@@ -8,8 +8,7 @@ import (
 	"github.com/sean9999/polity"
 )
 
-func handleProverb(me *polity.Citizen, msg polity.Message) error {
-	env := flargs.NewCLIEnvironment("")
+func handleProverb(env *flargs.Environment, me *polity.Citizen, msg polity.Message) error {
 	ok := me.Verify(msg)
 	if ok {
 		fmt.Fprintln(env.OutputStream, proverbs.RandomProverb())

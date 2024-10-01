@@ -23,7 +23,7 @@ func Howdee(env *flargs.Environment, ctx *cli.Context, ntwk network.Network) err
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd, ntwk)
+	me, err := polity.CitizenFrom(fd, ntwk, false)
 	if err != nil {
 		return err
 	}

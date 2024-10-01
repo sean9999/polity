@@ -11,7 +11,6 @@ var ErrNoAvailableDevices = errors.New("no suitable network devices found")
 var ErrNoAddress = errors.New("this device has no addresses")
 
 const UDP6_LAN_PORT = 9005
-const UDP6_LAN_NETWORK_NAME = "lan/udp/ipv6"
 
 var _ Network = (*LanUdp6Net)(nil)
 
@@ -31,8 +30,20 @@ func NewLanUdp6Network() *LanUdp6Net {
 }
 
 func (lan *LanUdp6Net) Name() string {
-	return UDP6_LAN_NETWORK_NAME
+	return "udp6"
 }
+
+func (lan *LanUdp6Net) Namespace() string {
+	return "lan/udp/ipv6"
+}
+
+// func (lo *LanUdp6Net) DestinationAddress(_ []byte, _ net.Addr) (net.Addr, error) {
+// 	return nil, nil
+// }
+
+// func (lo *LanUdp6Net) GetConnection(_ []byte, _ net.Addr) (Connection, error) {
+// 	return nil, ErrNotImplemented
+// }
 
 func (lan *LanUdp6Net) Up(suggestedAddr net.Addr) error {
 	//	check to make sure there is at least one device that can serve link local IPv6
@@ -65,6 +76,23 @@ func (lan *LanUdp6Net) Down() error {
 
 func (lan *LanUdp6Net) Status() NetworkStatus {
 	return lan.status
+}
+
+func (lan *LanUdp6Net) OutboundConnection(fromConn Connection, toAddr net.Addr) (Connection, error) {
+	pc, err := net.DialUDP("udp6", nil, toAddr.(*net.UDPAddr))
+	if err != nil {
+		return nil, err
+	}
+	conn := LanUdpConn{
+		network:    lan,
+		PacketConn: pc,
+	}
+	return &conn, nil
+}
+
+func (lan *LanUdp6Net) CreateAddress(b []byte) net.Addr {
+	//	you can't determine an address based on the public key in this network
+	return nil
 }
 
 func (lan *LanUdp6Net) CreateConnection(_ []byte, suggestedAddr net.Addr) (Connection, error) {

@@ -24,10 +24,13 @@ type Envelope struct {
 // a Network is a substrate for Connections
 type Network interface {
 	Name() string
+	Namespace() string
 	Up(net.Addr) error // bring the network up
 	Down() error       // tear the network down
 	Status() NetworkStatus
 	CreateConnection([]byte, net.Addr) (Connection, error)
+	OutboundConnection(fromConn Connection, to net.Addr) (Connection, error)
+	CreateAddress([]byte) net.Addr
 }
 
 // a Connection is an address with a way to communicate with another address

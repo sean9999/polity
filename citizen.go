@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"slices"
 
@@ -19,11 +18,11 @@ type Spool chan Message
 
 type Citizen struct {
 	*oracle.Oracle
-	config     *CitizenConfig
-	Connection network.Connection
-	inbox      Spool
-	spindle    chan Spool
-	peers      map[string]Peer
+	network           network.Network
+	config            *CitizenConfig
+	InboundConnection network.Connection
+	inbox             Spool
+	peers             map[string]Peer
 }
 
 func (c *Citizen) Verify(msg Message) bool {
@@ -51,7 +50,7 @@ func (c *Citizen) Config() CitizenConfig {
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.Connection.LocalAddr().String(),
+		c.InboundConnection.LocalAddr().String(),
 	}
 	peersMap := map[string]peerConfig{}
 
@@ -60,7 +59,7 @@ func (c *Citizen) Config() CitizenConfig {
 	}
 
 	conf := CitizenConfig{
-		connection: c.Connection,
+		connection: c.InboundConnection,
 		handle:     c.Handle,
 		Self:       self,
 		Peers:      peersMap,
@@ -74,7 +73,7 @@ func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.Connection.LocalAddr().String(),
+		c.InboundConnection.LocalAddr().String(),
 	}
 	peersMap := map[string]peerConfig{}
 
@@ -98,7 +97,7 @@ func (c *Citizen) AddPeer(p Peer) error {
 }
 
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n\n%#v\n\n", c.config, c.Connection)
+	fmt.Printf("%#v\n\n%#v\n\n", c.config, c.InboundConnection)
 }
 
 func (p *Citizen) Shutdown() error {
@@ -109,7 +108,7 @@ func (p *Citizen) Shutdown() error {
 	//	close the channel
 	close(p.inbox)
 	//	leave the network (ie: de-register)
-	return p.Connection.Close()
+	return p.InboundConnection.Close()
 }
 
 // join the network (ie: acquire an address)
@@ -134,15 +133,16 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 	//	the first message sent is to myself.
 	//	I want to know my own address and nickname
-	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", c.Connection.LocalAddr(), c.Nickname())
+	fqAddr := fmt.Sprintf("%s://%s", c.InboundConnection.Network().Namespace(), c.InboundConnection.LocalAddr())
+	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", fqAddr, c.Nickname())
 	msg := c.Compose(SubjHelloSelf, []byte(body))
-	msg.SenderAddress = c.Connection.LocalAddr()
+	msg.SenderAddress = c.InboundConnection.LocalAddr()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
 	go func() {
 		for {
-			n, addr, err := c.Connection.ReadFrom(buffer)
+			n, addr, err := c.InboundConnection.ReadFrom(buffer)
 			if err != nil {
 				//	TODO: is this a failure condition that chould trigger Close()?
 				//	find out what kind of errors could occur here.
@@ -171,23 +171,22 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 }
 
 func (c *Citizen) Send(msg Message, recipient Peer) error {
-	if err := msg.Problem(); err != nil {
-		return err
-	}
 
-	c.Up()
+	//genericConn, err := c.network.OutboundConnection(nil, recipient.Address)
 
-	// raddr, err := net.ResolveUDPAddr("udp", recipient.Address.String())
-	// if err != nil {
-	// 	return err
-	// }
+	conn, err := c.network.OutboundConnection(c.InboundConnection, recipient.Address)
 
-	//	pick a random port for origination
-	conn, err := net.ListenPacket("udp", ":0")
+	//conn, err := c.Listener.Network().OutboundConnection(c.Listener, recipient.Address)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	//defer conn.Close()
+
+	msg.SenderAddress = c.InboundConnection.LocalAddr()
+
+	if err := msg.Problem(); err != nil {
+		return err
+	}
 
 	bin, err := msg.MarshalBinary()
 	if err != nil {
@@ -210,7 +209,6 @@ func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
 	// 	return nil, err
 	// }
 	inbox := make(Spool, 1)
-	spindle := make(chan Spool, 1)
 
 	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
 	if err != nil {
@@ -218,10 +216,10 @@ func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
 	}
 
 	citizen := &Citizen{
-		inbox:      inbox,
-		spindle:    spindle,
-		Oracle:     orc,
-		Connection: conn,
+		network:           network,
+		inbox:             inbox,
+		Oracle:            orc,
+		InboundConnection: conn,
 	}
 
 	//	@todo: sanity checking
@@ -230,7 +228,7 @@ func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
 }
 
 // read a config file and spin up a Citizen
-func CitizenFrom(rw io.ReadWriter, network network.Network) (*Citizen, error) {
+func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, error) {
 
 	orc, err := oracle.From(rw)
 	if err != nil {
@@ -251,16 +249,21 @@ func CitizenFrom(rw io.ReadWriter, network network.Network) (*Citizen, error) {
 
 	//conn := network(orc.EncryptionPublicKey.Bytes(), addr)
 
-	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("could not create connection: %w", err)
+	var conn network.Connection
+
+	if server {
+		conn, err = n.CreateConnection(orc.AsPeer().Bytes(), nil)
+		if err != nil {
+			return nil, fmt.Errorf("could not create connection: %w", err)
+		}
 	}
 
 	citizen := &Citizen{
-		inbox:      inbox,
-		config:     k,
-		Oracle:     orc,
-		Connection: conn,
+		network:           n,
+		inbox:             inbox,
+		config:            k,
+		Oracle:            orc,
+		InboundConnection: conn,
 	}
 
 	if err := citizen.init(); err != nil {
