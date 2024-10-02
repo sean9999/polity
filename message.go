@@ -87,11 +87,23 @@ func (m Message) Sender() Peer {
 	return NoPeer
 }
 
-func (m Message) Body() string {
+func (m Message) Body() []byte {
 	if m.isPlain() {
-		return string(m.Plain.PlainTextData)
+		return m.Plain.PlainTextData
 	}
-	return ""
+	return nil
+}
+
+func (m *Message) SetBody(b []byte) error {
+	if m.isPlain() {
+		m.Plain.PlainTextData = b
+		return nil
+	}
+	if m.isCiper() {
+		m.Cipher.CipherTextData = b
+		return nil
+	}
+	return errors.New("message is neither plain nor encrypted")
 }
 
 func (m Message) isPlain() bool {
@@ -207,6 +219,23 @@ func NewMessage(opts ...MessageOption) Message {
 		opt(&msg)
 	}
 	return msg
+}
+
+func (m *Message) Wrap(m2 Message) error {
+	bin, err := m2.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	return m.SetBody(bin)
+}
+
+func (m Message) Unwrap() (*Message, error) {
+	o := new(Message)
+	err := o.UnmarshalBinary(m.Body())
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
 }
 
 func (a Message) Preceeds(b Message) bool {

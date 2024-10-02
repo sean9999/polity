@@ -170,6 +170,20 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 	return m
 }
 
+// func (c *Citizen) Admin(msg Message) error {
+
+// 	if msg.Validate() := err; err != nil {
+// 		return err
+// 	}
+
+// 	if !msg.Sender().Equal(c.AsPeer()) {
+// 		return errors.New("You're not the right peer")
+// 	}
+
+// 	return c.Send(msg, c.AsPeer)
+
+// }
+
 func (c *Citizen) Send(msg Message, recipient Peer) error {
 
 	//genericConn, err := c.network.OutboundConnection(nil, recipient.Address)
