@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/google/uuid"
@@ -30,6 +31,19 @@ type Message struct {
 	SenderAddress net.Addr
 	Plain         *oracle.PlainText
 	Cipher        *oracle.CipherText
+}
+
+type Envelope struct {
+	Message   Message `json:"message"`
+	Recipient Peer    `json:"recipient"`
+}
+
+func (e Envelope) MarshalBinary() ([]byte, error) {
+	return json.Marshal(e)
+}
+
+func (e *Envelope) UnmarshalBinary(b []byte) error {
+	return json.Unmarshal(b, e)
 }
 
 func (m Message) Digest() ([]byte, error) {
@@ -221,21 +235,21 @@ func NewMessage(opts ...MessageOption) Message {
 	return msg
 }
 
-func (m *Message) Wrap(m2 Message) error {
-	bin, err := m2.MarshalBinary()
+func (m *Message) Wrap(e Envelope) error {
+	bin, err := e.MarshalBinary()
 	if err != nil {
 		return err
 	}
 	return m.SetBody(bin)
 }
 
-func (m Message) Unwrap() (*Message, error) {
-	o := new(Message)
+func (m Message) Unwrap() (Message, Peer, error) {
+	o := new(Envelope)
 	err := o.UnmarshalBinary(m.Body())
 	if err != nil {
-		return nil, err
+		return NoMessage, NoPeer, fmt.Errorf("could not unmarshal envelope: %w", err)
 	}
-	return o, nil
+	return o.Message, o.Recipient, nil
 }
 
 func (a Message) Preceeds(b Message) bool {

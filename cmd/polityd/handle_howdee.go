@@ -17,7 +17,7 @@ func handleHowdee(env *flargs.Environment, me *polity.Citizen, msg polity.Messag
 		fmt.Println(msg.Body())
 		return err
 	}
-	fmt.Printf("I just received a howdee from %s\n", msg.Sender().Nickname())
+	fmt.Fprintf(env.OutputStream, "I just received a howdee from %s\n", msg.Sender().Nickname())
 
 	//	loop through friends, adding anyone new
 	for nick, he := range pm {

@@ -69,7 +69,7 @@ func handleMarco(env *flargs.Environment, me *polity.Citizen, msg polity.Message
 	upperBound := 4096
 
 	b := new(MarcoPoloBody)
-	err := b.Deserialize(msg.Body())
+	err := b.Deserialize(string(msg.Body()))
 	if err != nil {
 		return err
 	}
@@ -91,10 +91,10 @@ func handleMarco(env *flargs.Environment, me *polity.Citizen, msg polity.Message
 		averageDuration := time.Duration(totalDuration / time.Duration(upperBound))
 
 		//	print out
-		fmt.Println("game id:\t", c.GameId)
-		fmt.Println("num hops:\t", upperBound)
-		fmt.Println("total time:\t", totalDuration.String())
-		fmt.Println("average hop:\t", averageDuration.String())
+		fmt.Fprintln(env.OutputStream, "game id:\t", c.GameId)
+		fmt.Fprintln(env.OutputStream, "num hops:\t", upperBound)
+		fmt.Fprintln(env.OutputStream, "total time:\t", totalDuration.String())
+		fmt.Fprintln(env.OutputStream, "average hop:\t", averageDuration.String())
 
 		if c.Num == upperBound {
 			//	mister odd prints out

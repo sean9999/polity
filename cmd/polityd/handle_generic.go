@@ -8,9 +8,9 @@ import (
 	"github.com/sean9999/polity"
 )
 
-func handleGeneric(_ *flargs.Environment, _ *polity.Citizen, msg polity.Message) error {
+func handleGeneric(env *flargs.Environment, _ *polity.Citizen, msg polity.Message) error {
 	err := errors.New("unhandled subject: " + string(msg.Subject()))
-	fmt.Println(msg.Body())
+	fmt.Fprintln(env.OutputStream, msg.Body())
 	return err
 }
 
@@ -32,7 +32,7 @@ func handleWelcomeBack(env *flargs.Environment, me *polity.Citizen, msg polity.M
 	//	tell all my other friends i'm happy my friend is back
 	for nick, thisPeer := range me.Peers() {
 		if !thisPeer.Equal(msg.Sender()) {
-			fmt.Printf("dear %s, huzzah! my friend %s is back\n", nick, msg.Sender().Nickname())
+			fmt.Fprintf(env.OutputStream, "dear %s, huzzah! my friend %s is back\n", nick, msg.Sender().Nickname())
 		}
 	}
 	return nil
