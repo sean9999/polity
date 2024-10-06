@@ -11,7 +11,27 @@ import (
 	"v.io/x/lib/netstate"
 )
 
-// Known networks are "tcp", "tcp4" (IPv4-only), "tcp6" (IPv6-only), "udp", "udp4" (IPv4-only), "udp6" (IPv6-only), "ip", "ip4" (IPv4-only), "ip6" (IPv6-only), "unix", "unixgram" and "unixpacket". 
+type Namespace string
+
+const (
+	NamespaceUnknown      = ""
+	NamespaceUnixSocket   = "socket/unixgram"
+	NamespaceLoopbackIPv6 = "loopback/udp6"
+	NamespaceLANIPv6      = "lan/udp6"
+)
+
+// Known networks are:
+//	- "tcp",
+//	- "tcp4" (IPv4-only),
+//	- "tcp6" (IPv6-only),
+//	- "udp", "udp4" (IPv4-only),
+//	- "udp6" (IPv6-only),
+//	- "ip",
+//	- "ip4" (IPv4-only),
+//	- "ip6" (IPv6-only),
+//	- "unix",
+//	- "unixgram"
+//	- "unixpacket".
 
 var ErrNetworkUp = errors.New("can't bring network up")
 var ErrConnection = errors.New("couldn't create connection")

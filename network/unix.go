@@ -63,7 +63,7 @@ func (socknet *SocketNet) CreateAddress(b []byte) net.Addr {
 }
 
 func (_ *SocketNet) Namespace() string {
-	return "unixgram"
+	return NamespaceUnixSocket
 }
 
 func (network *SocketNet) Up(_ net.Addr) error {

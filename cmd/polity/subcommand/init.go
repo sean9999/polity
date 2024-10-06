@@ -38,7 +38,7 @@ func Init(env *flargs.Environment, ctx *cli.Context, network network.Network) er
 
 	//	create a new citizen and write it to the file
 	randy := rand.New(env.Randomness)
-	me, err := polity.NewCitizen(randy, network)
+	me, err := polity.NewCitizen(randy, network, nil)
 	if err != nil {
 		return CliError{1, "can't create new citizen", err}
 	}

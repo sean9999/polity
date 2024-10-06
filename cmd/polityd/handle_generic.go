@@ -27,14 +27,19 @@ func handleWelcomeBack(env *flargs.Environment, me *polity.Citizen, msg polity.M
 
 	//	say welcome back to my friend, back from vacation
 	response := me.Compose(polity.SubjWelcomeBack, nil)
-	me.Send(response, msg.Sender())
+	me.Send(response, msg.Sender(), msg.SenderAddress)
+
+	ns := me.Network.Namespace()
 
 	//	tell all my other friends i'm happy my friend is back
-	for nick, thisPeer := range me.Peers() {
-		if !thisPeer.Equal(msg.Sender()) {
-			fmt.Fprintf(env.OutputStream, "dear %s, huzzah! my friend %s is back\n", nick, msg.Sender().Nickname())
+	for p, addrMap := range me.Peers() {
+		if !p.Equal(msg.Sender()) {
+			addr := addrMap[ns]
+			fmt.Fprintf(env.OutputStream, "dear %s @ %s, huzzah! my friend %s @ %s is back\n", p.Nickname(), addr, msg.Sender().Nickname(), msg.SenderAddress)
+			//	@todo: actually send it
 		}
 	}
+
 	return nil
 
 }

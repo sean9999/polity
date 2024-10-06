@@ -28,14 +28,20 @@ func Introduce(env *flargs.Environment, ctx *cli.Context, network network.Networ
 	}
 
 	//	peer
-	peer, err := polity.PeerFromHex([]byte(ctx.String("pubkey")), network, nil)
+	peer, err := polity.PeerFromHex([]byte(ctx.String("pubkey")))
 	if err != nil {
 		fmt.Println("not a valid peer", ctx.String("pubkey"))
 		return err
 	}
 
+	peerAddr, exists := me.Book[peer][network.Namespace()]
+
+	if !exists {
+		return fmt.Errorf("peer has no address on network %q", network.Namespace())
+	}
+
 	//	these are my friends. Who are your friends?
 	msg := me.Assert()
 
-	return me.Send(msg, peer)
+	return me.Send(msg, peer, peerAddr)
 }

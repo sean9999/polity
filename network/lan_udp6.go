@@ -34,7 +34,7 @@ func (lan *LanUdp6Net) Name() string {
 }
 
 func (lan *LanUdp6Net) Namespace() string {
-	return "lan/udp/ipv6"
+	return NamespaceLANIPv6
 }
 
 // func (lo *LanUdp6Net) DestinationAddress(_ []byte, _ net.Addr) (net.Addr, error) {

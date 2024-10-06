@@ -83,7 +83,7 @@ func handleMarco(env *flargs.Environment, me *polity.Citizen, msg polity.Message
 	}
 	if c.Num < upperBound {
 		response := me.Compose(c.Who, []byte(c.Serialize()))
-		me.Send(response, msg.Sender())
+		me.Send(response, msg.Sender(), msg.SenderAddress)
 	} else {
 		//	mister even prints out
 		stopime = time.Now()
@@ -91,15 +91,15 @@ func handleMarco(env *flargs.Environment, me *polity.Citizen, msg polity.Message
 		averageDuration := time.Duration(totalDuration / time.Duration(upperBound))
 
 		//	print out
-		fmt.Fprintln(env.OutputStream, "game id:\t", c.GameId)
-		fmt.Fprintln(env.OutputStream, "num hops:\t", upperBound)
+		fmt.Fprintln(env.OutputStream, "marco game id:\t", c.GameId)
+		fmt.Fprintln(env.OutputStream, "number hops:\t", upperBound)
 		fmt.Fprintln(env.OutputStream, "total time:\t", totalDuration.String())
 		fmt.Fprintln(env.OutputStream, "average hop:\t", averageDuration.String())
 
 		if c.Num == upperBound {
 			//	mister odd prints out
 			response := me.Compose(polity.SubjStartMarcoPolo, []byte(c.Serialize()))
-			me.Send(response, msg.Sender())
+			me.Send(response, msg.Sender(), msg.SenderAddress)
 		}
 	}
 	return nil

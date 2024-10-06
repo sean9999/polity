@@ -33,15 +33,18 @@ func Howdee(env *flargs.Environment, ctx *cli.Context, ntwk network.Network) err
 		return err
 	}
 
-	//	peer
-	peer, err := me.Peer(ctx.String("to"))
-	if err != nil {
-		fmt.Println("oh no!", ctx.String("to"))
-		return err
+	//	oraclePeer
+	peer, addr := me.Peer(ctx.String("to"))
+	if peer == polity.NoPeer {
+		return fmt.Errorf("no such peer: %q. %w", ctx.String("to"), err)
+	}
+
+	if addr == nil {
+		return fmt.Errorf("peer exists but has no address on network %q", me.Network.Namespace())
 	}
 
 	//	these are my friends. Who are your friends?
 	msg := me.Compose(polity.SubjWhoDoYouKnow, j)
 
-	return me.Send(msg, peer)
+	return me.Send(msg, peer, addr)
 }

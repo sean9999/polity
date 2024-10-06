@@ -3,14 +3,12 @@ package polity
 import (
 	"crypto/ed25519"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"io"
 	"net"
 	"slices"
 
 	"github.com/sean9999/go-oracle"
-	"github.com/sean9999/polity/network"
 )
 
 var ErrWrongByteLength = errors.New("wrong number of bytes")
@@ -19,57 +17,51 @@ var ErrWrongByteLength = errors.New("wrong number of bytes")
 // whose pubkey we have saved, and whose private key we should not know.
 //type Peer oracle.Peer
 
-type Peer struct {
-	Oracle  oracle.Peer
-	Address net.Addr
+type Peer oracle.Peer
+
+func (p Peer) ID() string {
+	return p.Nickname()
+}
+
+func (p Peer) Fingerprint() string {
+	return p.Nickname()
 }
 
 // zero value means no Peer
 var NoPeer Peer
 
+type peerWithAddress struct {
+	Peer    Peer
+	Address net.Addr
+}
+
 // peerConfig is an intermediary object suitable for serialization
 type peerConfig struct {
 	oracle.PeerConfig
-	Address net.Addr `json:"addr,omitempty"`
+	Address AddressMap `json:"addr,omitempty"`
 }
 
 func (c peerConfig) toPeer() Peer {
 	var p Peer
-	hex.Decode(p.Oracle[:], []byte(c.PeerConfig.PublicKey))
-	p.Address = c.Address
+	hex.Decode(p[:], []byte(c.PeerConfig.PublicKey))
 	return p
 }
 
-func (p Peer) Config() peerConfig {
+func (p Peer) Exists() bool {
+	return p != NoPeer
+}
+
+func (p Peer) Config(am AddressMap) peerConfig {
+
 	conf := peerConfig{
-		oracle.Peer(p.Oracle).Config(),
-		p.Address,
+		oracle.Peer(p).Config(),
+		am,
 	}
 	return conf
 }
 
 func (p Peer) Bytes() []byte {
-	return p.Oracle[:]
-}
-
-func (p Peer) MarshalJSON() ([]byte, error) {
-	conf := p.Config()
-	return json.MarshalIndent(conf, "", "\t")
-}
-
-func (p *Peer) UnmarshalJSON(b []byte) error {
-	var conf peerConfig
-	err := json.Unmarshal(b, &conf)
-	if err != nil {
-		return err
-	}
-	p.Address = conf.Address
-	orc, err := oracle.PeerFromHex([]byte(conf.PublicKey))
-	if err != nil {
-		return err
-	}
-	p.Oracle = orc
-	return err
+	return p[:]
 }
 
 // stable, deterministic address
@@ -85,11 +77,11 @@ func (p *Peer) UnmarshalJSON(b []byte) error {
 // }
 
 func (p Peer) Equal(q Peer) bool {
-	return slices.Equal(p.Oracle[:], q.Oracle[:])
+	return slices.Equal(p[:], q[:])
 }
 
 func (p Peer) Nickname() string {
-	return oracle.Peer(p.Oracle).Nickname()
+	return oracle.Peer(p).Nickname()
 }
 
 // func (p Peer) Oracle() oracle.Peer {
@@ -97,44 +89,29 @@ func (p Peer) Nickname() string {
 // }
 
 func (p Peer) SigningKey() ed25519.PublicKey {
-	return p.Oracle.SigningKey()
+	return oracle.Peer(p).SigningKey()
 }
 
-func PeerFromHex(hex []byte, network network.Network, addr net.Addr) (Peer, error) {
+func PeerFromHex(hex []byte) (Peer, error) {
 	op, err := oracle.PeerFromHex(hex)
 	if err != nil {
 		return NoPeer, err
 	}
-	p := Peer{
-		Oracle: op,
-	}
-	p.Address = addr
-
-	if addr == nil && network != nil {
-		p.Address = network.CreateAddress(p.Bytes())
-	}
-	return p, nil
+	return Peer(op), nil
 }
 
-func PeerFromBytes(b []byte, network network.Network, addr net.Addr) (Peer, error) {
+func PeerFromBytes(b []byte) (Peer, error) {
 	if len(b) != 64 {
 		return NoPeer, ErrWrongByteLength
 	}
 	p := Peer{}
-	copy(p.Oracle[:], b)
-
-	p.Address = addr
-
-	if addr == nil && network != nil {
-		p.Address = network.CreateAddress(b)
-	}
-
+	copy(p[:], b)
 	return p, nil
 }
 
 func NewPeer(randy io.Reader) (Peer, error) {
 	var p Peer
-	i, err := randy.Read(p.Oracle[:])
+	i, err := randy.Read(p[:])
 	if err != nil {
 		return NoPeer, err
 	}

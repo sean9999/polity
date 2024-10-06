@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"slices"
 
@@ -18,11 +19,27 @@ type Spool chan Message
 
 type Citizen struct {
 	*oracle.Oracle
-	network           network.Network
+	Book              AddressBook
+	MyAddresses       AddressMap
+	Network           network.Network
 	config            *CitizenConfig
 	InboundConnection network.Connection
 	inbox             Spool
-	peers             map[string]Peer
+	//peers             map[string]Peer
+}
+
+// @note: obviously this is superflous. get rid of it
+func (c *Citizen) Peers() AddressBook {
+	return c.Book
+}
+
+func (c *Citizen) AsPeer() Peer {
+	return Peer(c.Oracle.AsPeer())
+}
+
+func (c *Citizen) LocalAddr() net.Addr {
+	ns := c.Network.Namespace()
+	return c.MyAddresses[ns]
 }
 
 func (c *Citizen) Verify(msg Message) bool {
@@ -33,67 +50,79 @@ func (c *Citizen) Verify(msg Message) bool {
 	return c.Oracle.Verify(msg.Plain, sender)
 }
 
-func (c *Citizen) Peers() map[string]Peer {
-	return c.peers
-}
+// Get the Peer and address from a nickname or pubkey.
+// The consumer must check for nils or NoPeer
+func (c *Citizen) Peer(id string) (Peer, net.Addr) {
 
-func (c *Citizen) Peer(nick string) (Peer, error) {
-	p, exists := c.peers[nick]
-	if !exists {
-		return NoPeer, errors.New("peer doesn't exist")
+	var peer Peer = NoPeer
+	var addr net.Addr
+
+	if stringIsPubkey(id) {
+		peer, _ = PeerFromHex([]byte(id))
 	}
-	return p, nil
+
+	if stringIsNickname(id) {
+
+		//	Oracle knows how to get the peer from it's nickname
+		oraclePeer, err := c.Oracle.Peer(id)
+		if err != nil {
+			return NoPeer, nil
+		}
+		peer = Peer(oraclePeer)
+	}
+
+	_, entryExists := c.Book[peer]
+	if entryExists {
+		addr = c.Book[peer][c.Network.Namespace()]
+	}
+
+	return peer, addr
+
 }
 
 func (c *Citizen) Config() CitizenConfig {
-
 	oconf := c.Oracle.Config()
 	self := SelfConfig{
 		oconf.Self,
-		c.InboundConnection.LocalAddr().String(),
+		c.MyAddresses,
 	}
-	peersMap := map[string]peerConfig{}
-
-	for nick, peer := range c.Peers() {
-		peersMap[nick] = peer.Config()
-	}
-
 	conf := CitizenConfig{
-		connection: c.InboundConnection,
-		handle:     c.Handle,
-		Self:       self,
-		Peers:      peersMap,
+		handle: c.Handle,
+		Self:   self,
+		Peers:  c.Book,
 	}
 	return conf
-
 }
 
 func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 
-	oconf := c.Oracle.Config()
-	self := SelfConfig{
-		oconf.Self,
-		c.InboundConnection.LocalAddr().String(),
-	}
-	peersMap := map[string]peerConfig{}
-
-	for nick, peer := range c.Peers() {
-		peersMap[nick] = peer.Config()
-	}
-	conf := CitizenConfig{
-		Self:  self,
-		Peers: peersMap,
-	}
+	conf := c.Config()
 	enc := json.NewEncoder(rw)
 	enc.SetIndent("", "\t")
 	return enc.Encode(conf)
 
 }
 
+func (c *Citizen) UpdateConfig() error {
+	newConf := c.Config()
+	c.config = &newConf
+	return ifErr(c.Save(), "could not update config")
+}
+
 // add a peer to our list of peers, persisting to config
-func (c *Citizen) AddPeer(p Peer) error {
-	c.peers[p.Nickname()] = p
-	return nil
+func (c *Citizen) AddPeer(p Peer, addr net.Addr) error {
+
+	ns := c.Network.Namespace()
+	c.Book[p] = AddressMap{
+		ns: addr,
+	}
+
+	ifErrMsg := "could not add peer"
+	err := c.Oracle.AddPeer(oracle.Peer(p))
+	if err != nil {
+		return fmt.Errorf("%s: %w", ifErrMsg, err)
+	}
+	return ifErr(c.UpdateConfig(), ifErrMsg)
 }
 
 func (c *Citizen) Dump() {
@@ -158,10 +187,8 @@ func (c *Citizen) Listen() (chan Message, error) {
 	return c.inbox, nil
 }
 
-func (c *Citizen) Equal(p Peer) bool {
-	p1 := c.AsPeer().Bytes()
-	p2 := p.Oracle.Bytes()
-	return slices.Equal(p1, p2)
+func (me *Citizen) Equal(them Peer) bool {
+	return slices.Equal(me.AsPeer().Bytes(), them.Bytes())
 }
 
 func (c *Citizen) Compose(subj Subject, body []byte) Message {
@@ -184,17 +211,14 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 
 // }
 
-func (c *Citizen) Send(msg Message, recipient Peer) error {
+func (c *Citizen) Send(msg Message, recipient Peer, destAddr net.Addr) error {
 
-	//genericConn, err := c.network.OutboundConnection(nil, recipient.Address)
+	conn, err := c.Network.OutboundConnection(c.InboundConnection, destAddr)
 
-	conn, err := c.network.OutboundConnection(c.InboundConnection, recipient.Address)
-
-	//conn, err := c.Listener.Network().OutboundConnection(c.Listener, recipient.Address)
 	if err != nil {
 		return err
 	}
-	//defer conn.Close()
+	defer conn.Close()
 
 	msg.SenderAddress = c.InboundConnection.LocalAddr()
 
@@ -207,7 +231,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 		return err
 	}
 
-	_, err = conn.WriteTo(bin, recipient.Address)
+	_, err = conn.WriteTo(bin, destAddr)
 	if err != nil {
 		return err
 	}
@@ -215,7 +239,7 @@ func (c *Citizen) Send(msg Message, recipient Peer) error {
 }
 
 // create a new citizen and pesist her config
-func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
+func NewCitizen(randy io.Reader, network network.Network, hintAddr net.Addr) (*Citizen, error) {
 
 	orc := oracle.New(randy)
 	// err := orc.Export(config, false)
@@ -224,13 +248,19 @@ func NewCitizen(randy io.Reader, network network.Network) (*Citizen, error) {
 	// }
 	inbox := make(Spool, 1)
 
-	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), nil)
+	conn, err := network.CreateConnection(orc.AsPeer().Bytes(), hintAddr)
 	if err != nil {
 		return nil, err
 	}
 
+	myAddrs := AddressMap{
+		network.Namespace(): conn.LocalAddr(),
+	}
+
 	citizen := &Citizen{
-		network:           network,
+		MyAddresses:       myAddrs,
+		Book:              AddressBook{},
+		Network:           network,
 		inbox:             inbox,
 		Oracle:            orc,
 		InboundConnection: conn,
@@ -263,21 +293,20 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 
 	//conn := network(orc.EncryptionPublicKey.Bytes(), addr)
 
-	var conn network.Connection
+	//var conn network.Connection
 
-	if server {
-		conn, err = n.CreateConnection(orc.AsPeer().Bytes(), nil)
-		if err != nil {
-			return nil, fmt.Errorf("could not create connection: %w", err)
-		}
-	}
+	// if server {
+	// 	conn, err = n.CreateConnection(orc.AsPeer().Bytes(), nil)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("could not create connection: %w", err)
+	// 	}
+	// }
 
 	citizen := &Citizen{
-		network:           n,
-		inbox:             inbox,
-		config:            k,
-		Oracle:            orc,
-		InboundConnection: conn,
+		Network: n,
+		inbox:   inbox,
+		config:  k,
+		Oracle:  orc,
 	}
 
 	if err := citizen.init(); err != nil {

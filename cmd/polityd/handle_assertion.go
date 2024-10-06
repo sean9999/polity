@@ -9,6 +9,7 @@ import (
 	"github.com/sean9999/polity"
 )
 
+// here's a way to shadow fmt
 type f struct {
 	w io.Writer
 }
@@ -19,6 +20,7 @@ func (f f) Println(things ...any) {
 
 func handleAssertion(env *flargs.Environment, me *polity.Citizen, msg polity.Message) error {
 
+	//	here's a way to shadow fmt
 	fmt := f{env.OutputStream}
 
 	if me.Verify(msg) {
@@ -26,11 +28,11 @@ func handleAssertion(env *flargs.Environment, me *polity.Citizen, msg polity.Mes
 		peer, _ := me.Peer(msg.Sender().Nickname())
 		if peer.Equal(polity.NoPeer) {
 			//	send an assertion in response. We want to be mutual friends
-			err := me.Send(me.Assert(), msg.Sender())
+			err := me.Send(me.Assert(), msg.Sender(), msg.SenderAddress)
 			if err != nil {
 				return err
 			}
-			err = me.AddPeer(msg.Sender())
+			err = me.AddPeer(msg.Sender(), msg.SenderAddress)
 			fmt.Println("assertion received and peer possibly added")
 			return err
 		} else {

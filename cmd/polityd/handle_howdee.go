@@ -14,23 +14,31 @@ func handleHowdee(env *flargs.Environment, me *polity.Citizen, msg polity.Messag
 	var pm map[string]polity.Peer
 	err := json.Unmarshal([]byte(msg.Body()), &pm)
 	if err != nil {
-		fmt.Println(msg.Body())
+		fmt.Fprintln(env.ErrorStream, "could not unmarshal from json")
+		fmt.Fprintln(env.ErrorStream, msg.Body())
 		return err
 	}
 	fmt.Fprintf(env.OutputStream, "I just received a howdee from %s\n", msg.Sender().Nickname())
 
-	//	loop through friends, adding anyone new
-	for nick, he := range pm {
-		peer, _ := me.Peer(nick)
-		switch {
-		case me.Equal(he):
-			fmt.Printf("%s is me\n", me.Nickname())
-		case peer != polity.NoPeer:
-			fmt.Printf("%s is already a peer of mine\n", peer.Nickname())
-		default:
-			me.AddPeer(peer)
-			fmt.Printf("I just added %s as a friend\n", he.Nickname())
+	//	add sender if we haven't already,
+	//	or update address if it's changed.
+	ns := me.Network.Namespace()
+	senderAddr, exists := me.Book[msg.Sender()]
+
+	if !exists {
+		//	sender is brand new. Add them
+		//	@todo: this is news. Tell people
+		me.Book[msg.Sender()] = polity.AddressMap{
+			ns: msg.SenderAddress,
+		}
+	} else {
+		oldAddr := senderAddr[ns]
+		if oldAddr != msg.SenderAddress {
+			//	sender is known but has a new address. Update
+			//	@todo: tell people
+			me.Book[msg.Sender()][ns] = msg.SenderAddress
 		}
 	}
+
 	return nil
 }

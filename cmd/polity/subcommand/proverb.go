@@ -35,11 +35,20 @@ func Proverb(env *flargs.Environment, ctx *cli.Context, net network.Network) err
 	}
 
 	//	iterate and send
-	for nick, peer := range me.Peers() {
+	for peer, addrMap := range me.Book {
+
+		addr := addrMap[me.Network.Namespace()]
+
+		if addr == nil {
+			//	@todo: what kind of error handling should we do here?
+			continue
+		}
+
+		nick := peer.Nickname()
 		proverb := proverbs.RandomProverb()
 		msg := me.Compose(polity.SubjGoProverb, []byte(proverb))
 		me.Sign(msg.Plain)
-		err = me.Send(msg, peer)
+		err = me.Send(msg, peer, addr)
 		if err != nil {
 			fmt.Fprintf(env.ErrorStream, "could not send proverb to %s. %s\n", nick, err)
 		} else {

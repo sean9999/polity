@@ -32,7 +32,7 @@ func (lo *LocalUdp6Net) Name() string {
 }
 
 func (lo *LocalUdp6Net) Namespace() string {
-	return "loopback/udp/ipv6"
+	return NamespaceLoopbackIPv6
 }
 
 func (lo *LocalUdp6Net) DestinationAddress(_ []byte, _ net.Addr) (net.Addr, error) {

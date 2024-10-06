@@ -13,14 +13,15 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func helloEverybody(me *polity.Citizen) {
-	var err error
-	for nick, peer := range me.Peers() {
-		msg := me.Compose(polity.SubjImBack, nil)
-		err = me.Send(msg, polity.Peer(peer))
-		fmt.Printf("hello %s (%v)\n", nick, err)
-	}
-}
+// func helloEverybody(me *polity.Citizen) {
+// 	var err error
+// 	for p, addrMap := range me.Peers() {
+
+// 		msg := me.Compose(polity.SubjImBack, nil)
+// 		err = me.Send(msg, polity.Peer(peer))
+// 		fmt.Printf("hello %s (%v)\n", nick, err)
+// 	}
+// }
 
 func Daemon(env *flargs.Environment, cli *cli.Context) error {
 

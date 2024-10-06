@@ -30,10 +30,13 @@ func Marco(env *flargs.Environment, ctx *cli.Context, net network.Network) error
 	}
 
 	//	peer
-	peer, err := me.Peer(ctx.String("with"))
-	if err != nil {
-		fmt.Println("oh no!", ctx.String("with"))
-		return err
+	peer, addr := me.Peer(ctx.String("with"))
+	if !peer.Exists() {
+		return errors.New("peer does not exist")
+	}
+
+	if addr == nil {
+		return fmt.Errorf("no address for peer %q", peer.Nickname())
 	}
 
 	gameId, err := uuid.NewRandom()
@@ -43,7 +46,7 @@ func Marco(env *flargs.Environment, ctx *cli.Context, net network.Network) error
 	body := fmt.Sprintf("%s\n/%s\n%d\n", gameId.String(), polity.SubjStartMarcoPolo, 0)
 
 	msg := me.Compose(polity.SubjStartMarcoPolo, []byte(body))
-	me.Send(msg, peer)
+	me.Send(msg, peer, addr)
 
 	return nil
 }

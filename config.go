@@ -8,7 +8,6 @@ import (
 
 	"github.com/sean9999/go-oracle"
 	realfs "github.com/sean9999/go-real-fs"
-	"github.com/sean9999/polity/network"
 )
 
 var ZeroConf CitizenConfig
@@ -17,15 +16,14 @@ var ErrInvalidConfig = errors.New("invalid config")
 // a SelfConfig is an [oracle.Self] with an address
 type SelfConfig struct {
 	oracle.SelfConfig
-	Address string `json:"addr"`
+	Addresses AddressMap `json:"addrs"`
 }
 
 // a CitizenConfig is a SelfConfig, along with it's peers and a file handle
 type CitizenConfig struct {
-	connection network.Connection
-	handle     io.ReadWriter
-	Self       SelfConfig            `json:"self"`
-	Peers      map[string]peerConfig `json:"peers"`
+	handle io.ReadWriter
+	Self   SelfConfig  `json:"self"`
+	Peers  AddressBook `json:"peers"`
 }
 
 func (cc *CitizenConfig) String() string {
@@ -33,12 +31,16 @@ func (cc *CitizenConfig) String() string {
 	return string(b)
 }
 
-// save config to file or whatever the storage backend is
-func (cc *CitizenConfig) Save() error {
-	e := json.NewEncoder(cc.handle)
+// write the CitizenConfig
+func (cc *CitizenConfig) Export(w io.Writer) error {
+	e := json.NewEncoder(w)
 	e.SetIndent("", "\t")
-	e.Encode(cc)
-	return nil
+	return e.Encode(cc)
+}
+
+// save CitizenConfig to it's handle (usually a file)
+func (cc *CitizenConfig) Save() error {
+	return cc.Export(cc.handle)
 }
 
 func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
