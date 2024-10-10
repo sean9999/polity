@@ -52,7 +52,7 @@ func main() {
 				Name:  "info",
 				Usage: "display info about self",
 				Action: func(cCtx *cli.Context) error {
-					return subcommand.Info(env, cCtx)
+					return subcommand.Info(env, cCtx, myNetwork)
 				},
 			},
 			{
@@ -104,6 +104,19 @@ func main() {
 					&cli.StringFlag{
 						Name:  "pubkey",
 						Usage: "pubkey to to send introduction to",
+					},
+				},
+			},
+			{
+				Name:  "join",
+				Usage: "introduce yourself by way of address",
+				Action: func(cCtx *cli.Context) error {
+					return subcommand.Join(env, cCtx, myNetwork)
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "addr",
+						Usage: "address to join",
 					},
 				},
 			},

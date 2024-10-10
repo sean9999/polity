@@ -7,7 +7,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
-			"args": ["-config", "testdata/billowing-water.json", "info"],
+			"args": ["-config", "testdata/blue-surf.json", "info"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},
@@ -40,7 +40,7 @@
 			"args": ["-config", "testdata/rough-bird.json"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
-		}
+		},
 		{
 			"name": "dark haze listening",
 			"type": "go",

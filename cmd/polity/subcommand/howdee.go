@@ -40,7 +40,7 @@ func Howdee(env *flargs.Environment, ctx *cli.Context, ntwk network.Network) err
 	}
 
 	if addr == nil {
-		return fmt.Errorf("peer exists but has no address on network %q", me.Network.Namespace())
+		return fmt.Errorf("peer exists but has no address on network %q", me.Network.Space())
 	}
 
 	//	these are my friends. Who are your friends?

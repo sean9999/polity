@@ -1,0 +1,14 @@
+{
+	"self": {
+		"nick": "blue-surf",
+		"pub": "c47bd9d8ac8670ab736dfccd26d0890f57b1c29f3444173b7ff8f4ac8ff9d087d2c499539f6219b841fec9c25ff185eeb3ac684ac126a00fc3d8ecaa3d567b08",
+		"priv": "014c1f1acfa3085499c95c2eff0da450d4f7fd04abf48306b57930ed8c5529f4",
+		"addrs": {
+			"socket/unixgram": {
+				"Name": "/Users/seanmacdonald/polity/run/blue-surf",
+				"Net": "unixgram"
+			}
+		}
+	},
+	"peers": {}
+}

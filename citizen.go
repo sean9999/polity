@@ -19,10 +19,10 @@ type Spool chan Message
 
 type Citizen struct {
 	*oracle.Oracle
-	Book              AddressBook
+	Book              AddressBook `json:"book"`
 	MyAddresses       AddressMap
 	Network           network.Network
-	config            *CitizenConfig
+	configHandle      io.ReadWriter
 	InboundConnection network.Connection
 	inbox             Spool
 	//peers             map[string]Peer
@@ -37,8 +37,16 @@ func (c *Citizen) AsPeer() Peer {
 	return Peer(c.Oracle.AsPeer())
 }
 
+func (c *Citizen) AsPeerWithAddress() peerWithAddress {
+	pa := peerWithAddress{
+		Peer:    c.AsPeer(),
+		Address: c.MyAddresses,
+	}
+	return pa
+}
+
 func (c *Citizen) LocalAddr() net.Addr {
-	ns := c.Network.Namespace()
+	ns := c.Network.Space()
 	return c.MyAddresses[ns]
 }
 
@@ -73,7 +81,7 @@ func (c *Citizen) Peer(id string) (Peer, net.Addr) {
 
 	_, entryExists := c.Book[peer]
 	if entryExists {
-		addr = c.Book[peer][c.Network.Namespace()]
+		addr = c.Book[peer][c.Network.Space()]
 	}
 
 	return peer, addr
@@ -81,15 +89,16 @@ func (c *Citizen) Peer(id string) (Peer, net.Addr) {
 }
 
 func (c *Citizen) Config() CitizenConfig {
-	oconf := c.Oracle.Config()
+
 	self := SelfConfig{
-		oconf.Self,
-		c.MyAddresses,
+		Nickname:   c.Nickname(),
+		PublicKey:  string(c.PublicKeyAsHex()),
+		Privatekey: string(c.PrivateEncryptionKey().Bytes()),
+		Addresses:  c.MyAddresses,
 	}
 	conf := CitizenConfig{
-		handle: c.Handle,
-		Self:   self,
-		Peers:  c.Book,
+		Self:  self,
+		Peers: &(c.Book),
 	}
 	return conf
 }
@@ -105,14 +114,13 @@ func (c *Citizen) Export(rw io.ReadWriter, andClose bool) error {
 
 func (c *Citizen) UpdateConfig() error {
 	newConf := c.Config()
-	c.config = &newConf
-	return ifErr(c.Save(), "could not update config")
+	return newConf.Export(c.configHandle)
 }
 
 // add a peer to our list of peers, persisting to config
-func (c *Citizen) AddPeer(p Peer, addr net.Addr) error {
+func (c *Citizen) AddPeer(p Peer, addr network.AddressString) error {
 
-	ns := c.Network.Namespace()
+	ns := c.Network.Space()
 	c.Book[p] = AddressMap{
 		ns: addr,
 	}
@@ -126,12 +134,18 @@ func (c *Citizen) AddPeer(p Peer, addr net.Addr) error {
 }
 
 func (c *Citizen) Dump() {
-	fmt.Printf("%#v\n\n%#v\n\n", c.config, c.InboundConnection)
+	conf := c.Config()
+	fmt.Printf("%#v\n\n%#v\n\n", conf, c.InboundConnection)
 }
 
 func (p *Citizen) Shutdown() error {
+
+	//	flush config
+	conf := p.Config()
+	conf.Export(p.configHandle)
+
 	//	if we have an open file handle or some other resource that can close, close it
-	if handle, canClose := p.config.handle.(io.Closer); canClose {
+	if handle, canClose := p.configHandle.(io.Closer); canClose {
 		handle.Close()
 	}
 	//	close the channel
@@ -149,7 +163,8 @@ func (c *Citizen) Up() error {
 
 // save the config file.
 func (c *Citizen) Save() error {
-	return c.config.Save()
+	conf := c.Config()
+	return conf.Export(c.configHandle)
 }
 
 // Listen for [Message]s and push them to Citizen.inbox
@@ -162,7 +177,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 
 	//	the first message sent is to myself.
 	//	I want to know my own address and nickname
-	fqAddr := fmt.Sprintf("%s://%s", c.InboundConnection.Network().Namespace(), c.InboundConnection.LocalAddr())
+	fqAddr := fmt.Sprintf("%s://%s", c.InboundConnection.Network().Space(), c.InboundConnection.LocalAddr())
 	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", fqAddr, c.Nickname())
 	msg := c.Compose(SubjHelloSelf, []byte(body))
 	msg.SenderAddress = c.InboundConnection.LocalAddr()
@@ -211,7 +226,7 @@ func (c *Citizen) Compose(subj Subject, body []byte) Message {
 
 // }
 
-func (c *Citizen) Send(msg Message, recipient Peer, destAddr net.Addr) error {
+func (c *Citizen) Send(msg Message, _ Peer, destAddr net.Addr) error {
 
 	conn, err := c.Network.OutboundConnection(c.InboundConnection, destAddr)
 
@@ -254,7 +269,7 @@ func NewCitizen(randy io.Reader, network network.Network, hintAddr net.Addr) (*C
 	}
 
 	myAddrs := AddressMap{
-		network.Namespace(): conn.LocalAddr(),
+		network.Space(): conn.Address(),
 	}
 
 	citizen := &Citizen{
@@ -302,11 +317,14 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 	// 	}
 	// }
 
+	kpeers := k.Peers
+
 	citizen := &Citizen{
-		Network: n,
-		inbox:   inbox,
-		config:  k,
-		Oracle:  orc,
+		Network:     n,
+		inbox:       inbox,
+		Oracle:      orc,
+		MyAddresses: AddressMap{},
+		Book:        *kpeers,
 	}
 
 	if err := citizen.init(); err != nil {
@@ -319,9 +337,6 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 func (c *Citizen) init() error {
 
 	//	certain props cannot be nil
-	if c.config == nil {
-		return errors.New("nil config")
-	}
 	if c.Oracle == nil {
 		return errors.New("nil oracle")
 	}

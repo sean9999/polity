@@ -24,7 +24,7 @@ type Envelope struct {
 // a Network is a substrate for Connections
 type Network interface {
 	Name() string
-	Namespace() string
+	Space() Namespace
 	Up(net.Addr) error // bring the network up
 	Down() error       // tear the network down
 	Status() NetworkStatus
@@ -33,16 +33,3 @@ type Network interface {
 	CreateAddress([]byte) net.Addr
 }
 
-// a Connection is an address with a way to communicate with another address
-type Connection interface {
-	net.PacketConn
-	Network() Network
-}
-
-// type Connection struct {
-// 	Address net.Addr
-// 	Name    string
-// 	Id      string
-// }
-
-type ConnectionConstructor func(pubkey []byte, suggestedAddress net.Addr) Network

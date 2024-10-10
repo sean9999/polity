@@ -1,0 +1,14 @@
+{
+	"self": {
+		"nick": "divine-field",
+		"pub": "0154ebb802d33a9ad370d7ab2020804887754509aab96031fdfd4513008208397fbd4447ac739d17854aed20f9ce10a30d4eee33d157169fb4d1bb6f289e871e",
+		"priv": "2a5e00d4538ca993a874411af34ddec38aacb245ea0d285bcde2586bf21a0dd9",
+		"addrs": {
+			"socket/unixgram": {
+				"Name": "/Users/seanmacdonald/polity/run/divine-field",
+				"Net": "unixgram"
+			}
+		}
+	},
+	"peers": {}
+}

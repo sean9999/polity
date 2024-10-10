@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func Introduce(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
+func Join(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
 
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
@@ -27,21 +27,25 @@ func Introduce(env *flargs.Environment, ctx *cli.Context, network network.Networ
 		return err
 	}
 
+	addr, pubkey, err := polity.ParseAddressString(ctx.String("addr"))
+
+	fmt.Fprintf(env.OutputStream, "addr: %s, pubkey: %s, err: %v", addr, pubkey, err)
+
 	//	peer
-	peer, err := polity.PeerFromHex([]byte(ctx.String("pubkey")))
+	peer, err := polity.PeerFromHex([]byte(pubkey))
 	if err != nil {
 		fmt.Println("not a valid peer", ctx.String("pubkey"))
 		return err
 	}
 
-	peerAddr, exists := me.Book[peer][network.Namespace()]
+	// peerAddr, exists := me.Book[peer][network.Namespace()]
 
-	if !exists {
-		return fmt.Errorf("peer has no address on network %q", network.Space())
-	}
+	// if !exists {
+	// 	return fmt.Errorf("peer has no address on network %q", network.Namespace())
+	// }
 
 	//	these are my friends. Who are your friends?
 	msg := me.Assert()
 
-	return me.Send(msg, peer, peerAddr)
+	return me.Send(msg, peer, addr)
 }

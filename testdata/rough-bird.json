@@ -1,9 +1,0 @@
-{
-	"self": {
-		"nick": "rough-bird",
-		"pub": "1134ddca2bae3298988489a149b9c7ca5cc2e611e32a1de9943388c0d9e112ee4c41fb9df1ead69619dbf76c078f9b09bd2c987b69126a508de2ece0a8a3e959",
-		"priv": "ca8a683aef492a68992cb4d1e320ebcf822bc640384b0ea96021e5e2f3544ba1",
-		"addr": "[fe80::1c36:52f3:d771:58a1%en0]:9005"
-	},
-	"peers": {}
-}

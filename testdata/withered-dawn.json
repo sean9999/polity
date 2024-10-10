@@ -1,0 +1,14 @@
+{
+	"self": {
+		"nick": "withered-dawn",
+		"pub": "674c331f8f47f1cb1885f320813b468bdd878d079110bb218eac1c2087c83489ed556461695489c8192bea6cec27a0cbc39da570f89590f6fffa78b5b57a7515",
+		"priv": "743e3091b7ccf0ddd983564a0dd119ed6e2066b19d0365f933557c1d71f316c0",
+		"addrs": {
+			"socket/unixgram": {
+				"Name": "/Users/seanmacdonald/polity/run/withered-dawn",
+				"Net": "unixgram"
+			}
+		}
+	},
+	"peers": {}
+}

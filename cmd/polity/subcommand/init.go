@@ -46,7 +46,10 @@ func Init(env *flargs.Environment, ctx *cli.Context, network network.Network) er
 	//nick := me.AsPeer().Nickname()
 	//fmt.Fprintf(env.OutputStream, "%q was written to %q\n", nick, ctx.String("config"))
 
-	me.Export(env.OutputStream, false)
+	err = me.Export(env.OutputStream, false)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"math/big"
 	"net"
 )
@@ -31,7 +32,7 @@ func (lo *LocalUdp6Net) Name() string {
 	return "udp6"
 }
 
-func (lo *LocalUdp6Net) Namespace() string {
+func (lo *LocalUdp6Net) Space() Namespace {
 	return NamespaceLoopbackIPv6
 }
 
@@ -103,4 +104,10 @@ func (lo *LocalUdp6Net) CreateConnection(pubkey []byte, _ net.Addr) (Connection,
 
 func (conn *LocalUdp6Conn) Network() Network {
 	return conn.network
+}
+
+func (conn *LocalUdp6Conn) Address() AddressString {
+	addr := conn.PacketConn.LocalAddr()
+	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
+	return AddressString(str)
 }

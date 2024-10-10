@@ -62,7 +62,7 @@ func (socknet *SocketNet) CreateAddress(b []byte) net.Addr {
 	return &addr
 }
 
-func (_ *SocketNet) Namespace() string {
+func (_ *SocketNet) Space() Namespace {
 	return NamespaceUnixSocket
 }
 
@@ -257,4 +257,10 @@ func (c *SocketConn) Close() error {
 
 func (c *SocketConn) Network() Network {
 	return c.network
+}
+
+func (conn *SocketConn) Address() AddressString {
+	addr := conn.PacketConn.LocalAddr()
+	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
+	return AddressString(str)
 }

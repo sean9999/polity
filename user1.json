@@ -1,0 +1,14 @@
+{
+	"self": {
+		"nick": "little-sea",
+		"pub": "c4b02c548060ee22b6ce8b15f7739fbf29fe05a8392088b5f7812681fadb834b789a083fe76c3dbe426177c5948062b765faf9a431e7e55cbf7bd3a5e8054943",
+		"priv": "b28f22e888b6db8a65a41cc4e8c446db6b28b21e4700f72c78a1918707798ede",
+		"addrs": {
+			"socket/unixgram": {
+				"Name": "/Users/seanmacdonald/polity/run/little-sea",
+				"Net": "unixgram"
+			}
+		}
+	},
+	"peers": {}
+}

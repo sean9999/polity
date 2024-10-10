@@ -2,12 +2,14 @@ package polity
 
 import (
 	"crypto/ed25519"
-	"encoding/hex"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
-	"net"
 	"slices"
 
+	dbi "github.com/cohenjw/drunken-bishop-identicon"
+	"github.com/dchest/siphash"
 	"github.com/sean9999/go-oracle"
 )
 
@@ -20,45 +22,56 @@ var ErrWrongByteLength = errors.New("wrong number of bytes")
 type Peer oracle.Peer
 
 func (p Peer) ID() string {
-	return p.Nickname()
+	//	let's hash pubkey down to a uint64
+	//	and then return that as hex string
+	h := siphash.New(p[:]).Sum64()
+	return fmt.Sprintf("%x", h)
 }
 
 func (p Peer) Fingerprint() string {
-	return p.Nickname()
+	//	return the ID but with spaces for easier visual identification
+	//	@todo: implement this for real
+	return p.ID()
+}
+
+func (p Peer) Randomart() string {
+	sha := sha256.New()
+	sha.Write(p[:])
+	hash := sha.Sum(nil)
+	fp := dbi.NewFingerprint(hash)
+	return fp.String()
 }
 
 // zero value means no Peer
 var NoPeer Peer
 
 type peerWithAddress struct {
-	Peer    Peer
-	Address net.Addr
-}
-
-// peerConfig is an intermediary object suitable for serialization
-type peerConfig struct {
-	oracle.PeerConfig
-	Address AddressMap `json:"addr,omitempty"`
-}
-
-func (c peerConfig) toPeer() Peer {
-	var p Peer
-	hex.Decode(p[:], []byte(c.PeerConfig.PublicKey))
-	return p
+	Peer    Peer       `json:"peer"`
+	Address AddressMap `json:"addr"`
 }
 
 func (p Peer) Exists() bool {
 	return p != NoPeer
 }
 
-func (p Peer) Config(am AddressMap) peerConfig {
+func (pa peerWithAddress) ToConfig() PeerConfig {
+	return pa.Peer.ToConfig(pa.Address)
+}
 
-	conf := peerConfig{
+func (p Peer) ToConfig(am AddressMap) PeerConfig {
+
+	conf := PeerConfig{
 		oracle.Peer(p).Config(),
 		am,
 	}
 	return conf
 }
+
+// func (p PeerConfig) Export(w io.Writer) error {
+// 	enc := json.NewEncoder(w)
+// 	enc.SetIndent("", "\t")
+// 	return ifErr(enc.Encode(p), "failed to export peer")
+// }
 
 func (p Peer) Bytes() []byte {
 	return p[:]
@@ -120,3 +133,26 @@ func NewPeer(randy io.Reader) (Peer, error) {
 	}
 	return p, nil
 }
+
+// func (p Peer) MarshalJSON() ([]byte, error) {
+// 	//dst := make([]byte,128)
+// 	//hex := hex.Encode(dst, p[:])
+// 	str := fmt.Sprintf("%x", p.Bytes())
+// 	return json.Marshal(str)
+// }
+
+// func (p Peer) UnmarshalJSON(j []byte) error {
+
+// 	var stringOfHex string
+// 	err := json.Unmarshal(j, &stringOfHex)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	q, err := PeerFromHex([]byte(stringOfHex))
+// 	if err != nil {
+// 		return err
+// 	}
+// 	copy(p[:], q[:])
+// 	return nil
+
+// }

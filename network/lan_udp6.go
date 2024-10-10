@@ -2,6 +2,7 @@ package network
 
 import (
 	"errors"
+	"fmt"
 	"net"
 
 	"v.io/x/lib/netstate"
@@ -33,7 +34,7 @@ func (lan *LanUdp6Net) Name() string {
 	return "udp6"
 }
 
-func (lan *LanUdp6Net) Namespace() string {
+func (lan *LanUdp6Net) Space() Namespace {
 	return NamespaceLANIPv6
 }
 
@@ -147,6 +148,12 @@ func (conn *LanUdpConn) Network() Network {
 	return conn.network
 }
 
+func (conn *LanUdpConn) Address() AddressString {
+	addr := conn.PacketConn.LocalAddr()
+	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
+	return AddressString(str)
+}
+
 // func (conn *LanUdpConn) Close() error {
 // 	return conn.PacketConn.Close()
 // }
@@ -155,7 +162,7 @@ func (conn *LanUdpConn) Network() Network {
 
 // LocalUdp6 is a network composed of IPV6 LAN addresses
 // distinguished by using link-local addressing
-type LanUdp6 struct {
-	net.PacketConn
-	Addr *net.UDPAddr
-}
+// type LanUdp6 struct {
+// 	net.PacketConn
+// 	Addr *net.UDPAddr
+// }

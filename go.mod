@@ -5,6 +5,8 @@ go 1.22.3
 toolchain go1.22.4
 
 require (
+	github.com/cohenjw/drunken-bishop-identicon v0.0.0-20201122214230-bcb8c7dbb764
+	github.com/dchest/siphash v1.2.3
 	github.com/google/uuid v1.6.0
 	github.com/sean9999/go-flargs v1.4.0
 	github.com/sean9999/go-oracle v1.6.2
