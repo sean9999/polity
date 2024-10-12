@@ -1,0 +1,11 @@
+{
+	"self": {
+		"nick": "silent-wood",
+		"pub": "b3cfc1841b9a69150abbed8e35de74ca210139c035ce91a6fd80f78fae76223d381025ab64bc8f2bcfc5a317e67960f88c2a1db4a4ff43b463477d07215ee63f",
+		"priv": "27ce47ad2130322cbd3a0bbca2abf6485b7ae31ea58a499401b946064da5ef64",
+		"addrs": {
+			"socket/unixgram": "unixgram:///Users/seanmacdonald/polity/run/silent-wood"
+		}
+	},
+	"peers": {}
+}

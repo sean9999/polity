@@ -7,7 +7,7 @@
 			"request": "launch",
 			"mode": "debug",
 			"program": "${workspaceFolder}/cmd/polity/main.go",
-			"args": ["-config", "testdata/blue-surf.json", "info"],
+			"args": ["-config", "testdata/ringo.json", "info"],
 			"console": "integratedTerminal",
 			"cwd": "${workspaceFolder}"
 		},

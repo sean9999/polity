@@ -1,0 +1,11 @@
+{
+	"self": {
+		"nick": "empty-hill",
+		"pub": "33db128c58aa8c227f2e1838cf381d8a4b236905af59068477b2a503a57ad5474e3e5e713657567a5baa3c7435e556e01e1e6de81077d182037fba045034a866",
+		"priv": "9a0321ce9701557f8004996080ec9887c1b928a96207223862b84b7748d381e7",
+		"addrs": {
+			"socket/unixgram": "unixgram:///Users/seanmacdonald/polity/run/empty-hill"
+		}
+	},
+	"peers": {}
+}

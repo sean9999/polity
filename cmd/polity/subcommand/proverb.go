@@ -37,7 +37,7 @@ func Proverb(env *flargs.Environment, ctx *cli.Context, net network.Network) err
 	//	iterate and send
 	for peer, addrMap := range me.Book {
 
-		addr := addrMap[me.Network.Namespace()]
+		addr := addrMap[me.Network.Space()]
 
 		if addr == nil {
 			//	@todo: what kind of error handling should we do here?

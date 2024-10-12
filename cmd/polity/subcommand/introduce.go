@@ -34,7 +34,7 @@ func Introduce(env *flargs.Environment, ctx *cli.Context, network network.Networ
 		return err
 	}
 
-	peerAddr, exists := me.Book[peer][network.Namespace()]
+	peerAddr, exists := me.Book[peer][network.Space()]
 
 	if !exists {
 		return fmt.Errorf("peer has no address on network %q", network.Space())

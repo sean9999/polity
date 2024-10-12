@@ -29,7 +29,7 @@ func handleWelcomeBack(env *flargs.Environment, me *polity.Citizen, msg polity.M
 	response := me.Compose(polity.SubjWelcomeBack, nil)
 	me.Send(response, msg.Sender(), msg.SenderAddress)
 
-	ns := me.Network.Namespace()
+	ns := me.Network.Space()
 
 	//	tell all my other friends i'm happy my friend is back
 	for p, addrMap := range me.Peers() {

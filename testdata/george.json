@@ -1,0 +1,11 @@
+{
+	"self": {
+		"nick": "floral-breeze",
+		"pub": "1b1199025531092ac6ad7aac994cb8546ce54a010e70e66409be46b809d1a44ea24cb86c6d1f2cb4fb019211c9cfc5f2ac74c101a97985637791922e06738d78",
+		"priv": "35b0643ae06dd751f467118b09e48051911195be83e03e6f1c171b40396322f2",
+		"addrs": {
+			"socket/unixgram": "unixgram:///Users/seanmacdonald/polity/run/floral-breeze"
+		}
+	},
+	"peers": {}
+}

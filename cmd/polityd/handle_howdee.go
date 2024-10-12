@@ -22,7 +22,7 @@ func handleHowdee(env *flargs.Environment, me *polity.Citizen, msg polity.Messag
 
 	//	add sender if we haven't already,
 	//	or update address if it's changed.
-	ns := me.Network.Namespace()
+	ns := me.Network.Space()
 	senderAddr, exists := me.Book[msg.Sender()]
 
 	if !exists {

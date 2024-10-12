@@ -6,7 +6,7 @@ import "net"
 type Connection interface {
 	net.PacketConn
 	Network() Network
-	Address() AddressString
+	Address() *Address
 }
 
 // type Connection struct {

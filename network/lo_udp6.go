@@ -106,8 +106,9 @@ func (conn *LocalUdp6Conn) Network() Network {
 	return conn.network
 }
 
-func (conn *LocalUdp6Conn) Address() AddressString {
+func (conn *LocalUdp6Conn) Address() *Address {
 	addr := conn.PacketConn.LocalAddr()
 	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
-	return AddressString(str)
+	a, _ := ParseAddress(str)
+	return a
 }

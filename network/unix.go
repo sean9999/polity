@@ -259,8 +259,9 @@ func (c *SocketConn) Network() Network {
 	return c.network
 }
 
-func (conn *SocketConn) Address() AddressString {
+func (conn *SocketConn) Address() *Address {
 	addr := conn.PacketConn.LocalAddr()
 	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
-	return AddressString(str)
+	a, _ := ParseAddress(str)
+	return a
 }

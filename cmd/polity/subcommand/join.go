@@ -3,6 +3,7 @@ package subcommand
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/sean9999/go-flargs"
@@ -11,7 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func Join(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
+func Join(env *flargs.Environment, ctx *cli.Context, netw network.Network) error {
 
 	if ctx.String("config") == "" {
 		return errors.New("config is nil")
@@ -22,30 +23,34 @@ func Join(env *flargs.Environment, ctx *cli.Context, network network.Network) er
 		return err
 	}
 	fd.Seek(0, 0)
-	me, err := polity.CitizenFrom(fd, network, false)
+	me, err := polity.CitizenFrom(fd, netw, false)
 	if err != nil {
 		return err
 	}
 
-	addr, pubkey, err := polity.ParseAddressString(ctx.String("addr"))
+	//addrStr := network.AddressString(ctx.String("addr"))
+
+	addr, err := network.ParseAddress(ctx.String("addr"))
+	if err != nil {
+		return err
+	}
+	pubkey := addr.Pubkey()
 
 	fmt.Fprintf(env.OutputStream, "addr: %s, pubkey: %s, err: %v", addr, pubkey, err)
 
 	//	peer
 	peer, err := polity.PeerFromHex([]byte(pubkey))
 	if err != nil {
-		fmt.Println("not a valid peer", ctx.String("pubkey"))
+		fmt.Fprintln(env.ErrorStream, "not a valid peer: ", ctx.String("pubkey"))
 		return err
 	}
 
-	// peerAddr, exists := me.Book[peer][network.Namespace()]
-
-	// if !exists {
-	// 	return fmt.Errorf("peer has no address on network %q", network.Namespace())
-	// }
+	fmt.Fprintln(env.OutputStream, peer.Nickname())
 
 	//	these are my friends. Who are your friends?
 	msg := me.Assert()
+
+	io.Copy(env.OutputStream, msg)
 
 	return me.Send(msg, peer, addr)
 }

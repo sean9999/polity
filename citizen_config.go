@@ -22,8 +22,8 @@ type SelfConfig struct {
 
 // a CitizenConfig is a SelfConfig, along with it's peers and a file handle
 type CitizenConfig struct {
-	Self  SelfConfig   `json:"self"`
-	Peers *AddressBook `json:"peers"`
+	Self  SelfConfig  `json:"self"`
+	Peers AddressBook `json:"peers"`
 }
 
 func (cc *CitizenConfig) String() string {
@@ -44,8 +44,7 @@ func ConfigFrom(rw io.ReadWriter) (*CitizenConfig, error) {
 	}
 	jsonDecoder := json.NewDecoder(rw)
 	conf := CitizenConfig{
-		Self:  SelfConfig{},
-		Peers: &AddressBook{},
+		Self: SelfConfig{},
 	}
 	err := jsonDecoder.Decode(&conf)
 	if err != nil {

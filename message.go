@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
+	"io"
 
 	"github.com/google/uuid"
 	"github.com/sean9999/go-oracle"
+	"github.com/sean9999/polity/network"
 )
 
 // this should be the maximum size allowed for Messages
@@ -28,7 +29,7 @@ var ZeroUUID uuid.UUID
 type Message struct {
 	Id            uuid.UUID
 	ThreadId      uuid.UUID
-	SenderAddress net.Addr
+	SenderAddress *network.Address
 	Plain         *oracle.PlainText
 	Cipher        *oracle.CipherText
 }
@@ -44,6 +45,19 @@ func (e Envelope) MarshalBinary() ([]byte, error) {
 
 func (e *Envelope) UnmarshalBinary(b []byte) error {
 	return json.Unmarshal(b, e)
+}
+
+func (m Message) Read(p []byte) (int, error) {
+	json, err := m.MarshalBinary()
+	if err != nil {
+		return 0, err
+	}
+	n := copy(p, json)
+
+	if n <= len(json) {
+		return n, nil
+	}
+	return n, io.EOF
 }
 
 func (m Message) Digest() ([]byte, error) {
@@ -203,7 +217,7 @@ func (msg *Message) UnmarshalBinary(data []byte) error {
 // type messageOptionFunction func(any) MessageOption
 type MessageOption func(*Message)
 
-func WithSender(addr net.Addr) MessageOption {
+func WithSender(addr *network.Address) MessageOption {
 	return func(msg *Message) {
 		msg.SenderAddress = addr
 	}

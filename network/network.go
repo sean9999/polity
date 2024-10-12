@@ -32,4 +32,3 @@ type Network interface {
 	OutboundConnection(fromConn Connection, to net.Addr) (Connection, error)
 	CreateAddress([]byte) net.Addr
 }
-

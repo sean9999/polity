@@ -1,0 +1,11 @@
+{
+	"self": {
+		"nick": "floral-waterfall",
+		"pub": "c42b5074df956e3679292d54bd2dbc4dbb2d4fbf0e890753fd326e76f4073e4202842b378d088384c5db46254ae13815250ff3e02a625d0c923435ce1f3e9c1f",
+		"priv": "ce3472f3d7f05a87e49a44ee86e052da1df8f198fe02aff91c4fb74a0da90ca3",
+		"addrs": {
+			"socket/unixgram": "unixgram:///Users/seanmacdonald/polity/run/floral-waterfall"
+		}
+	},
+	"peers": {}
+}

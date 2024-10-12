@@ -1,11 +1,40 @@
 package polity
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/sean9999/polity/network"
 )
 
-type AddressMap map[network.Namespace]network.AddressString
+type AddressMap map[network.Namespace]*network.Address
 type AddressBook map[Peer]AddressMap
+
+func (ab AddressBook) MarshalJSON() ([]byte, error) {
+	m := make(map[string]AddressMap, len(ab))
+	for peer, v := range ab {
+		phex := fmt.Sprintf("%x", peer.Bytes())
+		m[phex] = v
+	}
+	return json.Marshal(m)
+}
+
+func (ptr *AddressBook) UnmarshalJSON(b []byte) error {
+	ab := *ptr
+	var m map[string]AddressMap
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return err
+	}
+	for phex, v := range m {
+		peer, err := PeerFromHex([]byte(phex))
+		if err != nil {
+			return err
+		}
+		ab[peer] = v
+	}
+	return nil
+}
 
 // func (book AddressBook) MarshalJSON() ([]byte, error) {
 // 	m := make(map[string]map[string]net.Addr, len(book))

@@ -39,9 +39,11 @@ func Info(env *flargs.Environment, ctx *cli.Context, n network.Network) error {
 		return err
 	}
 
+	fmt.Fprintln(env.OutputStream, me.Nickname())
+
 	//j, err := json.MarshalIndent(ooo, "", "\t")
 
-	meep := me.AsPeer()
+	//meep := me.AsPeer()
 
 	// mepeer := meep.ToConfig(me.MyAddresses)
 
@@ -53,7 +55,7 @@ func Info(env *flargs.Environment, ctx *cli.Context, n network.Network) error {
 	// env.OutputStream.Write(j)
 	// env.OutputStream.Write(lineBreak)
 
-	fmt.Fprintln(env.OutputStream, meep.Randomart())
+	//fmt.Fprintln(env.OutputStream, meep.Randomart())
 
 	//fmt.Fprintln(env.OutputStream, "Invite Code:")
 

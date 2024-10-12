@@ -148,10 +148,11 @@ func (conn *LanUdpConn) Network() Network {
 	return conn.network
 }
 
-func (conn *LanUdpConn) Address() AddressString {
+func (conn *LanUdpConn) Address() *Address {
 	addr := conn.PacketConn.LocalAddr()
 	str := fmt.Sprintf("%s://%s", addr.Network(), addr.String())
-	return AddressString(str)
+	a, _ := ParseAddress(str)
+	return a
 }
 
 // func (conn *LanUdpConn) Close() error {

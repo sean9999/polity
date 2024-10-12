@@ -90,15 +90,17 @@ func (c *Citizen) Peer(id string) (Peer, net.Addr) {
 
 func (c *Citizen) Config() CitizenConfig {
 
+	pub := fmt.Sprintf("%s", c.PublicKeyAsHex())
+	priv := fmt.Sprintf("%x", c.PrivateEncryptionKey().Bytes())
+
 	self := SelfConfig{
 		Nickname:   c.Nickname(),
-		PublicKey:  string(c.PublicKeyAsHex()),
-		Privatekey: string(c.PrivateEncryptionKey().Bytes()),
+		PublicKey:  pub,
+		Privatekey: priv,
 		Addresses:  c.MyAddresses,
 	}
 	conf := CitizenConfig{
-		Self:  self,
-		Peers: &(c.Book),
+		Self: self,
 	}
 	return conf
 }
@@ -118,7 +120,7 @@ func (c *Citizen) UpdateConfig() error {
 }
 
 // add a peer to our list of peers, persisting to config
-func (c *Citizen) AddPeer(p Peer, addr network.AddressString) error {
+func (c *Citizen) AddPeer(p Peer, addr *network.Address) error {
 
 	ns := c.Network.Space()
 	c.Book[p] = AddressMap{
@@ -180,7 +182,7 @@ func (c *Citizen) Listen() (chan Message, error) {
 	fqAddr := fmt.Sprintf("%s://%s", c.InboundConnection.Network().Space(), c.InboundConnection.LocalAddr())
 	body := fmt.Sprintf("my address is\t%s\nmy nickname is\t%s\n", fqAddr, c.Nickname())
 	msg := c.Compose(SubjHelloSelf, []byte(body))
-	msg.SenderAddress = c.InboundConnection.LocalAddr()
+	msg.SenderAddress = c.InboundConnection.Address()
 	c.inbox <- msg
 
 	buffer := make([]byte, messageBufferSize)
@@ -195,7 +197,15 @@ func (c *Citizen) Listen() (chan Message, error) {
 			}
 			var msg Message
 			msg.UnmarshalBinary(buffer[:n])
-			msg.SenderAddress = addr
+
+			address, err := network.AddressFromAddr(addr)
+
+			//	TODO: recover?
+			if err != nil {
+				panic(err)
+			}
+
+			msg.SenderAddress = address
 			c.inbox <- msg
 		}
 	}()
@@ -235,7 +245,9 @@ func (c *Citizen) Send(msg Message, _ Peer, destAddr net.Addr) error {
 	}
 	defer conn.Close()
 
-	msg.SenderAddress = c.InboundConnection.LocalAddr()
+	addr, err := network.AddressFromAddr(c.InboundConnection.LocalAddr())
+
+	msg.SenderAddress = addr
 
 	if err := msg.Problem(); err != nil {
 		return err
@@ -298,10 +310,10 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 	f.Seek(0, 0)
 
 	inbox := make(chan Message, 1)
-	k, err := ConfigFrom(rw)
-	if err != nil {
-		return nil, err
-	}
+	// k, err := ConfigFrom(rw)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	//	might be nil. That's ok. It's just a suggestion
 	//addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
@@ -317,14 +329,13 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 	// 	}
 	// }
 
-	kpeers := k.Peers
+	//kpeers := k.Peers
 
 	citizen := &Citizen{
 		Network:     n,
 		inbox:       inbox,
 		Oracle:      orc,
 		MyAddresses: AddressMap{},
-		Book:        *kpeers,
 	}
 
 	if err := citizen.init(); err != nil {

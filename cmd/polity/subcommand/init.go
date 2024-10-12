@@ -10,7 +10,7 @@ import (
 )
 
 // Init creates a new Citizen. You must pass in a valid path to a file where the private key information will be held.
-func Init(env *flargs.Environment, ctx *cli.Context, network network.Network) error {
+func Init(env *flargs.Environment, ctx *cli.Context, netw network.Network) error {
 
 	// if ctx.String("config") == "" {
 	// 	return errors.New("nil config")
@@ -38,7 +38,7 @@ func Init(env *flargs.Environment, ctx *cli.Context, network network.Network) er
 
 	//	create a new citizen and write it to the file
 	randy := rand.New(env.Randomness)
-	me, err := polity.NewCitizen(randy, network, nil)
+	me, err := polity.NewCitizen(randy, netw, nil)
 	if err != nil {
 		return CliError{1, "can't create new citizen", err}
 	}
