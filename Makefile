@@ -9,6 +9,12 @@ info:
 binaries: bin/polityd bin/polity
 	mkdir -p bin
 
+docker-image:
+	docker build -t $(REPO) .
+
+docker-run:
+	docker run --network ip6net -P $(REPO) polityd --config=/etc/polity/weathered-star.json
+
 bin/polity:
 	go build -v -o bin/polity -ldflags="-X 'main.Version=$(REF)'" cmd/polity/**.go
 	

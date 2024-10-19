@@ -10,7 +10,15 @@ COPY cmd ./cmd
 
 ENV CGO_ENABLED=0
 ENV GOOS=linux
-ENV GOARCH=arm
+#ENV GOARCH=arm
+
+VOLUME /etc/polity
+
+COPY testdata/weathered-star.json /etc/polity/
+COPY testdata/hidden-butterfly.json /etc/polity/
+COPY testdata/dark-haze.json /etc/polity/
+COPY testdata/billowing-water.json /etc/polity/
+
 
 RUN go build -o /bin/polity ./cmd/polity 
 RUN go build -o /bin/polityd ./cmd/polityd 

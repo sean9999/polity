@@ -1,5 +1,3 @@
-github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
-github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/amazon-ion/ion-go v1.5.0 h1:fxsAyFda8N9HsM2xYbQSxJ3Qi/oLn0xzLoiXWG3bseg=
 github.com/amazon-ion/ion-go v1.5.0/go.mod h1:3ZEje8i20TiIPVZlN+KE3B2ppZ1B8d9F/KaT7Dtec+k=
 github.com/cpuguy83/go-md2man/v2 v2.0.4 h1:wfIWP927BUkWJb2NmU/kNDYIBTh/ziUX91+lVfRxZq4=
@@ -19,8 +17,6 @@ github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sean9999/go-flargs v1.3.3 h1:VAo5oxV2OXw/QZ9fBMdnoVhvTXTuNohIulDmlzsAnAQ=
 github.com/sean9999/go-flargs v1.3.3/go.mod h1:uFPr2vtYoHLEJU2fn/u4jXk7A2j8Xag8Uyn2kbcVYd8=
-github.com/sean9999/go-oracle v1.4.3 h1:v1hIA1DdXqTWLi5mvfa22SEwSWLlHgZwfIiPbkp4w1E=
-github.com/sean9999/go-oracle v1.4.3/go.mod h1:azuff/rNaGLetmLHh+WFrhfXsgqybN3oJHKhq66zDAk=
 github.com/sean9999/go-oracle v1.6.1 h1:SloPPqh7uX0Gxb9GLE06sgzWC9ixrS849nDzqI/QNbM=
 github.com/sean9999/go-oracle v1.6.1/go.mod h1:azuff/rNaGLetmLHh+WFrhfXsgqybN3oJHKhq66zDAk=
 github.com/sean9999/go-real-fs v0.0.5 h1:9+1cJmlG3PhDJWD+bP35zqtvhImd2L2rlYEkmU85qBQ=

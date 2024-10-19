@@ -76,7 +76,7 @@ func (lan *LanUdp6) AddressFromPubkey(_ []byte, suggestedAddr net.Addr) (net.Add
 	//	Address is chosen based on available IPV6 addresses.
 
 	state, _ := netstate.GetAccessibleIPs()
-	ll6 := state.Filter(netstate.IsUnicastIPv6).Filter(isLinkLocalAndRoutable).Filter(isNotWeird)
+	ll6 := state.Filter(netstate.IsUnicastIPv6).Filter(isNotWeird)
 
 	var my_addr netstate.Address
 
