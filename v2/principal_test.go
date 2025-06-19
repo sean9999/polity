@@ -31,7 +31,10 @@ func TestEnvelope(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	e2 := new(Envelope[*net.UDPAddr])
+	//e2 := new(Envelope[*net.UDPAddr])
+
+	e2 := NewEnvelope[*net.UDPAddr]()
+
 	err = json.Unmarshal(data1, e2)
 	assert.NoError(t, err)
 

@@ -43,7 +43,17 @@ func (e *Envelope[A]) Serialize() ([]byte, error) {
 }
 
 func (e *Envelope[A]) Deserialize(data []byte) error {
-	return msgpack.Unmarshal(data, e)
+
+	e.ID = NilId
+	e.Thread = NilId
+	e.Recipient = NewPeer[A]()
+	e.Sender = NewPeer[A]()
+
+	err := msgpack.Unmarshal(data, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // type Message struct {
