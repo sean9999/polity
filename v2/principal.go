@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 
 	"github.com/google/uuid"
 
@@ -13,10 +14,9 @@ import (
 
 type Principal struct {
 	*goracle.Principal
-	Addr   Address
-	conn   net.PacketConn
-	Inbox  chan Envelope
-	Errors chan error
+	Addr  *UDPAddr
+	conn  net.PacketConn
+	Inbox chan Envelope
 }
 
 func (p *Principal) AsPeer() *Peer {
@@ -35,46 +35,35 @@ func NewPrincipal(rand io.Reader, network Network) (*Principal, error) {
 		return nil, err
 	}
 	ch := make(chan Envelope)
-	errs := make(chan error)
 	p := Principal{
 		Principal: gork,
-		Addr:      network.Address(),
+		Addr:      network.Address().(*UDPAddr),
 		conn:      pc,
 		Inbox:     ch,
-		Errors:    errs,
 	}
 	go func() {
 		buf := make([]byte, 1024)
 		for {
 			i, addr, err := p.conn.ReadFrom(buf)
-			// fmt.Println("i = ", i)
-			// fmt.Println("ReadFrom err is ", err)
-			// fmt.Println("addr is ", addr)
 			bin := buf[:i]
 			e := Envelope{}
 			err = json.Unmarshal(bin, &e)
+			if addr != e.Sender.Addr {
+				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr)
+			}
 			if err == nil {
-				if addr != e.Sender.Addr {
-					errs <- fmt.Errorf("envelope came from %s but said %s", addr, e.Sender.Addr)
-				}
 				ch <- e
 			} else {
-				fmt.Println("Unmarshal err is", err)
+				fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
 			}
 		}
 	}()
 
-	go func() {
-		for err := range errs {
-			fmt.Println("error is ", err)
-		}
-	}()
-
-	go func() {
-		for e := range ch {
-			fmt.Println("received envelope is ", e)
-		}
-	}()
+	// go func() {
+	// 	for e := range ch {
+	// 		fmt.Println(e.String())
+	// 	}
+	// }()
 
 	return &p, nil
 }
@@ -88,15 +77,24 @@ func (p *Principal) SendText(body []byte, recipient *Peer, threadId MessageID) (
 		Message:   body,
 	}
 
-	//	are we sending to ourself? then bypass the network
-	if p.Addr.Equal(recipient.Addr) {
-		p.Inbox <- e
-		return 0, nil
-	}
-
 	bin, err := json.Marshal(&e)
 	if err != nil {
 		return 0, err
+	}
+
+	//	are we sending to ourself? then open an ephemeral connection
+	//	NOTE: is it better to simply circumvent the network stack?
+	//	we could simply send to Inbox
+	if p.Addr.Equal(recipient.Addr) {
+
+		pc, err := net.DialUDP("udp", nil, recipient.Addr.UDPAddr)
+		if err != nil {
+			return -1, err
+		}
+		defer pc.Close()
+		i, err := pc.Write(bin)
+
+		return i, err
 	}
 
 	return p.conn.WriteTo(bin, recipient.Addr)

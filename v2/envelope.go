@@ -1,6 +1,8 @@
 package polity
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -17,6 +19,7 @@ type Envelope struct {
 	Message   []byte    `json:"msg"`
 }
 
-// func (e *Envelope) String() string {
-// 	s := fmt.Sprintf("sender: %s, message: %s", e.Sender)
-// }
+func (e *Envelope) String() string {
+	s := fmt.Sprintf("sender:\t%s\nsubj:\t%s\nmsg:\t%s\n", e.Sender.Nickname(), "asdfa", e.Message)
+	return s
+}

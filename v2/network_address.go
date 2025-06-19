@@ -20,10 +20,6 @@ type UDPAddr struct {
 	*net.UDPAddr
 }
 
-// func (u *UDPAddr) String() string {
-// 	return fmt.Sprintf("%s://%s", u.Network(), u.String())
-// }
-
 func (u *UDPAddr) Equal(x Address) bool {
 	return strings.Compare(u.String(), x.String()) == 0
 }

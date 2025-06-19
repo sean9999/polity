@@ -17,10 +17,16 @@ func main() {
 		panic(err)
 	}
 
-	i, err := p.SendText([]byte("hello"), p.AsPeer(), polity.Nil)
+	go func() {
+		for e := range p.Inbox {
+			fmt.Println(e.String())
+		}
+	}()
 
-	fmt.Println(i)
-	fmt.Println(err)
+	_, err = p.SendText([]byte("hello"), p.AsPeer(), polity.Nil)
+
+	// fmt.Println(i)
+	// fmt.Println(err)
 
 	time.Sleep(time.Second * 3333)
 

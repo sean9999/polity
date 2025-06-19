@@ -17,7 +17,7 @@ type peerRecord struct {
 
 type Peer struct {
 	*goracle.Peer `json:"goracle"`
-	Addr          Address `json:"addr"`
+	Addr          *UDPAddr `json:"addr"`
 }
 
 func (p *Peer) MarshalJSON() ([]byte, error) {
@@ -25,7 +25,7 @@ func (p *Peer) MarshalJSON() ([]byte, error) {
 	props := p.Props.AsMap()
 	rec := peerRecord{
 		Pubkey: pub,
-		Addr:   p.Addr.(*UDPAddr),
+		Addr:   p.Addr,
 		Props:  props,
 	}
 	return json.Marshal(rec)
