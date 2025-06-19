@@ -9,35 +9,36 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
 )
 
-type Principal struct {
+type Principal[A net.Addr, N Network[A]] struct {
 	*goracle.Principal
-	Addr  *UDPAddr
+	Net   N
 	conn  net.PacketConn
-	Inbox chan Envelope
+	Inbox chan Envelope[A]
 }
 
-func (p *Principal) AsPeer() *Peer {
-	e := Peer{
+func (p *Principal[A, N]) AsPeer() *Peer[A] {
+	e := Peer[A]{
 		Peer: p.ToPeer(),
-		Addr: p.Addr,
+		Addr: p.Net.Address(),
 	}
 	return &e
 }
 
-func NewPrincipal(rand io.Reader, network Network) (*Principal, error) {
+func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Principal[A, N], error) {
 	gork := goracle.NewPrincipal(rand, nil)
 
 	pc, err := network.Connection()
 	if err != nil {
 		return nil, err
 	}
-	ch := make(chan Envelope)
-	p := Principal{
+	ch := make(chan Envelope[A])
+	p := Principal[A, N]{
 		Principal: gork,
-		Addr:      network.Address().(*UDPAddr),
+		Net:       network,
 		conn:      pc,
 		Inbox:     ch,
 	}
@@ -46,10 +47,10 @@ func NewPrincipal(rand io.Reader, network Network) (*Principal, error) {
 		for {
 			i, addr, err := p.conn.ReadFrom(buf)
 			bin := buf[:i]
-			e := Envelope{}
+			e := Envelope[A]{}
 			err = json.Unmarshal(bin, &e)
-			if addr != e.Sender.Addr {
-				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr)
+			if addr.String() != e.Sender.Addr.String() {
+				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr.String())
 			}
 			if err == nil {
 				ch <- e
@@ -68,13 +69,32 @@ func NewPrincipal(rand io.Reader, network Network) (*Principal, error) {
 	return &p, nil
 }
 
-func (p *Principal) SendText(body []byte, recipient *Peer, threadId MessageID) (int, error) {
-	e := Envelope{
+func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread MessageID) *Envelope[A] {
+
+	msg := delphi.NewMessage(nil, delphi.PlainMessage, body)
+	msg.SenderKey = p.PublicKey()
+	msg.RecipientKey = recipient.PublicKey()
+
+	e := Envelope[A]{
+		ID:        MessageID(uuid.New()),
+		Thread:    thread,
+		Sender:    p.AsPeer(),
+		Recipient: recipient,
+		Message:   msg,
+	}
+	return &e
+}
+
+func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId MessageID) (int, error) {
+
+	msg := delphi.NewMessage(nil, delphi.PlainMessage, body)
+
+	e := Envelope[A]{
 		ID:        MessageID(uuid.New()),
 		Thread:    threadId,
 		Sender:    p.AsPeer(),
 		Recipient: recipient,
-		Message:   body,
+		Message:   msg,
 	}
 
 	bin, err := json.Marshal(&e)
@@ -85,17 +105,16 @@ func (p *Principal) SendText(body []byte, recipient *Peer, threadId MessageID) (
 	//	are we sending to ourself? then open an ephemeral connection
 	//	NOTE: is it better to simply circumvent the network stack?
 	//	we could simply send to Inbox
-	if p.Addr.Equal(recipient.Addr) {
-
-		pc, err := net.DialUDP("udp", nil, recipient.Addr.UDPAddr)
+	if p.Net.Address().String() == recipient.Addr.String() {
+		pc, err := p.Net.NewConnection()
 		if err != nil {
 			return -1, err
 		}
-		defer pc.Close()
-		i, err := pc.Write(bin)
-
+		i, err := pc.WriteTo(bin, recipient.Addr)
+		pc.Close()
 		return i, err
 	}
 
+	// we are sending to someone else
 	return p.conn.WriteTo(bin, recipient.Addr)
 }

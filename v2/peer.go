@@ -3,27 +3,30 @@ package polity
 import (
 	"encoding/json"
 	"errors"
+	"net"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
-type peerRecord struct {
+// a peerRecord is a convenient way to serialize a Peer
+type peerRecord[A net.Addr] struct {
 	Pubkey string            `json:"pub"`
-	Addr   *UDPAddr          `json:"addr"`
+	Addr   A                 `json:"addr"`
 	Props  map[string]string `json:"props"`
 }
 
-type Peer struct {
+// A Peer[N]  is a public key, some arbitrary key-value pairs, and an address on network N
+type Peer[A net.Addr] struct {
 	*goracle.Peer `json:"goracle"`
-	Addr          *UDPAddr `json:"addr"`
+	Addr          A `json:"net"`
 }
 
-func (p *Peer) MarshalJSON() ([]byte, error) {
+func (p *Peer[A]) MarshalJSON() ([]byte, error) {
 	pub := p.Peer.ToHex()
 	props := p.Props.AsMap()
-	rec := peerRecord{
+	rec := peerRecord[A]{
 		Pubkey: pub,
 		Addr:   p.Addr,
 		Props:  props,
@@ -31,13 +34,12 @@ func (p *Peer) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rec)
 }
 
-func (p *Peer) UnmarshalJSON(data []byte) error {
-	var rec peerRecord
+func (p *Peer[A]) UnmarshalJSON(data []byte) error {
+	var rec peerRecord[A]
 	err := json.Unmarshal(data, &rec)
 	if err != nil {
 		return err
 	}
-	p.Addr = rec.Addr
 	pubkey := delphi.KeyFromHex(rec.Pubkey)
 	gork := goracle.Peer{
 		Peer:  pubkey,
@@ -51,6 +53,6 @@ func (p *Peer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *Peer) PublicKey() delphi.KeyPair {
+func (p *Peer[A]) PublicKey() delphi.KeyPair {
 	return p.Peer.Peer
 }

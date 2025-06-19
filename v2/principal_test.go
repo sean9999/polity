@@ -3,8 +3,10 @@ package polity
 import (
 	"crypto/rand"
 	"encoding/json"
+	"net"
 	"testing"
 
+	"github.com/sean9999/go-delphi"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,10 +18,10 @@ func TestEnvelope(t *testing.T) {
 	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
 	assert.NoError(t, err)
 
-	e1 := &Envelope{
+	e1 := &Envelope[*net.UDPAddr]{
 		Sender:    alice.AsPeer(),
 		Recipient: bob.AsPeer(),
-		Message:   []byte("hello"),
+		Message:   delphi.NewMessage(nil, delphi.PlainMessage, []byte("hello")),
 	}
 
 	data1, err := json.Marshal(e1)
@@ -28,7 +30,7 @@ func TestEnvelope(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	e2 := new(Envelope)
+	e2 := new(Envelope[*net.UDPAddr])
 	err = json.Unmarshal(data1, e2)
 	assert.NoError(t, err)
 

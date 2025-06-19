@@ -25,9 +25,13 @@ func main() {
 
 	_, err = p.SendText([]byte("hello"), p.AsPeer(), polity.Nil)
 
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		time.Sleep(time.Second * 3)
+	}
+
 	// fmt.Println(i)
 	// fmt.Println(err)
-
-	time.Sleep(time.Second * 3333)
 
 }
