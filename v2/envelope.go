@@ -9,24 +9,40 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-type MessageID uuid.UUID
+type MessageId uuid.UUID
 
-// Nil is a uuid with all zeros
-var Nil MessageID = MessageID(uuid.Nil)
+// NilId is a uuid with all zeros
+var NilId MessageId = MessageId(uuid.Nil)
+
+func NewMessageId() MessageId {
+	u := uuid.New()
+	return MessageId(u)
+}
 
 type Envelope[A net.Addr] struct {
-	ID        MessageID       `json:"id" msgpack:"id"`
-	Thread    MessageID       `json:"thread" msgpack:"thread"`
+	ID        MessageId       `json:"id" msgpack:"id"`
+	Thread    MessageId       `json:"thread" msgpack:"thread"`
 	Sender    *Peer[A]        `json:"from" msgpack:"from"`
 	Recipient *Peer[A]        `json:"to" msgpack:"to"`
 	Message   *delphi.Message `json:"msg" msgpack:"msg"`
 }
 
-func (e Envelope[A]) MarshalBinary() ([]byte, error) {
+func NewEnvelope[A net.Addr]() *Envelope[A] {
+	e := Envelope[A]{
+		ID:        NilId,
+		Thread:    NilId,
+		Sender:    NewPeer[A](),
+		Recipient: NewPeer[A](),
+		Message:   delphi.NewMessage(),
+	}
+	return &e
+}
+
+func (e *Envelope[A]) Serialize() ([]byte, error) {
 	return msgpack.Marshal(e)
 }
 
-func (e *Envelope[A]) UnmarshalBinary(data []byte) error {
+func (e *Envelope[A]) Deserialize(data []byte) error {
 	return msgpack.Unmarshal(data, e)
 }
 

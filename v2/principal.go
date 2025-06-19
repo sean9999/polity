@@ -1,7 +1,6 @@
 package polity
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -42,79 +41,79 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 		conn:      pc,
 		Inbox:     ch,
 	}
+
+	//	listen for Envelopes
 	go func() {
 		buf := make([]byte, 1024)
 		for {
 			i, addr, err := p.conn.ReadFrom(buf)
 			bin := buf[:i]
-			e := Envelope[A]{}
-			err = json.Unmarshal(bin, &e)
+			e := NewEnvelope[A]()
+			err = e.Deserialize(bin)
 			if addr.String() != e.Sender.Addr.String() {
 				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr.String())
 			}
 			if err == nil {
-				ch <- e
+				ch <- *e
 			} else {
 				fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
 			}
 		}
 	}()
 
-	// go func() {
-	// 	for e := range ch {
-	// 		fmt.Println(e.String())
-	// 	}
-	// }()
-
 	return &p, nil
 }
 
-func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread MessageID) *Envelope[A] {
-
-	msg := delphi.NewMessage(nil, delphi.PlainMessage, body)
+func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread MessageId) *Envelope[A] {
+	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 	msg.SenderKey = p.PublicKey()
 	msg.RecipientKey = recipient.PublicKey()
-
-	e := Envelope[A]{
-		ID:        MessageID(uuid.New()),
-		Thread:    thread,
-		Sender:    p.AsPeer(),
-		Recipient: recipient,
-		Message:   msg,
-	}
-	return &e
+	e := NewEnvelope[A]()
+	e.ID = NewMessageId()
+	e.Thread = thread
+	e.Sender = p.AsPeer()
+	e.Recipient = recipient
+	e.Message = msg
+	return e
 }
 
-func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId MessageID) (int, error) {
+func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 
-	msg := delphi.NewMessage(nil, delphi.PlainMessage, body)
+	bin, err := e.Serialize()
+
+	if err != nil {
+		return 0, err
+	}
+
+	//	are we sending to ourself? then open an ephemeral connection
+	//	NOTE: is it better to circumvent the network stack?
+	//	we could simply send to Inbox.
+	if p.Net.Address().String() == e.Recipient.Addr.String() {
+		pc, err := p.Net.NewConnection()
+		if err != nil {
+			return -1, err
+		}
+		i, err := pc.WriteTo(bin, e.Recipient.Addr)
+		pc.Close()
+		return i, err
+	}
+
+	// we are sending to someone else
+	return p.conn.WriteTo(bin, e.Recipient.Addr)
+}
+
+func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId MessageId) (int, error) {
+
+	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 
 	e := Envelope[A]{
-		ID:        MessageID(uuid.New()),
+		ID:        MessageId(uuid.New()),
 		Thread:    threadId,
 		Sender:    p.AsPeer(),
 		Recipient: recipient,
 		Message:   msg,
 	}
 
-	bin, err := json.Marshal(&e)
-	if err != nil {
-		return 0, err
-	}
+	return p.Send(&e)
 
-	//	are we sending to ourself? then open an ephemeral connection
-	//	NOTE: is it better to simply circumvent the network stack?
-	//	we could simply send to Inbox
-	if p.Net.Address().String() == recipient.Addr.String() {
-		pc, err := p.Net.NewConnection()
-		if err != nil {
-			return -1, err
-		}
-		i, err := pc.WriteTo(bin, recipient.Addr)
-		pc.Close()
-		return i, err
-	}
-
-	// we are sending to someone else
-	return p.conn.WriteTo(bin, recipient.Addr)
 }

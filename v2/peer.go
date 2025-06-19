@@ -12,15 +12,24 @@ import (
 
 // a peerRecord is a convenient way to serialize a Peer
 type peerRecord[A net.Addr] struct {
-	Pubkey string            `json:"pub"`
-	Addr   A                 `json:"addr"`
-	Props  map[string]string `json:"props"`
+	Pubkey string            `json:"pub" msgpack:"pub"`
+	Addr   A                 `json:"addr" msgpack:"addr"`
+	Props  map[string]string `json:"props" msgpack:"props"`
 }
 
 // A Peer[N]  is a public key, some arbitrary key-value pairs, and an address on network N
 type Peer[A net.Addr] struct {
 	*goracle.Peer `json:"goracle"`
 	Addr          A `json:"net"`
+}
+
+func NewPeer[A net.Addr]() *Peer[A] {
+	addr := new(A)
+	p := Peer[A]{
+		Peer: goracle.NewPeer(),
+		Addr: *addr,
+	}
+	return &p
 }
 
 func (p *Peer[A]) MarshalJSON() ([]byte, error) {

@@ -23,15 +23,13 @@ func main() {
 		}
 	}()
 
-	_, err = p.SendText([]byte("hello"), p.AsPeer(), polity.Nil)
+	//	send to self
+	_, err = p.SendText([]byte("hello"), p.AsPeer(), polity.NilId)
 
 	if err != nil {
 		fmt.Println(err)
 	} else {
 		time.Sleep(time.Second * 3)
 	}
-
-	// fmt.Println(i)
-	// fmt.Println(err)
 
 }
