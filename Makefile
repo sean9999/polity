@@ -1,4 +1,4 @@
-REPO=github.com/sean9999/polity
+REPO=github.com/sean9999/polity/v2
 SEMVER := $$(git tag --sort=-version:refname | head -n 1)
 BRANCH := $$(git branch --show-current)
 REF := $$(git describe --dirty --tags --always)
@@ -6,21 +6,17 @@ REF := $$(git describe --dirty --tags --always)
 info:
 	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(REPO) $(SEMVER) $(BRANCH) $(REF)
 
-binaries: bin/polityd bin/polity
+binaries: bin/polityd
 	mkdir -p bin
-
-bin/polity:
-	go build -v -o bin/polity -ldflags="-X 'main.Version=$(REF)'" cmd/polity/**.go
 	
 bin/polityd:	
-	go build -v -o bin/polityd -ldflags="-X 'main.Version=$(REF)'" cmd/polityd/**.go
+	go build -v -o bin/polityd -ldflags="-X 'main.Version=$(REF)'" v2/cmd/polityd/**.go
 
 tidy:
 	go mod tidy
 
 install:
-	go install ./cmd/polity
-	go install ./cmd/polityd
+	cd ./v2 && go install ./cmd/polityd
 	mkdir -p ${HOME}/.config/polity
 	touch ${HOME}/.config/polity/config.json
 
