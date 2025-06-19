@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "Polity",
+			"path": "."
+		},
+		{
+			"name": "Oracle",
+			"path": "../../go-oracle/v2"
+		},
+		{
+			"name": "Delphi",
+			"path": "../../go-delphi"
+		},
+		{
+			"name": "Stable Map",
+			"path": "../../go-stable-map"
+		}
+	],
+	"settings": {}
+}
