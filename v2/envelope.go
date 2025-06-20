@@ -44,6 +44,10 @@ type Envelope[A net.Addr] struct {
 	Message   *delphi.Message `json:"msg" msgpack:"msg"`
 }
 
+func (e *Envelope[A]) IsSigned() bool {
+	return e.Message.Verify()
+}
+
 // NewEnvelope creates a new Envelope, ensuring there are no nil pointers
 func NewEnvelope[A net.Addr]() *Envelope[A] {
 	e := Envelope[A]{
@@ -70,6 +74,24 @@ func (e *Envelope[A]) Deserialize(data []byte) error {
 		return err
 	}
 	return nil
+}
+
+// Reply crafts an Envelope whose recipient is the sender, and whose threadId points back to the original
+func (e Envelope[A]) Reply() *Envelope[A] {
+	f := NewEnvelope[A]()
+	f.ID = NewMessageId()
+	f.Recipient, f.Sender = e.Sender, e.Recipient
+
+	//	if this is part of a thread, continue that thread, else start a new thread
+	if e.Thread == NilId {
+		f.Thread = e.ID
+	} else {
+		f.Thread = e.Thread
+	}
+
+	f.Message.Subject = e.Message.Subject
+	f.Message.SenderKey, f.Message.RecipientKey = e.Message.RecipientKey, e.Message.SenderKey
+	return f
 }
 
 // type Message struct {

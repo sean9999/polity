@@ -1,6 +1,7 @@
 package polity
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -8,13 +9,15 @@ import (
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
+	stablemap "github.com/sean9999/go-stable-map"
 )
 
 type Principal[A net.Addr, N Network[A]] struct {
 	*goracle.Principal
-	Net   N
-	conn  net.PacketConn
-	Inbox chan Envelope[A]
+	Net       N
+	conn      net.PacketConn
+	Inbox     chan Envelope[A]
+	PeerStore *stablemap.StableMap[string, *Peer[A]]
 }
 
 func (p *Principal[A, N]) AsPeer() *Peer[A] {
@@ -37,17 +40,21 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 	gork.Props.Set("polity.addr", pc.LocalAddr().String())
 	gork.Props.Set("polity.network", pc.LocalAddr().Network())
 
+	m := stablemap.New[string, *Peer[A]]()
+
 	ch := make(chan Envelope[A])
 	p := Principal[A, N]{
 		Principal: gork,
 		Net:       network,
 		conn:      pc,
 		Inbox:     ch,
+		PeerStore: m,
 	}
 
-	//	listen for Envelopes
+	//	listen for Envelopes on the socket, and send over channel
 	go func() {
-		buf := make([]byte, 1024)
+		//	NOTE: is this a good maximum size?
+		buf := make([]byte, 4096)
 		for {
 			i, addr, err := p.conn.ReadFrom(buf)
 			bin := buf[:i]
@@ -63,7 +70,8 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 			} else {
 				e := NewEnvelope[A]()
 				e.Message.PlainText = bin
-				e.Subject("ERROR. " + err.Error())
+				//e.Subject("ERROR. " + err.Error())
+				e.Message.Subject = "ERROR"
 				ch <- *e
 				fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
 			}
@@ -115,6 +123,16 @@ func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 
 	// we are sending to someone else
 	return p.conn.WriteTo(bin, e.Recipient.Addr)
+}
+
+var ErrPeerExists = errors.New("peer exists")
+
+func (p *Principal[A, N]) AddPeer(peer *Peer[A]) error {
+	if _, exists := p.PeerStore.Get(peer.Nickname()); exists {
+		return ErrPeerExists
+	}
+	p.PeerStore.Set(peer.Nickname(), peer)
+	return nil
 }
 
 // TODO: deprecate this
