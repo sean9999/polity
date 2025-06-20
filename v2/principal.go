@@ -52,10 +52,16 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 			err = e.Deserialize(bin)
 			if addr.String() != e.Sender.Addr.String() {
 				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr.String())
+			} else {
+				fmt.Fprintf(os.Stdout, "%s IN FACT IS %s\n", addr, e.Sender.Addr.String())
 			}
 			if err == nil {
 				ch <- *e
 			} else {
+				e := NewEnvelope[A]()
+				e.Message.PlainText = bin
+				e.Subject("ERROR. " + err.Error())
+				ch <- *e
 				fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
 			}
 		}

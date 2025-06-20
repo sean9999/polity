@@ -1,8 +1,10 @@
 package polity
 
 import (
+	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/sean9999/go-delphi"
@@ -19,6 +21,16 @@ func NewMessageId() MessageId {
 	return MessageId(u)
 }
 
+// Subject sets the subject of the embedded Message, and uppercases it.
+func (e *Envelope[A]) Subject(str string) error {
+	if e.Message == nil {
+		return errors.New("nil message in envelope")
+	}
+	e.Message.Subject = delphi.Subject(strings.ToUpper(str))
+	return nil
+}
+
+// an Envelope wraps a [delphi.Message], with information essential for addressing and grouping
 type Envelope[A net.Addr] struct {
 	ID        MessageId       `json:"id" msgpack:"id"`
 	Thread    MessageId       `json:"thread" msgpack:"thread"`
@@ -27,6 +39,7 @@ type Envelope[A net.Addr] struct {
 	Message   *delphi.Message `json:"msg" msgpack:"msg"`
 }
 
+// NewEnvelope creates a new Envelope, ensuring there are no nil pointers
 func NewEnvelope[A net.Addr]() *Envelope[A] {
 	e := Envelope[A]{
 		ID:        NilId,
