@@ -18,11 +18,11 @@ func TestEnvelopeSERDE(t *testing.T) {
 
 	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), NilId)
 
-	assert.NotNil(t, e1.SenderPeer)
-	assert.NotNil(t, e1.RecipientPeer)
+	assert.NotNil(t, e1.Sender)
+	assert.NotNil(t, e1.Recipient)
 
-	assert.NotEqual(t, "divine-cloud", e1.SenderPeer.Nickname())
-	assert.NotEqual(t, "divine-cloud", e1.RecipientPeer.Nickname())
+	assert.NotEqual(t, "divine-cloud", e1.Sender.Nickname())
+	assert.NotEqual(t, "divine-cloud", e1.Recipient.Nickname())
 
 	bin1, err := e1.Serialize()
 	assert.NoError(t, err)
@@ -32,13 +32,13 @@ func TestEnvelopeSERDE(t *testing.T) {
 	err = e2.Deserialize(bin1)
 	assert.NoError(t, err)
 
-	assert.NotNil(t, e2.SenderPeer)
-	assert.NotNil(t, e2.RecipientPeer)
+	assert.NotNil(t, e2.Sender)
+	assert.NotNil(t, e2.Recipient)
 
-	assert.Greater(t, len(e2.SenderPeer.Nickname()), 1)
-	assert.Greater(t, len(e2.RecipientPeer.Nickname()), 1)
+	assert.Greater(t, len(e2.Sender.Nickname()), 1)
+	assert.Greater(t, len(e2.Recipient.Nickname()), 1)
 
-	assert.NotEqual(t, "divine-cloud", e2.SenderPeer.Nickname())
-	assert.NotEqual(t, "divine-cloud", e2.RecipientPeer.Nickname())
+	assert.NotEqual(t, "divine-cloud", e2.Sender.Nickname())
+	assert.NotEqual(t, "divine-cloud", e2.Recipient.Nickname())
 
 }

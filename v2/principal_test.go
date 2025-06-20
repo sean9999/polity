@@ -20,9 +20,9 @@ func TestEnvelope(t *testing.T) {
 	assert.NoError(t, err)
 
 	e1 := &Envelope[*net.UDPAddr]{
-		SenderAddr:    alice.AsPeer().Addr,
-		RecipientAddr: bob.AsPeer().Addr,
-		Message:       delphi.ComposeMessage(nil, delphi.PlainMessage, []byte("hello")),
+		Sender:    alice.AsPeer(),
+		Recipient: bob.AsPeer(),
+		Message:   delphi.ComposeMessage(nil, delphi.PlainMessage, []byte("hello")),
 	}
 
 	data1, err := json.Marshal(e1)
@@ -49,8 +49,8 @@ func TestEnvelopeMsgPack(t *testing.T) {
 	assert.NoError(t, err)
 
 	e1 := NewEnvelope[*net.UDPAddr]()
-	e1.SenderAddr = alice.AsPeer().Addr
-	e1.RecipientAddr = bob.AsPeer().Addr
+	e1.Sender = alice.AsPeer()
+	e1.Recipient = bob.AsPeer()
 
 	data1, err := msgpack.Marshal(e1)
 	if err != nil {
@@ -73,8 +73,8 @@ func TestEnvelopeSerde(t *testing.T) {
 	assert.NoError(t, err)
 
 	e1 := NewEnvelope[*net.UDPAddr]()
-	e1.SenderAddr = alice.AsPeer().Addr
-	e1.RecipientAddr = bob.AsPeer().Addr
+	e1.Sender = alice.AsPeer()
+	e1.Recipient = bob.AsPeer()
 
 	data1, err := e1.Serialize()
 	if err != nil {

@@ -92,8 +92,8 @@ func main() {
 			color.Cyan("Thread:\t%s\n", e.Thread)
 			color.Blue("Signed:\t%v\n", msg.Verify())
 			color.Blue("Enc:\t%v\n", msg.Encrypted())
-			color.Green("From:\t%s@%s\n", e.Message.SenderKey.Nickname(), e.SenderPeer.Addr.String())
-			color.Green("To:\t%s@%s\n", e.Message.RecipientKey.Nickname(), e.RecipientPeer.Addr.String())
+			color.Green("From:\t%s@%s\n", e.Message.SenderKey.Nickname(), e.Sender.Addr.String())
+			color.Green("To:\t%s@%s\n", e.Message.RecipientKey.Nickname(), e.Recipient.Addr.String())
 			fmt.Println(body)
 
 			// if subj.Equals("friend request") {

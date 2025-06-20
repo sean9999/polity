@@ -6,8 +6,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/google/uuid"
-
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
 )
@@ -56,8 +54,8 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 			e := NewEnvelope[A]()
 			err = e.Deserialize(bin)
 			if err == nil {
-				if addr.String() != e.SenderAddr.String() {
-					err = fmt.Errorf("address mismatch. %s is not %s", addr.String(), e.SenderAddr.String())
+				if addr.String() != e.Sender.Addr.String() {
+					err = fmt.Errorf("address mismatch. %s is not %s", addr.String(), e.Sender.Addr.String())
 				}
 			}
 			if e.ID != NilId {
@@ -81,8 +79,6 @@ func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread Messag
 	e := NewEnvelope[A]()
 	e.ID = NewMessageId()
 	e.Thread = thread
-	e.SenderAddr = p.Net.Address()
-	e.RecipientAddr = recipient.Addr
 
 	//	create delphi message
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
@@ -91,8 +87,8 @@ func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread Messag
 	e.Message = msg
 
 	//	attach peers
-	e.SenderPeer = p.AsPeer()
-	e.RecipientPeer = recipient
+	e.Sender = p.AsPeer()
+	e.Recipient = recipient
 
 	return e
 }
@@ -107,18 +103,18 @@ func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 
 	//	are we sending to ourself? then open an ephemeral connection
 	//	NOTE: is it better to circumvent the network stack? we could simply send to Inbox.
-	if p.Net.Address().String() == e.RecipientAddr.String() {
+	if p.Net.Address().String() == e.Recipient.Addr.String() {
 		pc, err := p.Net.NewConnection()
 		if err != nil {
 			return -1, err
 		}
-		i, err := pc.WriteTo(bin, e.RecipientAddr)
+		i, err := pc.WriteTo(bin, e.Recipient.Addr)
 		pc.Close()
 		return i, err
 	}
 
 	// we are sending to someone else
-	return p.conn.WriteTo(bin, e.RecipientAddr)
+	return p.conn.WriteTo(bin, e.Recipient.Addr)
 }
 
 // TODO: deprecate this
@@ -127,11 +123,9 @@ func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId Mes
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 
 	e := Envelope[A]{
-		ID:            MessageId(uuid.New()),
-		Thread:        threadId,
-		SenderAddr:    p.Net.Address(),
-		RecipientAddr: recipient.Addr,
-		Message:       msg,
+		ID:      NewMessageId(),
+		Thread:  threadId,
+		Message: msg,
 	}
 
 	return p.Send(&e)
