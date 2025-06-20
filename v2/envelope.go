@@ -21,6 +21,11 @@ func NewMessageId() MessageId {
 	return MessageId(u)
 }
 
+func (m MessageId) String() string {
+	u := uuid.UUID(m)
+	return u.String()
+}
+
 // Subject sets the subject of the embedded Message, and uppercases it.
 func (e *Envelope[A]) Subject(str string) error {
 	if e.Message == nil {
@@ -30,23 +35,28 @@ func (e *Envelope[A]) Subject(str string) error {
 	return nil
 }
 
-// an Envelope wraps a [delphi.Message], with information essential for addressing and grouping
+// an Envelope wraps a [delphi.Message], with information essential for addressing and organizing
 type Envelope[A net.Addr] struct {
-	ID        MessageId       `json:"id" msgpack:"id"`
-	Thread    MessageId       `json:"thread" msgpack:"thread"`
-	Sender    *Peer[A]        `json:"from" msgpack:"from"`
-	Recipient *Peer[A]        `json:"to" msgpack:"to"`
-	Message   *delphi.Message `json:"msg" msgpack:"msg"`
+	ID            MessageId       `json:"id" msgpack:"id"`
+	Thread        MessageId       `json:"thread" msgpack:"thread"`
+	SenderAddr    A               `json:"from" msgpack:"from"`
+	RecipientAddr A               `json:"to" msgpack:"to"`
+	SenderPeer    *Peer[A]        `json:"sender" msgpack:"sender"`
+	RecipientPeer *Peer[A]        `json:"recipient" msgpack:"recipient"`
+	Message       *delphi.Message `json:"msg" msgpack:"msg"`
 }
 
 // NewEnvelope creates a new Envelope, ensuring there are no nil pointers
 func NewEnvelope[A net.Addr]() *Envelope[A] {
+	var a A
 	e := Envelope[A]{
-		ID:        NilId,
-		Thread:    NilId,
-		Sender:    NewPeer[A](),
-		Recipient: NewPeer[A](),
-		Message:   delphi.NewMessage(),
+		ID:            NilId,
+		Thread:        NilId,
+		SenderAddr:    a,
+		RecipientAddr: a,
+		SenderPeer:    NewPeer[A](),
+		RecipientPeer: NewPeer[A](),
+		Message:       delphi.NewMessage(),
 	}
 	return &e
 }
@@ -57,10 +67,14 @@ func (e *Envelope[A]) Serialize() ([]byte, error) {
 
 func (e *Envelope[A]) Deserialize(data []byte) error {
 
+	var addr A
+
 	e.ID = NilId
 	e.Thread = NilId
-	e.Recipient = NewPeer[A]()
-	e.Sender = NewPeer[A]()
+	e.RecipientAddr = addr
+	e.SenderAddr = addr
+	e.SenderPeer = NewPeer[A]()
+	e.RecipientPeer = NewPeer[A]()
 
 	err := msgpack.Unmarshal(data, e)
 	if err != nil {
@@ -83,6 +97,6 @@ func (e *Envelope[A]) Deserialize(data []byte) error {
 // }
 
 func (e *Envelope[A]) String() string {
-	s := fmt.Sprintf("sender:\t%s\nsubj:\t%s\nmsg:\t%s\n", e.Sender.Nickname(), "asdfa", e.Message)
+	s := fmt.Sprintf("sender:\t%s\nsubj:\t%s\nmsg:\t%s\n", e.SenderAddr, "asdfa", e.Message)
 	return s
 }

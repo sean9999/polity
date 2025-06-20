@@ -24,6 +24,7 @@ func (p *Principal[A, N]) AsPeer() *Peer[A] {
 		Peer: p.ToPeer(),
 		Addr: p.Net.Address(),
 	}
+
 	return &e
 }
 
@@ -34,6 +35,10 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 	if err != nil {
 		return nil, err
 	}
+
+	gork.Props.Set("polity.addr", pc.LocalAddr().String())
+	gork.Props.Set("polity.network", pc.LocalAddr().Network())
+
 	ch := make(chan Envelope[A])
 	p := Principal[A, N]{
 		Principal: gork,
@@ -50,12 +55,12 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 			bin := buf[:i]
 			e := NewEnvelope[A]()
 			err = e.Deserialize(bin)
-			if addr.String() != e.Sender.Addr.String() {
-				fmt.Fprintf(os.Stderr, "%s is not %s\n", addr, e.Sender.Addr.String())
-			} else {
-				fmt.Fprintf(os.Stdout, "%s IN FACT IS %s\n", addr, e.Sender.Addr.String())
-			}
 			if err == nil {
+				if addr.String() != e.SenderAddr.String() {
+					err = fmt.Errorf("address mismatch. %s is not %s", addr.String(), e.SenderAddr.String())
+				}
+			}
+			if e.ID != NilId {
 				ch <- *e
 			} else {
 				e := NewEnvelope[A]()
@@ -71,15 +76,24 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 }
 
 func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread MessageId) *Envelope[A] {
-	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
-	msg.SenderKey = p.PublicKey()
-	msg.RecipientKey = recipient.PublicKey()
+
+	//	instantiate envelope
 	e := NewEnvelope[A]()
 	e.ID = NewMessageId()
 	e.Thread = thread
-	e.Sender = p.AsPeer()
-	e.Recipient = recipient
+	e.SenderAddr = p.Net.Address()
+	e.RecipientAddr = recipient.Addr
+
+	//	create delphi message
+	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
+	msg.SenderKey = p.PublicKey()
+	msg.RecipientKey = recipient.PublicKey()
 	e.Message = msg
+
+	//	attach peers
+	e.SenderPeer = p.AsPeer()
+	e.RecipientPeer = recipient
+
 	return e
 }
 
@@ -92,32 +106,32 @@ func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 	}
 
 	//	are we sending to ourself? then open an ephemeral connection
-	//	NOTE: is it better to circumvent the network stack?
-	//	we could simply send to Inbox.
-	if p.Net.Address().String() == e.Recipient.Addr.String() {
+	//	NOTE: is it better to circumvent the network stack? we could simply send to Inbox.
+	if p.Net.Address().String() == e.RecipientAddr.String() {
 		pc, err := p.Net.NewConnection()
 		if err != nil {
 			return -1, err
 		}
-		i, err := pc.WriteTo(bin, e.Recipient.Addr)
+		i, err := pc.WriteTo(bin, e.RecipientAddr)
 		pc.Close()
 		return i, err
 	}
 
 	// we are sending to someone else
-	return p.conn.WriteTo(bin, e.Recipient.Addr)
+	return p.conn.WriteTo(bin, e.RecipientAddr)
 }
 
+// TODO: deprecate this
 func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId MessageId) (int, error) {
 
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 
 	e := Envelope[A]{
-		ID:        MessageId(uuid.New()),
-		Thread:    threadId,
-		Sender:    p.AsPeer(),
-		Recipient: recipient,
-		Message:   msg,
+		ID:            MessageId(uuid.New()),
+		Thread:        threadId,
+		SenderAddr:    p.Net.Address(),
+		RecipientAddr: recipient.Addr,
+		Message:       msg,
 	}
 
 	return p.Send(&e)

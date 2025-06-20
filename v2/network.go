@@ -1,18 +1,23 @@
 package polity
 
 import (
+	"encoding"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 )
 
 type Network[A net.Addr] interface {
 	Network() string
 	Address() A
-	Connection() (net.PacketConn, error)
-	NewConnection() (net.PacketConn, error)
+	Connection() (net.PacketConn, error)    // persistant connection
+	NewConnection() (net.PacketConn, error) // for ephemeral, one-off connections
 	json.Marshaler
 	json.Unmarshaler
+	encoding.TextMarshaler
+	encoding.TextUnmarshaler
+	fmt.Stringer
 }
 
 var _ Network[*net.UDPAddr] = (*LocalUDP4Net)(nil)
@@ -33,7 +38,34 @@ func (lo *LocalUDP4Net) Network() string {
 	return "udp"
 }
 
+func (lo *LocalUDP4Net) MarshalText() ([]byte, error) {
+	if lo.addr == nil {
+		return nil, errors.New("nothing to marshal")
+	}
+	str := lo.Address().String()
+	return []byte(str), nil
+}
+
+func (lo *LocalUDP4Net) String() string {
+	if lo.addr == nil {
+		return ""
+	}
+	return lo.addr.String()
+}
+
+func (lo *LocalUDP4Net) UnmarshalText(data []byte) error {
+	addr, err := net.ResolveUDPAddr("udp", string(data))
+	if err != nil {
+		return err
+	}
+	lo.addr = addr
+	return nil
+}
+
 func (lo *LocalUDP4Net) MarshalJSON() ([]byte, error) {
+	if lo.addr == nil {
+		return nil, errors.New("nothing to marshal")
+	}
 	s := localUDP4NetJsonRecord{
 		Network: "udp",
 		Zone:    lo.addr.Zone,

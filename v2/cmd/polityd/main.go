@@ -80,23 +80,26 @@ func main() {
 			subj := e.Message.Subject
 			var body string
 			if msg.Encrypted() {
+				//	TODO: decrypt message.
 				body = fmt.Sprintf("%x", msg.CipherText)
 			} else {
 				body = string(e.Message.PlainText)
 			}
+
+			//	log out message
 			color.Magenta("\n#\t%s", string(subj))
-
-			color.Blue("Message has valid signature:\t%v\n", msg.Verify())
-
-			color.Blue("Sender (envelope):\t%s\n", e.Sender.Nickname())
-
-			color.Blue("sender (envelope) pubkey:\t%s\n", e.Sender.ToHex())
-
-			color.Green("Sender (msg):\t%s\n", e.Message.SenderKey.Nickname())
-
-			color.Green("sender (msg) pubkey:\t%s\n", e.Message.SenderKey.ToHex())
-
+			color.Cyan("MsgId:\t%s\n", e.ID)
+			color.Cyan("Thread:\t%s\n", e.Thread)
+			color.Blue("Signed:\t%v\n", msg.Verify())
+			color.Blue("Enc:\t%v\n", msg.Encrypted())
+			color.Green("From:\t%s@%s\n", e.Message.SenderKey.Nickname(), e.SenderPeer.Addr.String())
+			color.Green("To:\t%s@%s\n", e.Message.RecipientKey.Nickname(), e.RecipientPeer.Addr.String())
 			fmt.Println(body)
+
+			// if subj.Equals("friend request") {
+			// 	p.Peers.Set(e.Message.SenderKey.Nickname(), )
+			// }
+
 			if subj.Equals("DIE NOW") {
 				time.Sleep(time.Second * 1)
 				close(p.Inbox)

@@ -41,7 +41,10 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("could not unmarshal Peer. %w", err)
 	}
 	p.Addr = rec.Addr
-	p.Peer = goracle.PeerFrom(rec.Pubkey, rec.Props)
+
+	gork := goracle.PeerFrom(rec.Pubkey, rec.Props)
+
+	p.Peer = gork
 	return nil
 }
 
@@ -90,6 +93,6 @@ func (p *Peer[A]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (p *Peer[A]) PublicKey() delphi.KeyPair {
+func (p *Peer[A]) PublicKey() delphi.Key {
 	return p.Peer.Peer
 }
