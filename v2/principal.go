@@ -1,6 +1,7 @@
 package polity
 
 import (
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -29,30 +30,17 @@ func (p *Principal[A, N]) AsPeer() *Peer[A] {
 	return &e
 }
 
-func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Principal[A, N], error) {
-	gork := goracle.NewPrincipal(rand, nil)
-
-	pc, err := network.Connection()
+func (p *Principal[A, N]) Connect() error {
+	pc, err := p.Net.Connection()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	gork.Props.Set("polity.addr", pc.LocalAddr().String())
-	gork.Props.Set("polity.network", pc.LocalAddr().Network())
-
-	m := stablemap.New[string, *Peer[A]]()
-
-	ch := make(chan Envelope[A])
-	p := Principal[A, N]{
-		Principal: gork,
-		Net:       network,
-		conn:      pc,
-		Inbox:     ch,
-		PeerStore: m,
-	}
-
+	p.conn = pc
+	p.Props.Set("polity/addr", pc.LocalAddr().String())
+	p.Props.Set("polity/network", pc.LocalAddr().Network())
 	//	listen for Envelopes on the socket, and send over channel
 	go func() {
+		ch := p.Inbox
 		//	NOTE: is this a good maximum size?
 		buf := make([]byte, 4096)
 		for {
@@ -77,6 +65,29 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 			}
 		}
 	}()
+	return nil
+}
+
+func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Principal[A, N], error) {
+	gork := goracle.NewPrincipal(rand, nil)
+
+	// pc, err := network.Connection()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// gork.Props.Set("polity/addr", pc.LocalAddr().String())
+	// gork.Props.Set("polity/network", pc.LocalAddr().Network())
+
+	m := stablemap.New[string, *Peer[A]]()
+
+	ch := make(chan Envelope[A])
+	p := Principal[A, N]{
+		Principal: gork,
+		Net:       network,
+		Inbox:     ch,
+		PeerStore: m,
+	}
 
 	return &p, nil
 }
@@ -148,4 +159,43 @@ func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId Mes
 
 	return p.Send(&e)
 
+}
+
+func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {
+	pemFile, err := p.Principal.MarshalPEM()
+	if err != nil {
+		return nil, err
+	}
+	pemFile.Type = "POLITY PRIVATE KEY"
+
+	for k, v := range p.PeerStore.Entries() {
+		//pText, _ := v.MarshalText()
+		pemFile.Headers["polity/peer/"+k] = v.String()
+	}
+
+	return pemFile, nil
+}
+
+func (p *Principal[A, N]) UnmarshalPEM(data []byte) error {
+
+	block, _ := pem.Decode(data)
+	gorkPrince := goracle.NewPrincipal(nil, nil)
+	err := gorkPrince.Principal.UnmarshalPEM(*block)
+	if err != nil {
+		return err
+	}
+
+	p.Principal = gorkPrince
+
+	err = p.Net.UnmarshalText([]byte(block.Headers["polity/addr"]))
+	if err != nil {
+		return err
+	}
+
+	//p.PeerStore = &stablemap.StableMap[string, *Peer[A]]{}
+
+	// inbox := make(chan Envelope[A])
+	// p.Inbox = inbox
+
+	return nil
 }

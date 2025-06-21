@@ -11,7 +11,7 @@ import (
 type Network[A net.Addr] interface {
 	Network() string
 	Address() A
-	Connection() (net.PacketConn, error)    // persistant connection
+	Connection() (net.PacketConn, error)    // persistent connection
 	NewConnection() (net.PacketConn, error) // for ephemeral, one-off connections
 	json.Marshaler
 	json.Unmarshaler

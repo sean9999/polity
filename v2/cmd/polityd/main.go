@@ -16,21 +16,45 @@ var NoUUID uuid.UUID
 func main() {
 
 	done := make(chan error)
-	acquaintance, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
+	acquaintance, fileName, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
 	if err != nil {
 		done <- err
 		return
 	}
 
-	p, err := polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
-	if err != nil {
-		panic(err)
-	}
+	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
 
+	//p := polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
+
+	if fileName == "" {
+		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
+		if err != nil {
+			done <- err
+			return
+		}
+	} else {
+		data, err := os.ReadFile(fileName)
+		if err != nil {
+			done <- err
+			return
+		}
+		p, err = polity.NewPrincipal(nil, new(polity.LocalUDP4Net))
+		//pBlock, _ := pem.Decode(data)
+		err = p.UnmarshalPEM(data)
+		if err != nil {
+			done <- err
+			return
+		}
+	}
+	err = p.Connect()
+	if err != nil {
+		done <- err
+		return
+	}
 	// handle incoming Envelopes
 	go func() {
 		for e := range p.Inbox {
-			onEnvelope(p, e)
+			onEnvelope(p, e, fileName)
 		}
 		//	once the inbox channel is closed, we assume it's time to die
 		done <- errors.New("goodbye!")

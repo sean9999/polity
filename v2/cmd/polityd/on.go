@@ -7,7 +7,7 @@ import (
 )
 
 // onEnvelope handles an Envelope, according to what's inside
-func onEnvelope[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A]) {
+func onEnvelope[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A], configFile string) {
 
 	prettyLog(e)
 
@@ -17,7 +17,7 @@ func onEnvelope[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e po
 	case subj.Equals("die now"):
 		handleDeathThreat(p, e)
 	case subj.Equals("friend request"):
-		handleFriendRequest(p, e)
+		handleFriendRequest(p, e, configFile)
 	default:
 	}
 

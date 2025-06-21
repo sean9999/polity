@@ -12,12 +12,28 @@
             "program": "${workspaceFolder}/cmd/polityd",
         },
         {
-            "name": "polity join",
+            "name": "polityd join",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/polityd",
             "args": ["-join", "ef519b488b3d82d81fa4f2d77d156d497c7ca1126147b98771042a1f4e4f8479741128d2bf3f2c0262cf4c642101b5ce9e6cd003dd95aaa7dbcaad6d9f72771f@127.0.0.1:53283?still-night"]
+        },
+
+        {
+            "name": "polityd pem",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/polityd",
+            "args": ["-config", "../../testdata/broken-hill.pem"]
+        },
+        {
+            "name": "polity init",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/polity"
         }
     ]
 }
