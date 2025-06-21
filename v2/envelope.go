@@ -13,12 +13,9 @@ import (
 
 type MessageId uuid.UUID
 
-// NilId is a uuid with all zeros
-var NilId MessageId = MessageId(uuid.Nil)
-
-func NewMessageId() MessageId {
-	u := uuid.New()
-	return MessageId(u)
+func NewMessageId() *MessageId {
+	u := MessageId(uuid.New())
+	return &u
 }
 
 func (m MessageId) String() string {
@@ -37,11 +34,18 @@ func (e *Envelope[A]) Subject(str string) error {
 
 // an Envelope wraps a [delphi.Message], with information essential for addressing and organizing
 type Envelope[A net.Addr] struct {
-	ID        MessageId       `json:"id" msgpack:"id"`
-	Thread    MessageId       `json:"thread" msgpack:"thread"`
+	ID        *MessageId      `json:"id" msgpack:"id"`
+	Thread    *MessageId      `json:"thread" msgpack:"thread"`
 	Sender    *Peer[A]        `json:"sender" msgpack:"sender"`
 	Recipient *Peer[A]        `json:"recipient" msgpack:"recipient"`
 	Message   *delphi.Message `json:"msg" msgpack:"msg"`
+}
+
+func (e *Envelope[A]) SetRecipient(p *Peer[A]) {
+	e.Recipient = p
+	if e.Message != nil {
+		e.Message.RecipientKey = p.PublicKey()
+	}
 }
 
 func (e *Envelope[A]) IsSigned() bool {
@@ -51,8 +55,8 @@ func (e *Envelope[A]) IsSigned() bool {
 // NewEnvelope creates a new Envelope, ensuring there are no nil pointers
 func NewEnvelope[A net.Addr]() *Envelope[A] {
 	e := Envelope[A]{
-		ID:        NilId,
-		Thread:    NilId,
+		ID:        nil,
+		Thread:    nil,
 		Sender:    NewPeer[A](),
 		Recipient: NewPeer[A](),
 		Message:   delphi.NewMessage(),
@@ -65,8 +69,8 @@ func (e *Envelope[A]) Serialize() ([]byte, error) {
 }
 
 func (e *Envelope[A]) Deserialize(data []byte) error {
-	e.ID = NilId
-	e.Thread = NilId
+	e.ID = nil
+	e.Thread = nil
 	e.Sender = NewPeer[A]()
 	e.Recipient = NewPeer[A]()
 	err := msgpack.Unmarshal(data, e)
@@ -76,6 +80,16 @@ func (e *Envelope[A]) Deserialize(data []byte) error {
 	return nil
 }
 
+func (e Envelope[A]) Clone() *Envelope[A] {
+	f := NewEnvelope[A]()
+	f.ID = NewMessageId()
+	f.Thread = e.Thread
+	f.Sender = e.Sender
+	f.Recipient = e.Recipient
+	f.Message = e.Message
+	return f
+}
+
 // Reply crafts an Envelope whose recipient is the sender, and whose threadId points back to the original
 func (e Envelope[A]) Reply() *Envelope[A] {
 	f := NewEnvelope[A]()
@@ -83,7 +97,7 @@ func (e Envelope[A]) Reply() *Envelope[A] {
 	f.Recipient, f.Sender = e.Sender, e.Recipient
 
 	//	if this is part of a thread, continue that thread, else start a new thread
-	if e.Thread == NilId {
+	if e.Thread == nil {
 		f.Thread = e.ID
 	} else {
 		f.Thread = e.Thread

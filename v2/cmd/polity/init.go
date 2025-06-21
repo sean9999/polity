@@ -19,18 +19,17 @@ func _init(e hermeti.Env, _ *app) {
 		return
 	}
 
-	alice, _ := polity.NewPrincipal(e.Randomness, new(polity.LocalUDP4Net))
+	brokenHill, err := polity.PrincipalFromFile("testdata/broken-hill.pem", new(polity.LocalUDP4Net))
+	p.AddPeer(brokenHill.AsPeer())
 
-	p.AddPeer(alice.AsPeer())
-
-	pemFIle, err := p.MarshalPEM()
+	me, err := p.MarshalPEM()
 	if err != nil {
 		fmt.Println(e.ErrStream, err)
 		e.Exit(1)
 		return
 	}
 
-	err = pem.Encode(e.OutStream, pemFIle)
+	err = pem.Encode(e.OutStream, me)
 
 	if err != nil {
 		fmt.Println(e.ErrStream, err)

@@ -30,6 +30,7 @@ func (p *Principal[A, N]) AsPeer() *Peer[A] {
 	return &e
 }
 
+// Connect acquires an address and starts listening on it
 func (p *Principal[A, N]) Connect() error {
 	pc, err := p.Net.Connection()
 	if err != nil {
@@ -53,7 +54,7 @@ func (p *Principal[A, N]) Connect() error {
 					err = fmt.Errorf("address mismatch. %s is not %s", addr.String(), e.Sender.Addr.String())
 				}
 			}
-			if e.ID != NilId {
+			if e.ID != nil {
 				ch <- *e
 			} else {
 				e := NewEnvelope[A]()
@@ -68,19 +69,33 @@ func (p *Principal[A, N]) Connect() error {
 	return nil
 }
 
+func PrincipalFromFile[A net.Addr, N Network[A]](filename string, network N) (*Principal[A, N], error) {
+	fd, err := os.Stat(filename)
+	if err != nil {
+		return nil, err
+	}
+	if fd.IsDir() {
+		return nil, errors.New("file is dir")
+	}
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return PrincipalFromPEM(data, network)
+}
+
+func PrincipalFromPEM[A net.Addr, N Network[A]](data []byte, network N) (*Principal[A, N], error) {
+	p, err := NewPrincipal(nil, network)
+	if err != nil {
+		return nil, err
+	}
+	err = p.UnmarshalPEM(data)
+	return p, err
+}
+
 func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Principal[A, N], error) {
 	gork := goracle.NewPrincipal(rand, nil)
-
-	// pc, err := network.Connection()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// gork.Props.Set("polity/addr", pc.LocalAddr().String())
-	// gork.Props.Set("polity/network", pc.LocalAddr().Network())
-
 	m := stablemap.New[string, *Peer[A]]()
-
 	ch := make(chan Envelope[A])
 	p := Principal[A, N]{
 		Principal: gork,
@@ -88,11 +103,10 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 		Inbox:     ch,
 		PeerStore: m,
 	}
-
 	return &p, nil
 }
 
-func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread MessageId) *Envelope[A] {
+func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread *MessageId) *Envelope[A] {
 
 	//	instantiate envelope
 	e := NewEnvelope[A]()
@@ -147,18 +161,14 @@ func (p *Principal[A, N]) AddPeer(peer *Peer[A]) error {
 }
 
 // TODO: deprecate this
-func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId MessageId) (int, error) {
-
+func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
-
 	e := Envelope[A]{
 		ID:      NewMessageId(),
 		Thread:  threadId,
 		Message: msg,
 	}
-
 	return p.Send(&e)
-
 }
 
 func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {

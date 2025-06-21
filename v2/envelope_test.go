@@ -27,7 +27,7 @@ func TestEnvelopeSERDE(t *testing.T) {
 
 	alice, bob := aliceAndBob(t)
 
-	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), NilId)
+	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), nil)
 
 	assert.NotNil(t, e1.Sender)
 	assert.NotNil(t, e1.Recipient)
@@ -61,7 +61,7 @@ func TestEnvelope_Reply(t *testing.T) {
 	alice_nick := alice.Nickname()
 	bob_nick := bob.Nickname()
 
-	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), NilId)
+	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), nil)
 	e1.Message.Subject = "hello"
 
 	assert.NotNil(t, e1.Sender)

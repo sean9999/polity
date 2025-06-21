@@ -15,42 +15,34 @@ var NoUUID uuid.UUID
 
 func main() {
 
+	//	exit signal
 	done := make(chan error)
-	acquaintance, fileName, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
-	if err != nil {
-		done <- err
-		return
+	dieOn := func(err error) {
+		if err != nil {
+			done <- err
+		}
 	}
 
+	acquaintance, fileName, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
+	dieOn(err)
+
+	//	initialize a new or existing Principal
 	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
-
-	//p := polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
-
 	if fileName == "" {
 		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
 		if err != nil {
 			done <- err
-			return
 		}
 	} else {
 		data, err := os.ReadFile(fileName)
-		if err != nil {
-			done <- err
-			return
-		}
-		p, err = polity.NewPrincipal(nil, new(polity.LocalUDP4Net))
-		//pBlock, _ := pem.Decode(data)
-		err = p.UnmarshalPEM(data)
-		if err != nil {
-			done <- err
-			return
-		}
+		dieOn(err)
+
+		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4Net))
+		dieOn(err)
 	}
 	err = p.Connect()
-	if err != nil {
-		done <- err
-		return
-	}
+	dieOn(err)
+
 	// handle incoming Envelopes
 	go func() {
 		for e := range p.Inbox {
@@ -60,27 +52,15 @@ func main() {
 		done <- errors.New("goodbye!")
 	}()
 
-	//	boot up and display instructions for how to join us
-	message := fmt.Sprintf("Greetings! I'm %s at %s. Join me at:\npolityd -join %s\n", p.Nickname(), p.Net.Address(), p.AsPeer().String())
-	e := p.Compose([]byte(message), p.AsPeer(), polity.NilId)
-	e.Subject("boot up")
-	_, err = p.Send(e)
-
+	err = boot(p)
 	//	if we can't send a boot up message to ourselves, we must explain ourselves and die
-	if err != nil {
-		done <- err
-	}
+	dieOn(err)
 
-	//	if process was started with -join=pubkey@address flag, then send to peer
+	//	if process was started with -join=pubkey@address flag, try to join that peer
 	if acquaintance != nil {
-		j := p.Compose([]byte("i want to join you"), acquaintance, polity.MessageId(NoUUID))
-		j.Subject("friend request")
-		//	a friend request must be signed
-		err = j.Message.Sign(rand.Reader, p)
-		if err != nil {
-			done <- err
-		}
-		_, err = p.Send(j)
+		err = sendFriendRequest(p, acquaintance)
+		//	if we can't join a peer on boot, life is meaningless.
+		dieOn(err)
 	}
 
 	err = <-done
