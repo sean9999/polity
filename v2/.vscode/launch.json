@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "stack",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/stack",
+        },
+        {
             "name": "polityd straight up",
             "type": "go",
             "request": "launch",

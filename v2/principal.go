@@ -7,11 +7,31 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
 	stablemap "github.com/sean9999/go-stable-map"
 )
+
+//	ref is a hash. Like a git ref. It is used as the minutes of a vector clock
+// type ref struct {
+// 	id []byte
+// 	parent weak.Pointer[ref]
+// }
+
+// func NewRef(parent ref, randomness io.Reader) *ref {
+// 	bin := make([]byte, 8)
+// 	buf := bytes.NewBuffer(bin)
+// 	io.Copy(buf, randomness)
+// 	ref := ref{
+// 		id: bin,
+// 	}
+// 	if parent != nil {
+// 		ref.parent := weak.Make(parent)
+// 	}
+// 	return ref
+// }
 
 type Principal[A net.Addr, N Network[A]] struct {
 	*goracle.Principal
@@ -19,6 +39,7 @@ type Principal[A net.Addr, N Network[A]] struct {
 	conn      net.PacketConn
 	Inbox     chan Envelope[A]
 	PeerStore *stablemap.StableMap[string, *Peer[A]]
+	KB        KnowlegeBase[A]
 }
 
 func (p *Principal[A, N]) AsPeer() *Peer[A] {
@@ -28,6 +49,11 @@ func (p *Principal[A, N]) AsPeer() *Peer[A] {
 	}
 
 	return &e
+}
+
+func (p *Principal[A, N]) Disconnect() error {
+	close(p.Inbox)
+	return p.conn.Close()
 }
 
 // Connect acquires an address and starts listening on it
@@ -89,7 +115,7 @@ func PrincipalFromPEM[A net.Addr, N Network[A]](data []byte, network N) (*Princi
 	if err != nil {
 		return nil, err
 	}
-	err = p.UnmarshalPEM(data)
+	err = p.UnmarshalPEM(data, network)
 	return p, err
 }
 
@@ -186,7 +212,7 @@ func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {
 	return pemFile, nil
 }
 
-func (p *Principal[A, N]) UnmarshalPEM(data []byte) error {
+func (p *Principal[A, N]) UnmarshalPEM(data []byte, network Network[A]) error {
 
 	block, _ := pem.Decode(data)
 	gorkPrince := goracle.NewPrincipal(nil, nil)
@@ -200,6 +226,18 @@ func (p *Principal[A, N]) UnmarshalPEM(data []byte) error {
 	err = p.Net.UnmarshalText([]byte(block.Headers["polity/addr"]))
 	if err != nil {
 		return err
+	}
+
+	for k, v := range block.Headers {
+		if strings.Contains(k, "polity/peer") {
+			//pee := NewPeer[A]().
+			//data, err := hex.DecodeString(v)
+
+			pee, _ := PeerFromString(v, network)
+
+			p.PeerStore.Set(k, pee)
+
+		}
 	}
 
 	//p.PeerStore = &stablemap.StableMap[string, *Peer[A]]{}

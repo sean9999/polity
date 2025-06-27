@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
@@ -23,6 +24,23 @@ type peerRecord[A net.Addr] struct {
 type Peer[A net.Addr] struct {
 	*goracle.Peer `json:"goracle"`
 	Addr          A `json:"net"`
+}
+
+func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
+
+	url, err := url.Parse(h)
+	if err != nil {
+		return nil, err
+	}
+	pubkey := delphi.KeyFromHex(url.User.Username())
+	m := map[string]string{}
+	n.UnmarshalText([]byte(url.Host))
+	m["polity/network"] = n.Network()
+	m["polity/addr"] = n.Address().String()
+	gork := goracle.PeerFrom(pubkey.Bytes(), m)
+	pee := NewPeer[A]()
+	pee.Peer = gork
+	return pee, nil
 }
 
 func (p *Peer[A]) MarshalBinary() ([]byte, error) {

@@ -22,6 +22,9 @@ func _init(e hermeti.Env, _ *app) {
 	brokenHill, err := polity.PrincipalFromFile("testdata/broken-hill.pem", new(polity.LocalUDP4Net))
 	p.AddPeer(brokenHill.AsPeer())
 
+	p.Connect()
+	defer p.Disconnect()
+
 	me, err := p.MarshalPEM()
 	if err != nil {
 		fmt.Println(e.ErrStream, err)

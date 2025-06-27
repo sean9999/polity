@@ -58,11 +58,16 @@ func handleFriendRequest[A net.Addr, N polity.Network[A]](p *polity.Principal[A,
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
+
+			//	we know that peer is alive
+			p.KB.Alives.Set(e.Sender, true)
+
 			f := e.Reply()
 			f.Message.PlainText = []byte("i accept your friend request")
 			f.Message.Sign(rand.Reader, p)
 			p.Send(f)
 			trySave(p, configFile)
+
 		}
 
 		//	a peer I've added just asked me to add them again.

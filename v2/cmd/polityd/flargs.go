@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -11,44 +12,61 @@ import (
 	"github.com/sean9999/polity/v2"
 )
 
-type joiner[A net.Addr, N polity.Network[A]] struct {
-	peer *polity.Peer[A]
-	net  N
+type config[A net.Addr, N polity.Network[A]] struct {
+	joinPeer *polity.Peer[A]
+	network  N
+	self     *polity.Principal[A, N]
 }
 
-func (f *joiner[_, _]) String() string {
-	if f.peer != nil {
-		return f.peer.String()
+func (conf *config[_, _]) String() string {
+	var str string = fmt.Sprintf("I am %s", conf.self.Nickname())
+	if conf.joinPeer != nil {
+		str += fmt.Sprintf(" and I wish to join %s.", conf.joinPeer.Nickname())
+	} else {
+		str += "."
 	}
-	return ""
+	return str
 }
 
-func (f *joiner[A, N]) Set(s string) error {
-	u, err := url.Parse(fmt.Sprintf("%s://%s", f.net.Network(), s))
+func (conf *config[A, N]) Set(s string) error {
+
+	u, err := url.Parse(fmt.Sprintf("%s://%s", conf.network.Network(), s))
 	if err != nil {
 		return err
 	}
-	err = f.net.UnmarshalText([]byte(u.Host))
+	err = conf.network.UnmarshalText([]byte(u.Host))
 	if err != nil {
 		return err
 	}
+
+	//	hydrate self from stdin, or panic
+	pemdata, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return err
+	}
+	prince := new(polity.Principal[A, N])
+	err = prince.UnmarshalPEM(pemdata, conf.network)
+	if err != nil {
+		return err
+	}
+
 	newPeer := polity.NewPeer[A]()
-	newPeer.Addr = f.net.Address()
+	newPeer.Addr = conf.network.Address()
 
 	//	TODO: ensure this is valid hex, of the right size, and marshals into a valid public key
 	hexStr := u.User.Username()
 	newPeer.Peer.Peer = delphi.KeyFromHex(hexStr)
 
-	newPeer.Props.Set("polity.network", f.net.Network())
+	newPeer.Props.Set("polity.network", conf.network.Network())
 	newPeer.Props.Set("polity.addr", u.Host)
 
-	f.peer = newPeer
+	conf.joinPeer = newPeer
 	return nil
 }
 
 func parseFlargs[A net.Addr, N polity.Network[A]](thisnet polity.Network[A]) (*polity.Peer[A], string, error) {
-	joiner := new(joiner[A, N])
-	joiner.net = thisnet.(N)
+	joiner := new(config[A, N])
+	joiner.network = thisnet.(N)
 
 	//var configFile afero.File = (afero.File)(nil)
 
@@ -58,5 +76,5 @@ func parseFlargs[A net.Addr, N polity.Network[A]](thisnet polity.Network[A]) (*p
 	fileName := f.String("config", "", "config file")
 
 	err := f.Parse(os.Args[1:])
-	return joiner.peer, *fileName, err
+	return joiner.joinPeer, *fileName, err
 }
