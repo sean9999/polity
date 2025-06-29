@@ -110,6 +110,15 @@ func PrincipalFromFile[A net.Addr, N Network[A]](filename string, network N) (*P
 	return PrincipalFromPEM(data, network)
 }
 
+func PrincipalFromPEMBlock[A net.Addr, N Network[A]](block *pem.Block, network N) (*Principal[A, N], error) {
+	p, err := NewPrincipal(nil, network)
+	if err != nil {
+		return nil, err
+	}
+	err = p.UnmarshalPEMBlock(block, network)
+	return p, err
+}
+
 func PrincipalFromPEM[A net.Addr, N Network[A]](data []byte, network N) (*Principal[A, N], error) {
 	p, err := NewPrincipal(nil, network)
 	if err != nil {
@@ -205,22 +214,18 @@ func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {
 	pemFile.Type = "POLITY PRIVATE KEY"
 
 	for k, v := range p.PeerStore.Entries() {
-		//pText, _ := v.MarshalText()
 		pemFile.Headers["polity/peer/"+k] = v.String()
 	}
 
 	return pemFile, nil
 }
 
-func (p *Principal[A, N]) UnmarshalPEM(data []byte, network Network[A]) error {
-
-	block, _ := pem.Decode(data)
+func (p *Principal[A, N]) UnmarshalPEMBlock(block *pem.Block, network Network[A]) error {
 	gorkPrince := goracle.NewPrincipal(nil, nil)
 	err := gorkPrince.Principal.UnmarshalPEM(*block)
 	if err != nil {
 		return err
 	}
-
 	p.Principal = gorkPrince
 
 	err = p.Net.UnmarshalText([]byte(block.Headers["polity/addr"]))
@@ -230,20 +235,20 @@ func (p *Principal[A, N]) UnmarshalPEM(data []byte, network Network[A]) error {
 
 	for k, v := range block.Headers {
 		if strings.Contains(k, "polity/peer") {
-			//pee := NewPeer[A]().
-			//data, err := hex.DecodeString(v)
-
-			pee, _ := PeerFromString(v, network)
-
+			pee, err := PeerFromString(v, network)
+			if err != nil {
+				return err
+			}
 			p.PeerStore.Set(k, pee)
-
 		}
 	}
-
-	//p.PeerStore = &stablemap.StableMap[string, *Peer[A]]{}
-
-	// inbox := make(chan Envelope[A])
-	// p.Inbox = inbox
-
 	return nil
+}
+
+func (p *Principal[A, N]) UnmarshalPEM(data []byte, network Network[A]) error {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return errors.New("could not decode bytes into a PEM")
+	}
+	return p.UnmarshalPEMBlock(block, network)
 }

@@ -19,34 +19,34 @@ func main() {
 	done := make(chan error)
 	dieOn := func(err error) {
 		if err != nil {
-			done <- err
+			panic(err)
 		}
 	}
 
-	acquaintance, fileName, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
+	join, meConf, _, err := parseFlargs()
 	dieOn(err)
 
 	//	initialize a new or existing Principal
 	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
-	if fileName == "" {
+	if meConf == nil || meConf.me == nil {
 		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
 		if err != nil {
 			done <- err
 		}
 	} else {
-		data, err := os.ReadFile(fileName)
-		dieOn(err)
+		data, err := os.ReadFile(meConf.String())
+		go dieOn(err)
 
 		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4Net))
-		dieOn(err)
+		go dieOn(err)
 	}
 	err = p.Connect()
-	dieOn(err)
+	go dieOn(err)
 
 	// handle incoming Envelopes
 	go func() {
 		for e := range p.Inbox {
-			onEnvelope(p, e, fileName)
+			onEnvelope(p, e, meConf.String())
 		}
 		//	once the inbox channel is closed, we assume it's time to die
 		done <- errors.New("goodbye!")
@@ -54,13 +54,13 @@ func main() {
 
 	err = boot(p)
 	//	if we can't send a boot up message to ourselves, we must explain ourselves and die
-	dieOn(err)
+	go dieOn(err)
 
 	//	if process was started with -join=pubkey@address flag, try to join that peer
-	if acquaintance != nil {
-		err = sendFriendRequest(p, acquaintance)
-		//	if we can't join a peer on boot, life is meaningless.
-		dieOn(err)
+	if join.Peer != nil {
+		err = sendFriendRequest(p, join.Peer)
+		//	if we can't join a peer, we should kill ourselves.
+		go dieOn(err)
 	}
 
 	err = <-done

@@ -12,7 +12,7 @@ type Network[A net.Addr] interface {
 	Network() string
 	Address() A
 	Connection() (net.PacketConn, error)    // persistent connection
-	NewConnection() (net.PacketConn, error) // for ephemeral, one-off connections
+	NewConnection() (net.PacketConn, error) // for ephemeral one-off connections
 	json.Marshaler
 	json.Unmarshaler
 	encoding.TextMarshaler
@@ -22,11 +22,14 @@ type Network[A net.Addr] interface {
 
 var _ Network[*net.UDPAddr] = (*LocalUDP4Net)(nil)
 
+// LocalUDP4Net is a [Network] that listens on localhost
+// and distinguishes different nodes with different ports.
 type LocalUDP4Net struct {
 	addr *net.UDPAddr
 	conn net.PacketConn
 }
 
+// localUDP4NetJsonRecord is an object useful for serializing a [LocalUDP4Net].
 type localUDP4NetJsonRecord struct {
 	Network string `json:"string"`
 	Zone    string `json:"zone"`
@@ -114,6 +117,7 @@ func (lo *LocalUDP4Net) NewConnection() (net.PacketConn, error) {
 	return net.ListenUDP("udp", addr)
 }
 
+// Address returns our persistent [net.Addr]
 func (lo *LocalUDP4Net) Address() *net.UDPAddr {
 	if lo.addr != nil {
 		return lo.addr

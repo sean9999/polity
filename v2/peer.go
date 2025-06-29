@@ -2,10 +2,12 @@ package polity
 
 import (
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
 	"net/url"
+	"strings"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
@@ -28,6 +30,11 @@ type Peer[A net.Addr] struct {
 
 func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
 
+	//	if h does not include protocol://, add it
+	if !strings.Contains(h, "://") {
+		h = fmt.Sprintf("%s://%s", n.Network(), h)
+	}
+
 	url, err := url.Parse(h)
 	if err != nil {
 		return nil, err
@@ -40,7 +47,19 @@ func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
 	gork := goracle.PeerFrom(pubkey.Bytes(), m)
 	pee := NewPeer[A]()
 	pee.Peer = gork
+	pee.Addr = n.Address()
 	return pee, nil
+}
+
+func (p *Peer[A]) MarshalPEM() (*pem.Block, error) {
+	block, err := p.Peer.MarshalPEM()
+	if err != nil {
+		return nil, err
+	}
+	block.Headers["polity/network"] = p.Addr.Network()
+	block.Headers["polity/addr"] = p.Addr.String()
+
+	return block, nil
 }
 
 func (p *Peer[A]) MarshalBinary() ([]byte, error) {
@@ -59,9 +78,7 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("could not unmarshal Peer. %w", err)
 	}
 	p.Addr = rec.Addr
-
 	gork := goracle.PeerFrom(rec.Pubkey, rec.Props)
-
 	p.Peer = gork
 	return nil
 }
@@ -69,7 +86,8 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 func (p *Peer[A]) String() string {
 	addr := p.Addr.String()
 	pub := p.PublicKey().ToHex()
-	return fmt.Sprintf("%s@%s", pub, addr)
+	net := p.Addr.Network()
+	return fmt.Sprintf("%s://%s@%s", net, pub, addr)
 }
 
 func NewPeer[A net.Addr]() *Peer[A] {
