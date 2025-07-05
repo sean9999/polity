@@ -4,32 +4,47 @@ import (
 	"encoding"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 )
 
-type Network[A net.Addr] interface {
-	Network() string
-	Address() A
-	Connection() (net.PacketConn, error)    // persistent connection
-	NewConnection() (net.PacketConn, error) // for ephemeral one-off connections
-	json.Marshaler
-	json.Unmarshaler
+type Addresser interface {
+	net.Addr
 	encoding.TextMarshaler
 	encoding.TextUnmarshaler
-	fmt.Stringer
 }
 
-var _ Network[*net.UDPAddr] = (*LocalUDP4Net)(nil)
+type Connector interface {
+	Connection() (net.PacketConn, error)    // persistent connection
+	NewConnection() (net.PacketConn, error) // for ephemeral one-off connections
+}
 
-// LocalUDP4Net is a [Network] that listens on localhost
+type AddressConnector interface {
+	Addresser
+	Connector
+}
+
+// type Network[A net.Addr] interface {
+// 	Network() string
+// 	Address() A
+// 	Connection() (net.PacketConn, error)    // persistent connection
+// 	NewConnection() (net.PacketConn, error) // for ephemeral one-off connections
+// 	json.Marshaler
+// 	json.Unmarshaler
+// 	encoding.TextMarshaler
+// 	encoding.TextUnmarshaler
+// 	fmt.Stringer
+// }
+
+var _ AddressConnector = (*LocalUDP4)(nil)
+
+// LocalUDP4 is a [Network] that listens on localhost
 // and distinguishes different nodes with different ports.
-type LocalUDP4Net struct {
+type LocalUDP4 struct {
 	addr *net.UDPAddr
 	conn net.PacketConn
 }
 
-// localUDP4NetJsonRecord is an object useful for serializing a [LocalUDP4Net].
+// localUDP4NetJsonRecord is an object useful for serializing a [LocalUDP4].
 type localUDP4NetJsonRecord struct {
 	Network string `json:"string"`
 	Zone    string `json:"zone"`
@@ -37,11 +52,11 @@ type localUDP4NetJsonRecord struct {
 	Port    int    `port:"port"`
 }
 
-func (lo *LocalUDP4Net) Network() string {
+func (lo *LocalUDP4) Network() string {
 	return "udp"
 }
 
-func (lo *LocalUDP4Net) MarshalText() ([]byte, error) {
+func (lo *LocalUDP4) MarshalText() ([]byte, error) {
 	if lo.addr == nil {
 		return nil, errors.New("nothing to marshal")
 	}
@@ -49,14 +64,14 @@ func (lo *LocalUDP4Net) MarshalText() ([]byte, error) {
 	return []byte(str), nil
 }
 
-func (lo *LocalUDP4Net) String() string {
+func (lo *LocalUDP4) String() string {
 	if lo.addr == nil {
 		return ""
 	}
 	return lo.addr.String()
 }
 
-func (lo *LocalUDP4Net) UnmarshalText(data []byte) error {
+func (lo *LocalUDP4) UnmarshalText(data []byte) error {
 	addr, err := net.ResolveUDPAddr("udp", string(data))
 	if err != nil {
 		return err
@@ -65,7 +80,7 @@ func (lo *LocalUDP4Net) UnmarshalText(data []byte) error {
 	return nil
 }
 
-func (lo *LocalUDP4Net) MarshalJSON() ([]byte, error) {
+func (lo *LocalUDP4) MarshalJSON() ([]byte, error) {
 	if lo.addr == nil {
 		return nil, errors.New("nothing to marshal")
 	}
@@ -77,7 +92,7 @@ func (lo *LocalUDP4Net) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(s)
 }
-func (lo *LocalUDP4Net) UnmarshalJSON(data []byte) error {
+func (lo *LocalUDP4) UnmarshalJSON(data []byte) error {
 
 	var s localUDP4NetJsonRecord
 	err := json.Unmarshal(data, &s)
@@ -94,7 +109,7 @@ func (lo *LocalUDP4Net) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (lo *LocalUDP4Net) Connection() (net.PacketConn, error) {
+func (lo *LocalUDP4) Connection() (net.PacketConn, error) {
 	addr := lo.Address()
 	if addr == nil {
 		return nil, errors.New("no address")
@@ -112,13 +127,13 @@ func (lo *LocalUDP4Net) Connection() (net.PacketConn, error) {
 	return pc, nil
 }
 
-func (lo *LocalUDP4Net) NewConnection() (net.PacketConn, error) {
+func (lo *LocalUDP4) NewConnection() (net.PacketConn, error) {
 	addr := lo.createAddress()
 	return net.ListenUDP("udp", addr)
 }
 
 // Address returns our persistent [net.Addr]
-func (lo *LocalUDP4Net) Address() *net.UDPAddr {
+func (lo *LocalUDP4) Address() *net.UDPAddr {
 	if lo.addr != nil {
 		return lo.addr
 	}
@@ -126,7 +141,7 @@ func (lo *LocalUDP4Net) Address() *net.UDPAddr {
 	return lo.addr
 }
 
-func (lo *LocalUDP4Net) createAddress() *net.UDPAddr {
+func (lo *LocalUDP4) createAddress() *net.UDPAddr {
 	ua := &net.UDPAddr{
 		IP:   net.ParseIP("127.0.0.1"),
 		Port: 0,

@@ -33,31 +33,31 @@ import (
 // 	return ref
 // }
 
-type Principal[A net.Addr, N Network[A]] struct {
+type Principal[A AddressConnector] struct {
 	*goracle.Principal
-	Net       N
+	Net       A
 	conn      net.PacketConn
 	Inbox     chan Envelope[A]
 	PeerStore *stablemap.StableMap[string, *Peer[A]]
 	KB        KnowlegeBase[A]
 }
 
-func (p *Principal[A, N]) AsPeer() *Peer[A] {
+func (p *Principal[A]) AsPeer() *Peer[A] {
 	e := Peer[A]{
 		Peer: p.ToPeer(),
-		Addr: p.Net.Address(),
+		Addr: p.Net,
 	}
 
 	return &e
 }
 
-func (p *Principal[A, N]) Disconnect() error {
+func (p *Principal[A]) Disconnect() error {
 	close(p.Inbox)
 	return p.conn.Close()
 }
 
 // Connect acquires an address and starts listening on it
-func (p *Principal[A, N]) Connect() error {
+func (p *Principal[A]) Connect() error {
 	pc, err := p.Net.Connection()
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (p *Principal[A, N]) Connect() error {
 	return nil
 }
 
-func PrincipalFromFile[A net.Addr, N Network[A]](filename string, network N) (*Principal[A, N], error) {
+func PrincipalFromFile[A AddressConnector](filename string, network A) (*Principal[A], error) {
 	fd, err := os.Stat(filename)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func PrincipalFromFile[A net.Addr, N Network[A]](filename string, network N) (*P
 	return PrincipalFromPEM(data, network)
 }
 
-func PrincipalFromPEMBlock[A net.Addr, N Network[A]](block *pem.Block, network N) (*Principal[A, N], error) {
+func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Principal[A], error) {
 	p, err := NewPrincipal(nil, network)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func PrincipalFromPEMBlock[A net.Addr, N Network[A]](block *pem.Block, network N
 	return p, err
 }
 
-func PrincipalFromPEM[A net.Addr, N Network[A]](data []byte, network N) (*Principal[A, N], error) {
+func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A], error) {
 	p, err := NewPrincipal(nil, network)
 	if err != nil {
 		return nil, err
@@ -128,11 +128,11 @@ func PrincipalFromPEM[A net.Addr, N Network[A]](data []byte, network N) (*Princi
 	return p, err
 }
 
-func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Principal[A, N], error) {
+func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A], error) {
 	gork := goracle.NewPrincipal(rand, nil)
 	m := stablemap.New[string, *Peer[A]]()
 	ch := make(chan Envelope[A])
-	p := Principal[A, N]{
+	p := Principal[A]{
 		Principal: gork,
 		Net:       network,
 		Inbox:     ch,
@@ -141,7 +141,7 @@ func NewPrincipal[A net.Addr, N Network[A]](rand io.Reader, network N) (*Princip
 	return &p, nil
 }
 
-func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread *MessageId) *Envelope[A] {
+func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageId) *Envelope[A] {
 
 	//	instantiate envelope
 	e := NewEnvelope[A]()
@@ -161,7 +161,7 @@ func (p *Principal[A, N]) Compose(body []byte, recipient *Peer[A], thread *Messa
 	return e
 }
 
-func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
+func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 
 	bin, err := e.Serialize()
 
@@ -171,7 +171,7 @@ func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 
 	//	are we sending to ourself? then open an ephemeral connection
 	//	NOTE: is it better to circumvent the network stack? we could simply send to Inbox.
-	if p.Net.Address().String() == e.Recipient.Addr.String() {
+	if p.Net.String() == e.Recipient.Addr.String() {
 		pc, err := p.Net.NewConnection()
 		if err != nil {
 			return -1, err
@@ -187,7 +187,7 @@ func (p *Principal[A, N]) Send(e *Envelope[A]) (int, error) {
 
 var ErrPeerExists = errors.New("peer exists")
 
-func (p *Principal[A, N]) AddPeer(peer *Peer[A]) error {
+func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
 	if _, exists := p.PeerStore.Get(peer.Nickname()); exists {
 		return ErrPeerExists
 	}
@@ -196,7 +196,7 @@ func (p *Principal[A, N]) AddPeer(peer *Peer[A]) error {
 }
 
 // TODO: deprecate this
-func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
+func (p *Principal[A]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 	e := Envelope[A]{
 		ID:      NewMessageId(),
@@ -206,7 +206,7 @@ func (p *Principal[A, N]) SendText(body []byte, recipient *Peer[A], threadId *Me
 	return p.Send(&e)
 }
 
-func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {
+func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	pemFile, err := p.Principal.MarshalPEM()
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (p *Principal[A, N]) MarshalPEM() (*pem.Block, error) {
 	return pemFile, nil
 }
 
-func (p *Principal[A, N]) UnmarshalPEMBlock(block *pem.Block, network Network[A]) error {
+func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 	gorkPrince := goracle.NewPrincipal(nil, nil)
 	err := gorkPrince.Principal.UnmarshalPEM(*block)
 	if err != nil {
@@ -245,7 +245,7 @@ func (p *Principal[A, N]) UnmarshalPEMBlock(block *pem.Block, network Network[A]
 	return nil
 }
 
-func (p *Principal[A, N]) UnmarshalPEM(data []byte, network Network[A]) error {
+func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 	block, _ := pem.Decode(data)
 	if block == nil {
 		return errors.New("could not decode bytes into a PEM")

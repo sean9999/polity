@@ -10,7 +10,7 @@ import (
 
 func initialize(e hermeti.Env, _ *app) {
 
-	udpnet := new(polity.LocalUDP4Net)
+	udpnet := new(polity.LocalUDP4)
 
 	p, err := polity.NewPrincipal(e.Randomness, udpnet)
 	if err != nil {
@@ -19,7 +19,7 @@ func initialize(e hermeti.Env, _ *app) {
 		return
 	}
 
-	brokenHill, err := polity.PrincipalFromFile("testdata/little-violet.pem", new(polity.LocalUDP4Net))
+	brokenHill, err := polity.PrincipalFromFile("testdata/little-violet.pem", new(polity.LocalUDP4))
 	p.AddPeer(brokenHill.AsPeer())
 
 	p.Connect()

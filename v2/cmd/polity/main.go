@@ -12,16 +12,16 @@ import (
 type app struct {
 	verbosity   uint8
 	subCommands functionMap
-	self        *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
+	self        *polity.Principal[*net.UDPAddr, *polity.LocalUDP4]
 	bag         pemBag
-	network     *polity.LocalUDP4Net
+	network     *polity.LocalUDP4
 }
 
 // Init initializes an *app, before being [Run].
 // This satisfies [hermeti.Initializer].
 func (a *app) Init(e *Env) error {
 
-	a.network = new(polity.LocalUDP4Net)
+	a.network = new(polity.LocalUDP4)
 	a.subCommands = make(functionMap)
 	a.bag = make(pemBag)
 

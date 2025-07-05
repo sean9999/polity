@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func aliceAndBob(t testing.TB) (*Principal[*net.UDPAddr, *LocalUDP4Net], *Principal[*net.UDPAddr, *LocalUDP4Net]) {
+func aliceAndBob(t testing.TB) (*Principal[*LocalUDP4], *Principal[*LocalUDP4]) {
 	t.Helper()
-	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4))
 	assert.NoError(t, err)
-	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4))
 	assert.NoError(t, err)
 	return alice, bob
 }

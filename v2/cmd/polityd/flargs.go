@@ -58,7 +58,7 @@ func (join *joinPeer) String() string {
 }
 
 func (join *joinPeer) Set(s string) error {
-	peer2, err := polity.PeerFromString(s, &polity.LocalUDP4Net{})
+	peer2, err := polity.PeerFromString(s, &polity.LocalUDP4{})
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (join *joinPeer) Set(s string) error {
 	return nil
 }
 
-type self *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
+type self *polity.Principal[*net.UDPAddr, *polity.LocalUDP4]
 
 type privConf struct {
 	me       self
@@ -86,7 +86,7 @@ func (m *privConf) Set(s string) error {
 	if err != nil {
 		return err
 	}
-	me, err := polity.PrincipalFromPEM(bin, &polity.LocalUDP4Net{})
+	me, err := polity.PrincipalFromPEM(bin, &polity.LocalUDP4{})
 	m.me = me
 	m.filename = s
 	return err

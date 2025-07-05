@@ -27,9 +27,9 @@ func main() {
 	dieOn(err)
 
 	//	initialize a new or existing Principal
-	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
+	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4]
 	if meConf == nil || meConf.me == nil {
-		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
+		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4))
 		if err != nil {
 			done <- err
 		}
@@ -37,7 +37,7 @@ func main() {
 		data, err := os.ReadFile(meConf.String())
 		go dieOn(err)
 
-		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4Net))
+		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4))
 		go dieOn(err)
 	}
 	err = p.Connect()

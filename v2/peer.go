@@ -28,11 +28,11 @@ type Peer[A net.Addr] struct {
 	Addr          A `json:"net"`
 }
 
-func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
+func PeerFromString[A Addresser](h string, addr A) (*Peer[A], error) {
 
 	//	if h does not include protocol://, add it
 	if !strings.Contains(h, "://") {
-		h = fmt.Sprintf("%s://%s", n.Network(), h)
+		h = fmt.Sprintf("%s://%s", addr.Network(), h)
 	}
 
 	url, err := url.Parse(h)
@@ -41,13 +41,15 @@ func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
 	}
 	pubkey := delphi.KeyFromHex(url.User.Username())
 	m := map[string]string{}
-	n.UnmarshalText([]byte(url.Host))
-	m["polity/network"] = n.Network()
-	m["polity/addr"] = n.Address().String()
+
+	addr.UnmarshalText([]byte(url.Host))
+
+	m["polity/network"] = addr.Network()
+	m["polity/addr"] = addr.String()
 	gork := goracle.PeerFrom(pubkey.Bytes(), m)
 	pee := NewPeer[A]()
 	pee.Peer = gork
-	pee.Addr = n.Address()
+	pee.Addr = addr
 	return pee, nil
 }
 
