@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"net"
 	"net/url"
 	"strings"
 
@@ -16,14 +15,14 @@ import (
 )
 
 // a peerRecord is a convenient way to serialize a Peer
-type peerRecord[A net.Addr] struct {
+type peerRecord[A Addresser] struct {
 	Pubkey []byte            `json:"pub" msgpack:"pub"`
 	Addr   A                 `json:"addr" msgpack:"addr"`
 	Props  map[string]string `json:"props" msgpack:"props"`
 }
 
-// A Peer[N]  is a public key, some arbitrary key-value pairs, and an address on network N
-type Peer[A net.Addr] struct {
+// A Peer is a public key, some arbitrary key-value pairs, and an address on network N
+type Peer[A Addresser] struct {
 	*goracle.Peer `json:"goracle"`
 	Addr          A `json:"net"`
 }
@@ -92,7 +91,7 @@ func (p *Peer[A]) String() string {
 	return fmt.Sprintf("%s://%s@%s", net, pub, addr)
 }
 
-func NewPeer[A net.Addr]() *Peer[A] {
+func NewPeer[A Addresser]() *Peer[A] {
 	addr := new(A)
 	p := Peer[A]{
 		Peer: goracle.NewPeer(),

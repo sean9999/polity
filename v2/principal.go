@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -40,6 +41,7 @@ type Principal[A AddressConnector] struct {
 	Inbox     chan Envelope[A]
 	PeerStore *stablemap.StableMap[string, *Peer[A]]
 	KB        KnowlegeBase[A]
+	Log       *log.Logger
 }
 
 func (p *Principal[A]) AsPeer() *Peer[A] {
@@ -132,15 +134,22 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 	gork := goracle.NewPrincipal(rand, nil)
 	m := stablemap.New[string, *Peer[A]]()
 	ch := make(chan Envelope[A])
+
+	logger := log.New(os.Stdout, "polity", log.Ltime)
+
+	network.Initialize()
+
 	p := Principal[A]{
 		Principal: gork,
 		Net:       network,
 		Inbox:     ch,
 		PeerStore: m,
+		Log:       logger,
 	}
 	return &p, nil
 }
 
+// Compose a [delphi.Message], wrapped in an [Envelope], addressed to a particular [Peer].
 func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageId) *Envelope[A] {
 
 	//	instantiate envelope
@@ -169,7 +178,7 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 		return 0, err
 	}
 
-	//	are we sending to ourself? then open an ephemeral connection
+	//	are we sending to ourselves? then open an ephemeral connection.
 	//	NOTE: is it better to circumvent the network stack? we could simply send to Inbox.
 	if p.Net.String() == e.Recipient.Addr.String() {
 		pc, err := p.Net.NewConnection()

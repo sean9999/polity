@@ -19,7 +19,7 @@ type subCommand func(hermeti.Env, *app)
 // a functionMap organizes subCommands
 type functionMap map[string]subCommand
 
-func stdin_has_data(e *hermeti.Env) bool {
+func stdinHasData(e *hermeti.Env) bool {
 	r := e.InStream
 	f, ok := r.(*os.File)
 	if ok {
@@ -52,7 +52,7 @@ func stdin_has_data(e *hermeti.Env) bool {
 	}
 }
 
-// bagify reads in an [io.Reader], collecting PEMs into a pemBag.
+// Bagify reads in an [io.Reader], collecting PEMs into a pemBag.
 // It exits when the byte-stream can no longer be decoded into a PEM.
 func (a *app) bagify(r io.Reader, ptr *pemBag) error {
 	bag := *ptr

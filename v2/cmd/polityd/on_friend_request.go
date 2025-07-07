@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/pem"
 	"errors"
-	"net"
 	"os"
 	"sync"
 
@@ -12,7 +11,7 @@ import (
 )
 
 // trySave tries to save a Principal to a file indicated by fileName
-func trySave[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], fileName string) error {
+func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string) error {
 	if fileName != "" {
 		pemFile, err := p.MarshalPEM()
 		if err != nil {
@@ -26,7 +25,7 @@ func trySave[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], fileNam
 }
 
 // broadcast a message to all my friends
-func broadcast[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e *polity.Envelope[A]) error {
+func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
 	wg := new(sync.WaitGroup)
 	wg.Add(p.PeerStore.Length())
 	for _, peer := range p.PeerStore.Entries() {
@@ -42,37 +41,52 @@ func broadcast[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e *po
 }
 
 // send a notice that so-and-so is alive
-func sendAliveness[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], soAndSo *polity.Peer[A]) error {
+func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *polity.Peer[A]) error {
 	peerBytes, err := soAndSo.MarshalBinary()
 	if err != nil {
 		return err
 	}
 	e := p.Compose(peerBytes, nil, polity.NewMessageId())
-	e.Subject("so and so is alive")
+	err = e.Subject("so and so is alive")
+	if err != nil {
+		return err
+	}
 	e.Message.Headers.Set("polity", "peer_that_is_alive", soAndSo.Nickname())
 	return broadcast(p, e)
 }
 
 // If message is signed and peer is new, add them and send a friend request back
-func handleFriendRequest[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A], configFile string) {
+func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
 
 			//	we know that peer is alive
-			p.KB.Alives.Set(e.Sender, true)
+			err := p.KB.Alives.Set(e.Sender, true)
+			if err != nil {
+				return
+			}
 
 			f := e.Reply()
 			f.Message.PlainText = []byte("i accept your friend request")
-			f.Message.Sign(rand.Reader, p)
-			p.Send(f)
-			trySave(p, configFile)
+			err = f.Message.Sign(rand.Reader, p)
+			if err != nil {
+				p.Log.Print(err)
+			}
+			_, err = p.Send(f)
+			if err != nil {
+				p.Log.Print(err)
+			}
+			err = trySave(p, configFile)
+			if err != nil {
+				p.Log.Print(err)
+			}
 
 		}
 
-		//	a peer I've added just asked me to add them again.
-		//	this is weird. It could indicate they went away and came back.
-		//	let's tell everyone
+		//	A peer I've added just asked me to add them again.
+		//	This is weird. It could indicate they went away and came back.
+		//	Let's tell everyone
 		go sendAliveness(p, e.Sender)
 
 	}

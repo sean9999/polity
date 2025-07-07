@@ -1,7 +1,8 @@
-package polity
+package polity_test
 
 import (
-	"net"
+	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 	"testing"
 
 	"crypto/rand"
@@ -9,21 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func aliceAndBob(t testing.TB) (*Principal[*LocalUDP4], *Principal[*LocalUDP4]) {
+func aliceAndBob(t testing.TB) (*polity.Principal[*udp4.Network], *polity.Principal[*udp4.Network]) {
 	t.Helper()
-	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4))
+	alice, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
-	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4))
+	bob, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
 	return alice, bob
 }
 
 func TestEnvelopeSERDE(t *testing.T) {
-
-	// alice, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
-	// assert.NoError(t, err)
-	// bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
-	// assert.NoError(t, err)
 
 	alice, bob := aliceAndBob(t)
 
@@ -38,7 +34,7 @@ func TestEnvelopeSERDE(t *testing.T) {
 	bin1, err := e1.Serialize()
 	assert.NoError(t, err)
 
-	e2 := NewEnvelope[*net.UDPAddr]()
+	e2 := polity.NewEnvelope[*udp4.Network]()
 
 	err = e2.Deserialize(bin1)
 	assert.NoError(t, err)
@@ -58,8 +54,8 @@ func TestEnvelope_Reply(t *testing.T) {
 
 	alice, bob := aliceAndBob(t)
 
-	alice_nick := alice.Nickname()
-	bob_nick := bob.Nickname()
+	aliceNick := alice.Nickname()
+	bobNick := bob.Nickname()
 
 	e1 := alice.Compose([]byte("hello"), bob.AsPeer(), nil)
 	e1.Message.Subject = "hello"
@@ -67,8 +63,8 @@ func TestEnvelope_Reply(t *testing.T) {
 	assert.NotNil(t, e1.Sender)
 	assert.NotNil(t, e1.Recipient)
 
-	assert.Equal(t, alice_nick, e1.Sender.Nickname())
-	assert.Equal(t, bob_nick, e1.Recipient.Nickname())
+	assert.Equal(t, aliceNick, e1.Sender.Nickname())
+	assert.Equal(t, bobNick, e1.Recipient.Nickname())
 
 	e2 := e1.Reply()
 
@@ -77,7 +73,7 @@ func TestEnvelope_Reply(t *testing.T) {
 	assert.NotNil(t, e2.Sender)
 	assert.NotNil(t, e2.Recipient)
 
-	assert.Equal(t, bob_nick, e2.Sender.Nickname())
-	assert.Equal(t, alice_nick, e2.Recipient.Nickname())
+	assert.Equal(t, bobNick, e2.Sender.Nickname())
+	assert.Equal(t, aliceNick, e2.Recipient.Nickname())
 
 }

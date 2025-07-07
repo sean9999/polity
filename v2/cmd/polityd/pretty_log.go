@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"net"
-
 	"github.com/fatih/color"
 	"github.com/sean9999/polity/v2"
 )
 
 // prettyLog logs out an Envelope in a pretty way
-func prettyLog[A net.Addr](e polity.Envelope[A]) {
+func prettyLog[A polity.Addresser](e polity.Envelope[A]) {
 	msg := e.Message
 	subj := e.Message.Subject
 	var body string

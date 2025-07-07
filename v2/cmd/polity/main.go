@@ -2,30 +2,29 @@ package main
 
 import (
 	"fmt"
-	"net"
-
 	. "github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
-// *app is the state in our app, which satisifes [hermeti.InitRunner].
+// *app is the state in our app, which satisfies [hermeti.InitRunner].
 type app struct {
 	verbosity   uint8
 	subCommands functionMap
-	self        *polity.Principal[*net.UDPAddr, *polity.LocalUDP4]
+	self        *polity.Principal[*udp4.Network]
 	bag         pemBag
-	network     *polity.LocalUDP4
+	network     *udp4.Network
 }
 
-// Init initializes an *app, before being [Run].
+// Init initializes an app before being [Run].
 // This satisfies [hermeti.Initializer].
 func (a *app) Init(e *Env) error {
 
-	a.network = new(polity.LocalUDP4)
+	a.network = new(udp4.Network)
 	a.subCommands = make(functionMap)
 	a.bag = make(pemBag)
 
-	if stdin_has_data(e) {
+	if stdinHasData(e) {
 		err := a.bagify(e.InStream, &a.bag)
 		if err != nil {
 			return err
@@ -45,7 +44,7 @@ func (a *app) Init(e *Env) error {
 	return nil
 }
 
-// an *app Runs against an [Env].
+// Run Runs an app against an [Env].
 // This satisfies [hermeti.Runner].
 func (a *app) Run(e Env) {
 
@@ -73,7 +72,8 @@ func main() {
 
 	a := new(app)
 
-	//	a "real cli" has normal inputs and outputs, such as stdin and stdout
+	// A "real cli" has normal inputs and outputs, such as stdin and stdout,
+	// but you can customize it.
 	cli := NewRealCli(a)
 	cli.Run()
 

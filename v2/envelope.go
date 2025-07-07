@@ -3,7 +3,6 @@ package polity
 import (
 	"errors"
 	"fmt"
-	"net"
 	"strings"
 
 	"github.com/google/uuid"
@@ -34,8 +33,8 @@ func (e *Envelope[A]) Subject(str string) error {
 	return nil
 }
 
-// an Envelope wraps a [delphi.Message], with information essential for addressing and organizing
-type Envelope[A net.Addr] struct {
+// an Envelope wraps a [delphi.Message] with information essential for addressing and organizing.
+type Envelope[A Addresser] struct {
 	ID        *MessageId      `json:"id" msgpack:"id"`
 	Thread    *MessageId      `json:"thread" msgpack:"thread"`
 	Sender    *Peer[A]        `json:"sender" msgpack:"sender"`
@@ -55,7 +54,7 @@ func (e *Envelope[A]) IsSigned() bool {
 }
 
 // NewEnvelope creates a new Envelope, ensuring there are no nil pointers
-func NewEnvelope[A net.Addr]() *Envelope[A] {
+func NewEnvelope[A Addresser]() *Envelope[A] {
 	e := Envelope[A]{
 		ID:        nil,
 		Thread:    nil,

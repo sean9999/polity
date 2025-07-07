@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/pem"
 	"fmt"
+	"github.com/sean9999/polity/v2/udp4"
 
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
@@ -10,19 +11,27 @@ import (
 
 func initialize(e hermeti.Env, _ *app) {
 
-	udpnet := new(polity.LocalUDP4)
-
-	p, err := polity.NewPrincipal(e.Randomness, udpnet)
+	p, err := polity.NewPrincipal(e.Randomness, new(udp4.Network))
 	if err != nil {
 		fmt.Println(e.ErrStream, err)
 		e.Exit(1)
 		return
 	}
 
-	brokenHill, err := polity.PrincipalFromFile("testdata/little-violet.pem", new(polity.LocalUDP4))
-	p.AddPeer(brokenHill.AsPeer())
+	//brokenHill, err := polity.PrincipalFromFile("testdata/little-violet.pem", new(udp4.Network))
+	//if err != nil {
+	//	fmt.Println(e.ErrStream, err)
+	//	e.Exit(1)
+	//	return
+	//}
+	//p.AddPeer(brokenHill.AsPeer())
 
-	p.Connect()
+	err = p.Connect()
+	if err != nil {
+		fmt.Println(e.ErrStream, err)
+		e.Exit(1)
+		return
+	}
 	defer p.Disconnect()
 
 	me, err := p.MarshalPEM()

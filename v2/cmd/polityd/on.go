@@ -1,13 +1,11 @@
 package main
 
 import (
-	"net"
-
 	"github.com/sean9999/polity/v2"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func handleDump[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A]) error {
+func handleDump[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) error {
 
 	f := e.Reply()
 
@@ -23,7 +21,7 @@ func handleDump[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e po
 }
 
 // onEnvelope handles an Envelope, according to what's inside
-func onEnvelope[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A], configFile string) {
+func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 
 	prettyLog(e)
 

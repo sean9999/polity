@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/google/uuid"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
 var NoUUID uuid.UUID
@@ -27,9 +27,9 @@ func main() {
 	dieOn(err)
 
 	//	initialize a new or existing Principal
-	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4]
+	var p *polity.Principal[*udp4.Network]
 	if meConf == nil || meConf.me == nil {
-		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4))
+		p, err = polity.NewPrincipal(rand.Reader, new(udp4.Network))
 		if err != nil {
 			done <- err
 		}
@@ -37,7 +37,7 @@ func main() {
 		data, err := os.ReadFile(meConf.String())
 		go dieOn(err)
 
-		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4))
+		p, err = polity.PrincipalFromPEM(data, new(udp4.Network))
 		go dieOn(err)
 	}
 	err = p.Connect()
@@ -49,7 +49,7 @@ func main() {
 			onEnvelope(p, e, meConf.String())
 		}
 		//	once the inbox channel is closed, we assume it's time to die
-		done <- errors.New("goodbye!")
+		done <- errors.New("goodbye")
 	}()
 
 	err = boot(p)
