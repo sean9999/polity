@@ -1,16 +1,13 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": "./v2"
 		},
 		{
 			"path": "../go-oracle"
 		},
 		{
-			"path": "../go-flargs"
-		},
-		{
-			"path": "../go-real-fs"
+			"path": "../go-delphi"
 		}
 	],
 	"settings": {
