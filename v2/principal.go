@@ -15,33 +15,14 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
-//	ref is a hash. Like a git ref. It is used as the minutes of a vector clock
-// type ref struct {
-// 	id []byte
-// 	parent weak.Pointer[ref]
-// }
-
-// func NewRef(parent ref, randomness io.Reader) *ref {
-// 	bin := make([]byte, 8)
-// 	buf := bytes.NewBuffer(bin)
-// 	io.Copy(buf, randomness)
-// 	ref := ref{
-// 		id: bin,
-// 	}
-// 	if parent != nil {
-// 		ref.parent := weak.Make(parent)
-// 	}
-// 	return ref
-// }
-
 type Principal[A AddressConnector] struct {
 	*goracle.Principal
-	Net       A
-	conn      net.PacketConn
-	Inbox     chan Envelope[A]
-	PeerStore *stablemap.StableMap[string, *Peer[A]]
-	KB        KnowlegeBase[A]
-	Log       *log.Logger
+	Net   A
+	conn  net.PacketConn
+	Inbox chan Envelope[A]
+	Peers *stablemap.StableMap[string, *Peer[A]]
+	KB    KnowlegeBase[A]
+	Log   *log.Logger
 }
 
 func (p *Principal[A]) AsPeer() *Peer[A] {
@@ -67,7 +48,7 @@ func (p *Principal[A]) Connect() error {
 	p.conn = pc
 	p.Props.Set("polity/addr", pc.LocalAddr().String())
 	p.Props.Set("polity/network", pc.LocalAddr().Network())
-	//	listen for Envelopes on the socket, and send over channel
+	//	listen for Envelopes on the socket and send over channel
 	go func() {
 		ch := p.Inbox
 		//	NOTE: is this a good maximum size?
@@ -97,20 +78,20 @@ func (p *Principal[A]) Connect() error {
 	return nil
 }
 
-func PrincipalFromFile[A AddressConnector](filename string, network A) (*Principal[A], error) {
-	fd, err := os.Stat(filename)
-	if err != nil {
-		return nil, err
-	}
-	if fd.IsDir() {
-		return nil, errors.New("file is dir")
-	}
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return PrincipalFromPEM(data, network)
-}
+//func PrincipalFromFile[A AddressConnector](filename string, network A) (*Principal[A], error) {
+//	fd, err := os.Stat(filename)
+//	if err != nil {
+//		return nil, err
+//	}
+//	if fd.IsDir() {
+//		return nil, errors.New("file is dir")
+//	}
+//	data, err := os.ReadFile(filename)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return PrincipalFromPEM(data, network)
+//}
 
 func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Principal[A], error) {
 	p, err := NewPrincipal(nil, network)
@@ -143,7 +124,7 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 		Principal: gork,
 		Net:       network,
 		Inbox:     ch,
-		PeerStore: m,
+		Peers:     m,
 		Log:       logger,
 	}
 	return &p, nil
@@ -185,35 +166,41 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 		if err != nil {
 			return -1, err
 		}
-		i, err := pc.WriteTo(bin, e.Recipient.Addr)
+
+		//fromAddr := pc.LocalAddr().String()
+		//toAddr := e.Recipient.Addr.String()
+		//p.Log.Printf("from is %q and to is %q", fromAddr, toAddr)
+
+		i, err := pc.WriteTo(bin, e.Recipient.Addr.Addr())
 		pc.Close()
 		return i, err
+
 	}
 
 	// we are sending to someone else
-	return p.conn.WriteTo(bin, e.Recipient.Addr)
+	return p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
 }
 
 var ErrPeerExists = errors.New("peer exists")
 
 func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
-	if _, exists := p.PeerStore.Get(peer.Nickname()); exists {
+	if _, exists := p.Peers.Get(peer.Nickname()); exists {
 		return ErrPeerExists
 	}
-	p.PeerStore.Set(peer.Nickname(), peer)
+	p.Peers.Set(peer.Nickname(), peer)
 	return nil
 }
 
 // TODO: deprecate this
-func (p *Principal[A]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
-	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
-	e := Envelope[A]{
-		ID:      NewMessageId(),
-		Thread:  threadId,
-		Message: msg,
-	}
-	return p.Send(&e)
-}
+//func (p *Principal[A]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
+//	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
+//	e := Envelope[A]{
+//		ID:      NewMessageId(),
+//		Thread:  threadId,
+//		Message: msg,
+//	}
+//	return p.Send(&e)
+//}
 
 func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	pemFile, err := p.Principal.MarshalPEM()
@@ -222,7 +209,7 @@ func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	}
 	pemFile.Type = "POLITY PRIVATE KEY"
 
-	for k, v := range p.PeerStore.Entries() {
+	for k, v := range p.Peers.Entries() {
 		pemFile.Headers["polity/peer/"+k] = v.String()
 	}
 
@@ -244,11 +231,11 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 
 	for k, v := range block.Headers {
 		if strings.Contains(k, "polity/peer") {
-			pee, err := PeerFromString(v, network)
+			pee, err := PeerFromString(v, network.New().(A))
 			if err != nil {
 				return err
 			}
-			p.PeerStore.Set(k, pee)
+			p.Peers.Set(k, pee)
 		}
 	}
 	return nil

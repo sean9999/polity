@@ -27,8 +27,8 @@ func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string)
 // broadcast a message to all my friends
 func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
 	wg := new(sync.WaitGroup)
-	wg.Add(p.PeerStore.Length())
-	for _, peer := range p.PeerStore.Entries() {
+	wg.Add(p.Peers.Length())
+	for _, peer := range p.Peers.Entries() {
 		go func() {
 			f := e.Clone()
 			f.SetRecipient(peer)

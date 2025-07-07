@@ -34,14 +34,17 @@ func PeerFromString[A Addresser](h string, addr A) (*Peer[A], error) {
 		h = fmt.Sprintf("%s://%s", addr.Network(), h)
 	}
 
-	url, err := url.Parse(h)
+	u, err := url.Parse(h)
 	if err != nil {
 		return nil, err
 	}
-	pubkey := delphi.KeyFromHex(url.User.Username())
+	pubkey := delphi.KeyFromHex(u.User.Username())
 	m := map[string]string{}
 
-	addr.UnmarshalText([]byte(url.Host))
+	err = addr.UnmarshalText([]byte(u.Host))
+	if err != nil {
+		return nil, err
+	}
 
 	m["polity/network"] = addr.Network()
 	m["polity/addr"] = addr.String()

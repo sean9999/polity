@@ -10,11 +10,20 @@ import (
 
 var _ AddressConnector = (*Network)(nil)
 
+const (
+	NetworkName = "udp"
+	LocalAddr   = "127.0.0.1"
+)
+
 // Network is a [Network] that listens on localhost
 // and distinguishes different nodes with different ports.
 type Network struct {
 	addr *net.UDPAddr
 	conn net.PacketConn
+}
+
+func (lo *Network) New() AddressConnector {
+	return &Network{}
 }
 
 // jsonRecord is an object useful for serializing a [Network].
@@ -26,7 +35,7 @@ type jsonRecord struct {
 }
 
 func (lo *Network) Network() string {
-	return "udp"
+	return NetworkName
 }
 
 func (lo *Network) MarshalText() ([]byte, error) {
@@ -45,7 +54,7 @@ func (lo *Network) String() string {
 }
 
 func (lo *Network) UnmarshalText(data []byte) error {
-	addr, err := net.ResolveUDPAddr("udp", string(data))
+	addr, err := net.ResolveUDPAddr(NetworkName, string(data))
 	if err != nil {
 		return err
 	}
@@ -58,7 +67,7 @@ func (lo *Network) MarshalJSON() ([]byte, error) {
 		return nil, errors.New("nothing to marshal")
 	}
 	s := jsonRecord{
-		Network: "udp",
+		Network: NetworkName,
 		Zone:    lo.addr.Zone,
 		IP:      lo.addr.IP.String(),
 		Port:    lo.addr.Port,
@@ -102,7 +111,8 @@ func (lo *Network) Connection() (net.PacketConn, error) {
 
 func (lo *Network) NewConnection() (net.PacketConn, error) {
 	addr := lo.createAddress()
-	return net.ListenUDP("udp", addr)
+	//return net.ListenUDP(NetworkName, addr)
+	return net.ListenPacket(addr.Network(), addr.String())
 }
 
 // Address returns our persistent [net.Addr]
@@ -114,13 +124,18 @@ func (lo *Network) Address() *net.UDPAddr {
 	return lo.addr
 }
 
+// expose the underlying net.Addr
+func (lo *Network) Addr() net.Addr {
+	return lo.addr
+}
+
 func (lo *Network) Initialize() {
 	lo.Address()
 }
 
 func (lo *Network) createAddress() *net.UDPAddr {
 	ua := &net.UDPAddr{
-		IP:   net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP(LocalAddr),
 		Port: 0,
 	}
 	return ua

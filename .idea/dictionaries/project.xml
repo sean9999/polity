@@ -8,6 +8,7 @@
       <w>goproxy</w>
       <w>pkgsite</w>
       <w>polityd</w>
+      <w>unixgram</w>
     </words>
   </dictionary>
 </component>

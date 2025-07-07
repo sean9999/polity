@@ -10,6 +10,7 @@ type Addresser interface {
 	net.Addr
 	encoding.TextMarshaler
 	encoding.TextUnmarshaler
+	Addr() net.Addr
 }
 
 // a Connector provides one persistent and one ad-hoc packet connection
@@ -24,6 +25,7 @@ type Connector interface {
 type AddressConnector interface {
 	Addresser
 	Connector
+	New() AddressConnector
 }
 
 // type Network[A net.Addr] interface {
