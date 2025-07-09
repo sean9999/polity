@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 )
 
 func handleDeathThreat[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
@@ -12,7 +13,7 @@ func handleDeathThreat[A polity.AddressConnector](p *polity.Principal[A], e poli
 		close(p.Inbox)
 	} else {
 		f := e.Reply()
-		f.Subject("fuck you. I won't die")
+		f.Subject(subj.RefuseToDie)
 		p.Send(f)
 	}
 

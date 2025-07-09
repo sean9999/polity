@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="polityd white-grass" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <output_file path="$PROJECT_DIR$/../logs/white-grass-console" is_save="true" />
+    <log_file alias="white-grass" path="$PROJECT_DIR$/../logs" />
+    <module name="polity" />
+    <working_directory value="$PROJECT_DIR$/v2" />
+    <parameters value="-conf ./testdata/white-grass.pem" />
+    <kind value="PACKAGE" />
+    <package value="github.com/sean9999/polity/v2/cmd/polityd" />
+    <directory value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>

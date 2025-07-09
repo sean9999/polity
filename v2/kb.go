@@ -5,24 +5,23 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
-// a KnowlegeBase contains facts about entities in Polity.
-type KnowlegeBase[A Addresser] struct {
-	Alives *stablemap.StableMap[*Peer[A], bool]
+// a KnowledgeBase contains facts about entities in Polity.
+type KnowledgeBase[A Addresser] struct {
+	Lives *stablemap.StableMap[*Peer[A], bool]
 }
 
-func NewKB[A Addresser]() KnowlegeBase[A] {
-	kb := KnowlegeBase[A]{
+func NewKB[A Addresser]() KnowledgeBase[A] {
+	kb := KnowledgeBase[A]{
 		Alives: stablemap.New[*Peer[A], bool](),
 	}
 	return kb
 }
 
-func (kb *KnowlegeBase[A]) String() string {
+func (kb *KnowledgeBase[A]) String() string {
 	rows := `
 Peer	Alive
 `
-
-	for k, v := range kb.Alives.Entries() {
+	for k, v := range kb.Lives.Entries() {
 		rows += fmt.Sprintf(`
 %s	%v
 `, k.Nickname(), v)

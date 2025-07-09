@@ -1,0 +1,18 @@
+omnibus.
+
+Having an interface that is itself generic makes code very ugly. AdressConnector is now a regular interface, which is
+implemented by a package such as [udp4.Network].
+
+So members of our world will have a signature like `Peer[*udp4.Network]`.
+
+An [Addresser] is much like a [net.Addr], but crucially, it can serialize and deserialize itself.
+
+Since we act on Messages according to their subject lines, it's too brittle to be passing around loose text. If we send
+"Friend Request" but are matching against "friend_request", we will become very sad. So the "subj" packages contains
+constants that solve this problem. Don't use loose text for subject lines.
+
+When a principal boots up, it creates an ID that becomes the ThreadId of the messages it sends out next: Saying "hello,
+I'm alive" to all it's friends. In this way, a principal shares it's "boot ID" with it's friends. This will help nodes
+distinguish between duplicate and discrete messages.
+
+

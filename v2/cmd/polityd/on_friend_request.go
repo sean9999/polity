@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/pem"
 	"errors"
+	"fmt"
+	"github.com/sean9999/polity/v2/subj"
 	"os"
 	"sync"
 
@@ -47,7 +49,7 @@ func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *p
 		return err
 	}
 	e := p.Compose(peerBytes, nil, polity.NewMessageId())
-	err = e.Subject("so and so is alive")
+	err = e.Subject(subj.SoAndSoIsAlive)
 	if err != nil {
 		return err
 	}
@@ -57,18 +59,22 @@ func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *p
 
 // If message is signed and peer is new, add them and send a friend request back
 func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
+
+	fmt.Println("running handleFriendRequest")
+
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
 
 			//	we know that peer is alive
-			err := p.KB.Alives.Set(e.Sender, true)
+			err := p.KB.Lives.Set(e.Sender, true)
 			if err != nil {
 				return
 			}
 
 			f := e.Reply()
-			f.Message.PlainText = []byte("i accept your friend request")
+			f.Subject(subj.FriendRequestAccept)
+			// f.Message.PlainText = []byte(SubjFriendRequestAccept)
 			err = f.Message.Sign(rand.Reader, p)
 			if err != nil {
 				p.Log.Print(err)
@@ -90,5 +96,5 @@ func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e po
 		go sendAliveness(p, e.Sender)
 
 	}
-	//	if message is not signed, drop it
+	//	if message is not signed, drop it. No action taken
 }

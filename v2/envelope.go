@@ -3,6 +3,7 @@ package polity
 import (
 	"errors"
 	"fmt"
+	"github.com/sean9999/polity/v2/subj"
 	"strings"
 
 	"github.com/google/uuid"
@@ -25,11 +26,11 @@ func (m MessageId) String() string {
 }
 
 // Subject sets the subject of the embedded Message, and uppercases it.
-func (e *Envelope[A]) Subject(str string) error {
+func (e *Envelope[A]) Subject(str subj.Subject) error {
 	if e.Message == nil {
 		return errors.New("nil message in envelope")
 	}
-	e.Message.Subject = delphi.Subject(strings.ToUpper(str))
+	e.Message.Subject = delphi.Subject(strings.ToUpper(string(str)))
 	return nil
 }
 
@@ -81,7 +82,7 @@ func (e *Envelope[A]) Deserialize(data []byte) error {
 	return nil
 }
 
-func (e Envelope[A]) Clone() *Envelope[A] {
+func (e *Envelope[A]) Clone() *Envelope[A] {
 	f := NewEnvelope[A]()
 	f.ID = NewMessageId()
 	f.Thread = e.Thread
@@ -92,7 +93,7 @@ func (e Envelope[A]) Clone() *Envelope[A] {
 }
 
 // Reply crafts an Envelope whose recipient is the sender, and whose threadId points back to the original
-func (e Envelope[A]) Reply() *Envelope[A] {
+func (e *Envelope[A]) Reply() *Envelope[A] {
 	f := NewEnvelope[A]()
 	f.ID = NewMessageId()
 	f.Recipient, f.Sender = e.Sender, e.Recipient
@@ -108,19 +109,6 @@ func (e Envelope[A]) Reply() *Envelope[A] {
 	f.Message.SenderKey, f.Message.RecipientKey = e.Message.RecipientKey, e.Message.SenderKey
 	return f
 }
-
-// type Message struct {
-// 	readBuffer   []byte  `msgpack:"-"`
-// 	Subject      Subject `msgpack:"subj" json:"subj"`
-// 	RecipientKey KeyPair `msgpack:"to" json:"to"`
-// 	SenderKey    KeyPair `msgpack:"from" json:"from"`
-// 	Headers      KV      `msgpack:"hdrs" json:"hdrs"` // additional authenticated data (AAD)
-// 	Eph          []byte  `msgpack:"eph" json:"eph"`
-// 	Nonce        Nonce   `msgpack:"nonce" json:"nonce"`
-// 	CipherText   []byte  `msgpack:"ciph" json:"ciph"`
-// 	PlainText    []byte  `msgpack:"plain" json:"plain"`
-// 	Sig          []byte  `msgpack:"sig" json:"sig"`
-// }
 
 func (e *Envelope[A]) String() string {
 	s := fmt.Sprintf("sender:\t%s\nsubj:\t%s\nmsg:\t%s\n", e.Sender.Addr.String(), "asdfa", e.Message)

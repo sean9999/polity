@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 )
 
-func boot[A polity.AddressConnector](p *polity.Principal[A]) error {
+func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId, error) {
 
 	message := fmt.Sprintf("Greetings! I'm %s at %s. Join me with:\npolityd -join %s\n", p.Nickname(), p.Net, p.AsPeer().String())
 
@@ -18,10 +19,10 @@ func boot[A polity.AddressConnector](p *polity.Principal[A]) error {
 
 	// send a message to ourselves indicating that we've booted up
 	e := p.Compose([]byte(message), p.AsPeer(), nil)
-	e.Subject("boot up")
+	e.Subject(subj.Boot)
 	_, err := p.Send(e)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return e.ID, nil
 }

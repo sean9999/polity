@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sean9999/pear"
+	"github.com/sean9999/polity/v2/subj"
 	"io"
 	"os"
 
@@ -45,6 +46,7 @@ func main() {
 
 		p, err = polity.PrincipalFromPEM(data, new(udp4.Network))
 		dieOn(os.Stderr, err)
+
 	}
 	if p == nil {
 		dieOn(os.Stderr, errors.New("no principal"))
@@ -62,15 +64,26 @@ func main() {
 		done <- errors.New("goodbye")
 	}()
 
-	err = boot(p)
+	bootId, err := boot(p)
 	//	if we can't send a boot up message to ourselves, we must explain ourselves and die
 	dieOn(os.Stderr, err)
 
 	//	if our process was started with a "-join=pubkey@address" flag, try to join that peer
 	if join.Peer != nil {
-		err = sendFriendRequest(p, join.Peer)
+		fmt.Println("sending friend hello")
+		err = sendFriendRequest(p, join.Peer, bootId)
 		//	if we can't join a peer, we should kill ourselves.
 		dieOn(os.Stderr, err)
+	}
+
+	//	send out "hello, I'm alive" to all my friends (if I have any)
+	for k, v := range p.Peers.Entries() {
+		fmt.Printf("sending hello to %s\n", k)
+
+		//body := []byte("hello. I'm alive.")
+		e := p.Compose(nil, v, bootId)
+		e.Subject(subj.Hello)
+		p.Send(e)
 	}
 
 	err = <-done

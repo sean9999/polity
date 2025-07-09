@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -25,14 +27,16 @@ func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Enve
 
 	prettyLog(e)
 
-	subj := e.Message.Subject
+	subject := e.Message.Subject
+
+	fmt.Println("subject is ", subject)
 
 	switch {
-	case subj.Equals("die now"):
+	case subject.Equals(subj.KillYourself):
 		handleDeathThreat(p, e)
-	case subj.Equals("friend request"):
+	case subject.Equals(subj.FriendRequest):
 		handleFriendRequest(p, e, configFile)
-	case subj.Equals("dump thyself"):
+	case subject.Equals(subj.DumpThyself):
 		handleDump(p, e)
 	default:
 	}

@@ -21,7 +21,7 @@ type Principal[A AddressConnector] struct {
 	conn  net.PacketConn
 	Inbox chan Envelope[A]
 	Peers *stablemap.StableMap[string, *Peer[A]]
-	KB    KnowlegeBase[A]
+	KB    KnowledgeBase[A]
 	Log   *log.Logger
 }
 
@@ -176,6 +176,8 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 		return i, err
 
 	}
+
+	fmt.Printf("sending %s to %s", e.Message.Subject, e.Recipient.Addr.String())
 
 	// we are sending to someone else
 	return p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
