@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"github.com/sean9999/polity/v2/subj"
 	"log/slog"
 	"os"
@@ -61,14 +60,14 @@ func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *p
 // If message is signed and peer is new, add them and send a friend request back
 func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 
-	fmt.Println("running handleFriendRequest")
+	//fmt.Println("running handleFriendRequest")
 
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
 
 			//	we know that peer is alive
-			err := p.KB.Lives.Set(e.Sender, true)
+			err := p.KB.UpdateAlives(e.Sender, true)
 			if err != nil {
 				return
 			}

@@ -62,6 +62,13 @@ func main() {
 		done <- errors.New("goodbye")
 	}()
 
+	//	KB events
+	go func() {
+		for ev := range p.KB.LiveEvents {
+			prettyNote(ev)
+		}
+	}()
+
 	bootId, err := boot(p)
 	//	if we can't send a boot up message to ourselves, we must explain ourselves and die
 	dieOn(os.Stderr, err)
@@ -79,12 +86,21 @@ func main() {
 
 		//body := []byte("hello. I'm alive.")
 		e := p.Compose(nil, v, bootId)
-		e.Subject(subj.Hello)
-		send(p, e)
+		_ = e.Subject(subj.Hello)
+		_ = send(p, e)
+		_ = p.KB.UpdateAlives(v, false)
 	}
+
+	//time.Sleep(time.Second * 3)
+	//dmp := p.Compose(nil, p.AsPeer(), bootId)
+	//_ = dmp.Subject(subj.DumpThyself)
+	//_ = send(p, dmp)
+	//
+	//time.Sleep(time.Second * 1)
+	//p.Disconnect()
 
 	err = <-done
 	//	bye bye
-	fmt.Fprintln(os.Stderr, err)
+	_, _ = fmt.Fprintln(os.Stderr, err)
 
 }
