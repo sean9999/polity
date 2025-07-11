@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sean9999/polity/v2/subj"
+	"log/slog"
 	"os"
 	"sync"
 
@@ -34,7 +35,7 @@ func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Enve
 		go func() {
 			f := e.Clone()
 			f.SetRecipient(peer)
-			p.Send(f)
+			send(p, f)
 			wg.Done()
 		}()
 	}
@@ -77,15 +78,15 @@ func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e po
 			// f.Message.PlainText = []byte(SubjFriendRequestAccept)
 			err = f.Message.Sign(rand.Reader, p)
 			if err != nil {
-				p.Log.Print(err)
+				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
 			}
-			_, err = p.Send(f)
+			p.Send(f)
 			if err != nil {
-				p.Log.Print(err)
+				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
 			}
 			err = trySave(p, configFile)
 			if err != nil {
-				p.Log.Print(err)
+				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
 			}
 
 		}

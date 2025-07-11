@@ -92,6 +92,11 @@ func (lo *Network) UnmarshalJSON(data []byte) error {
 }
 
 func (lo *Network) Connection() (net.PacketConn, error) {
+
+	if lo.conn != nil {
+		return lo.conn, nil
+	}
+
 	addr := lo.Address()
 	if addr == nil {
 		return nil, errors.New("no address")

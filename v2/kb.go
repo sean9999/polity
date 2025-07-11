@@ -12,7 +12,7 @@ type KnowledgeBase[A Addresser] struct {
 
 func NewKB[A Addresser]() KnowledgeBase[A] {
 	kb := KnowledgeBase[A]{
-		Alives: stablemap.New[*Peer[A], bool](),
+		Lives: stablemap.New[*Peer[A], bool](),
 	}
 	return kb
 }

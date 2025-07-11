@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 	"github.com/vmihailenco/msgpack/v5"
@@ -17,7 +16,7 @@ func handleDump[A polity.AddressConnector](p *polity.Principal[A], e polity.Enve
 	}
 
 	f.Message.PlainText = bin
-	p.Send(f)
+	send(p, f)
 	return nil
 
 }
@@ -25,11 +24,9 @@ func handleDump[A polity.AddressConnector](p *polity.Principal[A], e polity.Enve
 // onEnvelope handles an Envelope, according to what's inside
 func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 
-	prettyLog(e)
+	prettyLog(e, "INBOX")
 
 	subject := e.Message.Subject
-
-	fmt.Println("subject is ", subject)
 
 	switch {
 	case subject.Equals(subj.KillYourself):

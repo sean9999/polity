@@ -20,9 +20,6 @@ func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId,
 	// send a message to ourselves indicating that we've booted up
 	e := p.Compose([]byte(message), p.AsPeer(), nil)
 	e.Subject(subj.Boot)
-	_, err := p.Send(e)
-	if err != nil {
-		return nil, err
-	}
+	send(p, e)
 	return e.ID, nil
 }

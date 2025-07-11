@@ -25,7 +25,7 @@ func (m MessageId) String() string {
 	return u.String()
 }
 
-// Subject sets the subject of the embedded Message, and uppercases it.
+// Subject sets the subject of the embedded [delphi.Message], and uppercases it.
 func (e *Envelope[A]) Subject(str subj.Subject) error {
 	if e.Message == nil {
 		return errors.New("nil message in envelope")
@@ -34,7 +34,7 @@ func (e *Envelope[A]) Subject(str subj.Subject) error {
 	return nil
 }
 
-// an Envelope wraps a [delphi.Message] with information essential for addressing and organizing.
+// An Envelope wraps a [delphi.Message] with information essential for addressing and organizing.
 type Envelope[A Addresser] struct {
 	ID        *MessageId      `json:"id" msgpack:"id"`
 	Thread    *MessageId      `json:"thread" msgpack:"thread"`

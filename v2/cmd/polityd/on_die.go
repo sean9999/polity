@@ -14,7 +14,7 @@ func handleDeathThreat[A polity.AddressConnector](p *polity.Principal[A], e poli
 	} else {
 		f := e.Reply()
 		f.Subject(subj.RefuseToDie)
-		p.Send(f)
+		send(p, f)
 	}
 
 }

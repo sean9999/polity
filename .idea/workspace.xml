@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/polity.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/polity.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/_template__of_Go_Build.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/go_test_v2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_broken_hill.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_white_grass.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/pretty_log.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/pretty_log.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/kb.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/kb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/principal.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/principal.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/udp4/net.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/udp4/net.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="GOROOT" url="file:///usr/local/go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;sean9999&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:sean9999/polity.git&quot;,
+    &quot;accountId&quot;: &quot;ad7e3474-f9ed-4cdc-8629-79baf02a3c31&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2zjjUUpqANhXQOwfuEN242NwO4T" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Go Build.polityd as blue-shadow.executor": "Run",
+    "Go Build.polityd as quiet-bird.executor": "Run",
+    "Go Build.polityd join quiet-bird.executor": "Debug",
+    "Go Build.polityd straight up.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.GoLinterPluginOnboarding": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "slog",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/mnt/bag/seanmacdonald/Documents/repos/polity/v2/cmd/polityd",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm"
+  }
+}]]></component>
+  <component name="RunManager" selected="Go Build.polityd join quiet-bird">
+    <configuration name="polityd as little-violet" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="polity" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="-conf testdata/little-violet.pem" />
+      <kind value="DIRECTORY" />
+      <package value="github.com/sean9999/polity" />
+      <directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="polityd as quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="polity" />
+      <working_directory value="$PROJECT_DIR$/v2" />
+      <parameters value="-conf testdata/quiet-bird.pem" />
+      <kind value="DIRECTORY" />
+      <package value="github.com/sean9999/polity" />
+      <directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="polityd join quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="polity" />
+      <working_directory value="$PROJECT_DIR$/v2" />
+      <parameters value="-join udp://e282a7ab4ed4854baa3fd30a4e87da86e69dcc0e945aff08906fbbb81b5b1b2a863a5bff18d7520962a903761582e6e3c2af042f457eb694fc3cf38304ae87e2@127.0.0.1:50971" />
+      <kind value="DIRECTORY" />
+      <package value="github.com/sean9999/polity" />
+      <directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Go Build.polityd straight up" />
+      <item itemvalue="Go Build.polityd as blue-shadow" />
+      <item itemvalue="Go Build.polityd as little-violet" />
+      <item itemvalue="Go Build.polityd as quiet-bird" />
+      <item itemvalue="Go Build.polityd join quiet-bird" />
+    </list>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-3b128438d3f6-34ac7aa8f6ab-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.23774.430" />
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-GO-251.23774.430" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="" />
+      <created>1752251392322</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1752251392322</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.pem" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/v2/udp4/net.go</url>
+          <line>93</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint enabled="true" log-message="true" type="DlvErrorBreakpoint" />
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

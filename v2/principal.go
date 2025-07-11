@@ -17,10 +17,10 @@ import (
 )
 
 /*
-a Principal is an entity (node) in the graph (cluster) that can:
+A Principal is an entity (node) in the graph (cluster) that can:
 - send messages
 - listen for messages
-- encrypt, decrpt, sign, and verify signatures
+- encrypt, decrypt, sign, and verify signatures
 - keep track of [Peer]s, which represent "friends"
 - read and write to a [KnowledgeBase] containing knowledge of the graph
 */
@@ -56,8 +56,14 @@ func (p *Principal[A]) Connect() error {
 		return err
 	}
 	p.conn = pc
-	p.Props.Set("polity/addr", pc.LocalAddr().String())
-	p.Props.Set("polity/network", pc.LocalAddr().Network())
+	err = p.Props.Set("polity/addr", pc.LocalAddr().String())
+	if err != nil {
+		return err
+	}
+	err = p.Props.Set("polity/network", pc.LocalAddr().Network())
+	if err != nil {
+		return err
+	}
 	//	listen for Envelopes on the socket and send over channel
 	go func() {
 		ch := p.Inbox
@@ -81,10 +87,14 @@ func (p *Principal[A]) Connect() error {
 				//e.Subject("ERROR. " + err.Error())
 				e.Message.Subject = "ERROR"
 				ch <- *e
-				fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
+				_, err := fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
+				if err != nil {
+					return
+				}
 			}
 		}
 	}()
+
 	return nil
 }
 
@@ -109,7 +119,7 @@ func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A]
 func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A], error) {
 	gork := goracle.NewPrincipal(rand, nil)
 	m := stablemap.New[string, *Peer[A]]()
-	ch := make(chan Envelope[A])
+	inbox := make(chan Envelope[A])
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -118,9 +128,10 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 	p := Principal[A]{
 		Principal: gork,
 		Net:       network,
-		Inbox:     ch,
+		Inbox:     inbox,
 		Peers:     m,
 		Slogger:   logger,
+		KB:        NewKB[A](),
 	}
 	return &p, nil
 }
@@ -172,8 +183,6 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 
 	}
 
-	fmt.Printf("sending %s to %s", e.Message.Subject, e.Recipient.Addr.String())
-
 	// we are sending to someone else
 	return p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
 }
@@ -187,17 +196,6 @@ func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
 	p.Peers.Set(peer.Nickname(), peer)
 	return nil
 }
-
-// TODO: deprecate this
-//func (p *Principal[A]) SendText(body []byte, recipient *Peer[A], threadId *MessageId) (int, error) {
-//	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
-//	e := Envelope[A]{
-//		ID:      NewMessageId(),
-//		Thread:  threadId,
-//		Message: msg,
-//	}
-//	return p.Send(&e)
-//}
 
 func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	pemFile, err := p.Principal.MarshalPEM()

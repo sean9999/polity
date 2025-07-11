@@ -9,12 +9,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/udp4"
 )
 
-var NoUUID uuid.UUID
+//var NoUUID uuid.UUID
 
 func dieOn(stream io.Writer, err error) {
 	if err != nil {
@@ -55,7 +54,7 @@ func main() {
 		dieOn(os.Stderr, err)
 	}
 
-	// handle incoming Envelopes
+	// handle inbox
 	go func() {
 		for e := range p.Inbox {
 			onEnvelope(p, e, meConf.String())
@@ -83,11 +82,17 @@ func main() {
 		//body := []byte("hello. I'm alive.")
 		e := p.Compose(nil, v, bootId)
 		e.Subject(subj.Hello)
-		p.Send(e)
+		send(p, e)
 	}
 
 	err = <-done
 	//	bye bye
 	fmt.Fprintln(os.Stderr, err)
 
+}
+
+func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
+	prettyLog[A](*e, "OUTBOX")
+	_, err := p.Send(e)
+	return err
 }
