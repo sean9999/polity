@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/sean9999/polity/v2"
+	"sync"
 )
+
+var mu *sync.Mutex = new(sync.Mutex)
 
 // prettyLog logs out an Envelope in a pretty way
 func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
+
+	mu.Lock()
+	defer mu.Unlock()
+
 	msg := e.Message
 	subj := e.Message.Subject
 	var body string
@@ -28,4 +35,10 @@ func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
 	color.Green("To:   \t%s@%s\n", e.Message.RecipientKey.Nickname(), e.Recipient.Addr.String())
 	fmt.Println(body)
 
+}
+
+func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
+	prettyLog[A](*e, "OUTBOX")
+	_, err := p.Send(e)
+	return err
 }

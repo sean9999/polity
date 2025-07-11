@@ -5,12 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sean9999/pear"
+	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
+	"github.com/sean9999/polity/v2/udp4"
 	"io"
 	"os"
-
-	"github.com/sean9999/polity/v2"
-	"github.com/sean9999/polity/v2/udp4"
 )
 
 //var NoUUID uuid.UUID
@@ -69,7 +68,6 @@ func main() {
 
 	//	if our process was started with a "-join=pubkey@address" flag, try to join that peer
 	if join.Peer != nil {
-		fmt.Println("sending friend hello")
 		err = sendFriendRequest(p, join.Peer, bootId)
 		//	if we can't join a peer, we should kill ourselves.
 		dieOn(os.Stderr, err)
@@ -89,10 +87,4 @@ func main() {
 	//	bye bye
 	fmt.Fprintln(os.Stderr, err)
 
-}
-
-func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
-	prettyLog[A](*e, "OUTBOX")
-	_, err := p.Send(e)
-	return err
 }
