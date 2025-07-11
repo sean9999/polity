@@ -9,6 +9,7 @@ require (
 	github.com/sean9999/go-oracle/v2 v2.2.1
 	github.com/sean9999/go-stable-map v0.1.1
 	github.com/sean9999/hermeti v0.5.2
+	github.com/sean9999/pear v0.0.5
 	github.com/stretchr/testify v1.10.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
@@ -20,7 +21,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sean9999/pear v0.0.5 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -15,14 +16,22 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
+/*
+a Principal is an entity (node) in the graph (cluster) that can:
+- send messages
+- listen for messages
+- encrypt, decrpt, sign, and verify signatures
+- keep track of [Peer]s, which represent "friends"
+- read and write to a [KnowledgeBase] containing knowledge of the graph
+*/
 type Principal[A AddressConnector] struct {
 	*goracle.Principal
-	Net   A
-	conn  net.PacketConn
-	Inbox chan Envelope[A]
-	Peers *stablemap.StableMap[string, *Peer[A]]
-	KB    KnowledgeBase[A]
-	Log   *log.Logger
+	Net     A
+	conn    net.PacketConn
+	Inbox   chan Envelope[A]
+	Peers   *stablemap.StableMap[string, *Peer[A]]
+	KB      KnowledgeBase[A]
+	Slogger *slog.Logger
 }
 
 func (p *Principal[A]) AsPeer() *Peer[A] {
@@ -39,7 +48,8 @@ func (p *Principal[A]) Disconnect() error {
 	return p.conn.Close()
 }
 
-// Connect acquires an address and starts listening on it
+// Connect acquires an address and starts listening on it.
+// After doing so, a node will want to advertise itself
 func (p *Principal[A]) Connect() error {
 	pc, err := p.Net.Connection()
 	if err != nil {
@@ -78,21 +88,6 @@ func (p *Principal[A]) Connect() error {
 	return nil
 }
 
-//func PrincipalFromFile[A AddressConnector](filename string, network A) (*Principal[A], error) {
-//	fd, err := os.Stat(filename)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if fd.IsDir() {
-//		return nil, errors.New("file is dir")
-//	}
-//	data, err := os.ReadFile(filename)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return PrincipalFromPEM(data, network)
-//}
-
 func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Principal[A], error) {
 	p, err := NewPrincipal(nil, network)
 	if err != nil {
@@ -116,7 +111,7 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 	m := stablemap.New[string, *Peer[A]]()
 	ch := make(chan Envelope[A])
 
-	logger := log.New(os.Stdout, "polity", log.Ltime)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	network.Initialize()
 
@@ -125,7 +120,7 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 		Net:       network,
 		Inbox:     ch,
 		Peers:     m,
-		Log:       logger,
+		Slogger:   logger,
 	}
 	return &p, nil
 }
