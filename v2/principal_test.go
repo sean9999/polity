@@ -1,9 +1,10 @@
-package polity
+package polity_test
 
 import (
 	"crypto/rand"
 	"encoding/json"
-	"net"
+	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 	"testing"
 
 	"github.com/sean9999/go-delphi"
@@ -13,13 +14,13 @@ import (
 
 func TestEnvelope(t *testing.T) {
 
-	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	alice, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
 
-	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	bob, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
 
-	e1 := &Envelope[*net.UDPAddr]{
+	e1 := &polity.Envelope[*udp4.Network]{
 		Sender:    alice.AsPeer(),
 		Recipient: bob.AsPeer(),
 		Message:   delphi.ComposeMessage(nil, delphi.PlainMessage, []byte("hello")),
@@ -30,25 +31,20 @@ func TestEnvelope(t *testing.T) {
 		t.FailNow()
 	}
 	assert.NoError(t, err)
-
-	//e2 := new(Envelope[*net.UDPAddr])
-
-	e2 := NewEnvelope[*net.UDPAddr]()
-
+	e2 := polity.NewEnvelope[*udp4.Network]()
 	err = json.Unmarshal(data1, e2)
 	assert.NoError(t, err)
-
 	assert.Equal(t, e1.Message, e2.Message)
 
 }
 
 func TestEnvelopeMsgPack(t *testing.T) {
-	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	alice, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
-	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	bob, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
 
-	e1 := NewEnvelope[*net.UDPAddr]()
+	e1 := polity.NewEnvelope[*udp4.Network]()
 	e1.Sender = alice.AsPeer()
 	e1.Recipient = bob.AsPeer()
 
@@ -57,7 +53,7 @@ func TestEnvelopeMsgPack(t *testing.T) {
 		t.FailNow()
 	}
 	assert.NoError(t, err)
-	e2 := NewEnvelope[*net.UDPAddr]()
+	e2 := polity.NewEnvelope[*udp4.Network]()
 	err = msgpack.Unmarshal(data1, e2)
 	if err != nil {
 		t.Fatal(err)
@@ -67,12 +63,12 @@ func TestEnvelopeMsgPack(t *testing.T) {
 }
 
 func TestEnvelopeSerde(t *testing.T) {
-	alice, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	alice, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
-	bob, err := NewPrincipal(rand.Reader, new(LocalUDP4Net))
+	bob, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 	assert.NoError(t, err)
 
-	e1 := NewEnvelope[*net.UDPAddr]()
+	e1 := polity.NewEnvelope[*udp4.Network]()
 	e1.Sender = alice.AsPeer()
 	e1.Recipient = bob.AsPeer()
 
@@ -81,7 +77,7 @@ func TestEnvelopeSerde(t *testing.T) {
 		t.FailNow()
 	}
 	assert.NoError(t, err)
-	e2 := NewEnvelope[*net.UDPAddr]()
+	e2 := polity.NewEnvelope[*udp4.Network]()
 	err = e2.Deserialize(data1)
 	if err != nil {
 		t.Fatal(err)

@@ -15,6 +15,10 @@
 		{
 			"name": "Stable Map",
 			"path": "../../go-stable-map"
+		},
+		{
+			"name": "Hermeti",
+			"path": "../../hermeti"
 		}
 	],
 	"settings": {}

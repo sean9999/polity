@@ -32,7 +32,7 @@
 			"cwd": "${workspaceFolder}"
 		},
 		{
-			"name": "rough bird listeneing",
+			"name": "rough bird listening",
 			"type": "go",
 			"request": "launch",
 			"mode":  "auto",

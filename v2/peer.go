@@ -2,10 +2,11 @@ package polity
 
 import (
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
-	"net"
 	"net/url"
+	"strings"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
@@ -14,33 +15,55 @@ import (
 )
 
 // a peerRecord is a convenient way to serialize a Peer
-type peerRecord[A net.Addr] struct {
+type peerRecord[A Addresser] struct {
 	Pubkey []byte            `json:"pub" msgpack:"pub"`
 	Addr   A                 `json:"addr" msgpack:"addr"`
 	Props  map[string]string `json:"props" msgpack:"props"`
 }
 
-// A Peer[N]  is a public key, some arbitrary key-value pairs, and an address on network N
-type Peer[A net.Addr] struct {
+// A Peer is a public key, some arbitrary key-value pairs, and an address on network N
+type Peer[A Addresser] struct {
 	*goracle.Peer `json:"goracle"`
 	Addr          A `json:"net"`
 }
 
-func PeerFromString[A net.Addr, N Network[A]](h string, n N) (*Peer[A], error) {
+func PeerFromString[A Addresser](h string, addr A) (*Peer[A], error) {
 
-	url, err := url.Parse(h)
+	//	if h does not include protocol://, add it
+	if !strings.Contains(h, "://") {
+		h = fmt.Sprintf("%s://%s", addr.Network(), h)
+	}
+
+	u, err := url.Parse(h)
 	if err != nil {
 		return nil, err
 	}
-	pubkey := delphi.KeyFromHex(url.User.Username())
+	pubkey := delphi.KeyFromHex(u.User.Username())
 	m := map[string]string{}
-	n.UnmarshalText([]byte(url.Host))
-	m["polity/network"] = n.Network()
-	m["polity/addr"] = n.Address().String()
+
+	err = addr.UnmarshalText([]byte(u.Host))
+	if err != nil {
+		return nil, err
+	}
+
+	m["polity/network"] = addr.Network()
+	m["polity/addr"] = addr.String()
 	gork := goracle.PeerFrom(pubkey.Bytes(), m)
 	pee := NewPeer[A]()
 	pee.Peer = gork
+	pee.Addr = addr
 	return pee, nil
+}
+
+func (p *Peer[A]) MarshalPEM() (*pem.Block, error) {
+	block, err := p.Peer.MarshalPEM()
+	if err != nil {
+		return nil, err
+	}
+	block.Headers["polity/network"] = p.Addr.Network()
+	block.Headers["polity/addr"] = p.Addr.String()
+
+	return block, nil
 }
 
 func (p *Peer[A]) MarshalBinary() ([]byte, error) {
@@ -59,9 +82,7 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("could not unmarshal Peer. %w", err)
 	}
 	p.Addr = rec.Addr
-
 	gork := goracle.PeerFrom(rec.Pubkey, rec.Props)
-
 	p.Peer = gork
 	return nil
 }
@@ -69,10 +90,11 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 func (p *Peer[A]) String() string {
 	addr := p.Addr.String()
 	pub := p.PublicKey().ToHex()
-	return fmt.Sprintf("%s@%s", pub, addr)
+	net := p.Addr.Network()
+	return fmt.Sprintf("%s://%s@%s", net, pub, addr)
 }
 
-func NewPeer[A net.Addr]() *Peer[A] {
+func NewPeer[A Addresser]() *Peer[A] {
 	addr := new(A)
 	p := Peer[A]{
 		Peer: goracle.NewPeer(),

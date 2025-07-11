@@ -1,12 +1,11 @@
 package main
 
 import (
-	"net"
-
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 )
 
-func handleDeathThreat[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A]) {
+func handleDeathThreat[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
 
 	//	if the message is signed, go ahead and die
 	//	TODO: It should not be enough that the message is signed. The peer ought to be known and trusted too
@@ -14,7 +13,7 @@ func handleDeathThreat[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N
 		close(p.Inbox)
 	} else {
 		f := e.Reply()
-		f.Subject("fuck you. I won't die")
+		f.Subject(subj.RefuseToDie)
 		p.Send(f)
 	}
 

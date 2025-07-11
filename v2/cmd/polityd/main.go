@@ -4,63 +4,86 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"net"
+	"github.com/sean9999/pear"
+	"github.com/sean9999/polity/v2/subj"
+	"io"
 	"os"
 
 	"github.com/google/uuid"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
 var NoUUID uuid.UUID
+
+func dieOn(stream io.Writer, err error) {
+	if err != nil {
+		err = pear.AsPear(err, 3)
+		fmt.Fprintln(stream, err)
+		pear.NicePanic(stream)
+		os.Exit(1)
+	}
+}
 
 func main() {
 
 	//	exit signal
 	done := make(chan error)
-	dieOn := func(err error) {
-		if err != nil {
-			done <- err
-		}
-	}
 
-	acquaintance, fileName, err := parseFlargs[*net.UDPAddr, *polity.LocalUDP4Net](new(polity.LocalUDP4Net))
-	dieOn(err)
+	join, meConf, _, err := parseFlargs()
+	dieOn(os.Stderr, err)
 
 	//	initialize a new or existing Principal
-	var p *polity.Principal[*net.UDPAddr, *polity.LocalUDP4Net]
-	if fileName == "" {
-		p, err = polity.NewPrincipal(rand.Reader, new(polity.LocalUDP4Net))
+	var p *polity.Principal[*udp4.Network]
+	if meConf == nil || meConf.me == nil {
+		p, err = polity.NewPrincipal(rand.Reader, new(udp4.Network))
 		if err != nil {
 			done <- err
 		}
 	} else {
-		data, err := os.ReadFile(fileName)
-		dieOn(err)
+		data, err := os.ReadFile(meConf.String())
+		dieOn(os.Stderr, err)
 
-		p, err = polity.PrincipalFromPEM(data, new(polity.LocalUDP4Net))
-		dieOn(err)
+		p, err = polity.PrincipalFromPEM(data, new(udp4.Network))
+		dieOn(os.Stderr, err)
+
 	}
-	err = p.Connect()
-	dieOn(err)
+	if p == nil {
+		dieOn(os.Stderr, errors.New("no principal"))
+	} else {
+		err = p.Connect()
+		dieOn(os.Stderr, err)
+	}
 
 	// handle incoming Envelopes
 	go func() {
 		for e := range p.Inbox {
-			onEnvelope(p, e, fileName)
+			onEnvelope(p, e, meConf.String())
 		}
-		//	once the inbox channel is closed, we assume it's time to die
-		done <- errors.New("goodbye!")
+		//	once the inbox channel is closed, we assume it's time to exit
+		done <- errors.New("goodbye")
 	}()
 
-	err = boot(p)
+	bootId, err := boot(p)
 	//	if we can't send a boot up message to ourselves, we must explain ourselves and die
-	dieOn(err)
+	dieOn(os.Stderr, err)
 
-	//	if process was started with -join=pubkey@address flag, try to join that peer
-	if acquaintance != nil {
-		err = sendFriendRequest(p, acquaintance)
-		//	if we can't join a peer on boot, life is meaningless.
-		dieOn(err)
+	//	if our process was started with a "-join=pubkey@address" flag, try to join that peer
+	if join.Peer != nil {
+		fmt.Println("sending friend hello")
+		err = sendFriendRequest(p, join.Peer, bootId)
+		//	if we can't join a peer, we should kill ourselves.
+		dieOn(os.Stderr, err)
+	}
+
+	//	send out "hello, I'm alive" to all my friends (if I have any)
+	for k, v := range p.Peers.Entries() {
+		fmt.Printf("sending hello to %s\n", k)
+
+		//body := []byte("hello. I'm alive.")
+		e := p.Compose(nil, v, bootId)
+		e.Subject(subj.Hello)
+		p.Send(e)
 	}
 
 	err = <-done

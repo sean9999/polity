@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="polity" />
+    <working_directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+    <parameters value="-config testdata/little-violet.pem" />
+    <kind value="DIRECTORY" />
+    <package value="github.com/sean9999/polity" />
+    <directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+    <filePath value="$PROJECT_DIR$" />
+    <output_directory value="$PROJECT_DIR$/v2/testdata/logs" />
+    <method v="2" />
+  </configuration>
+</component>

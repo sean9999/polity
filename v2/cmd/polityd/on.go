@@ -1,13 +1,13 @@
 package main
 
 import (
-	"net"
-
+	"fmt"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func handleDump[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A]) error {
+func handleDump[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) error {
 
 	f := e.Reply()
 
@@ -23,18 +23,20 @@ func handleDump[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e po
 }
 
 // onEnvelope handles an Envelope, according to what's inside
-func onEnvelope[A net.Addr, N polity.Network[A]](p *polity.Principal[A, N], e polity.Envelope[A], configFile string) {
+func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 
 	prettyLog(e)
 
-	subj := e.Message.Subject
+	subject := e.Message.Subject
+
+	fmt.Println("subject is ", subject)
 
 	switch {
-	case subj.Equals("die now"):
+	case subject.Equals(subj.KillYourself):
 		handleDeathThreat(p, e)
-	case subj.Equals("friend request"):
+	case subject.Equals(subj.FriendRequest):
 		handleFriendRequest(p, e, configFile)
-	case subj.Equals("dump thyself"):
+	case subject.Equals(subj.DumpThyself):
 		handleDump(p, e)
 	default:
 	}
