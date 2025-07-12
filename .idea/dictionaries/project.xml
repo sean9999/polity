@@ -1,8 +1,11 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>bin/polityd</w>
       <w>flargs</w>
       <w>fset</w>
+      <w>goproxy</w>
+      <w>pkgsite</w>
       <w>priv</w>
       <w>recip</w>
     </words>

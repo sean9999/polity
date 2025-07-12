@@ -30,10 +30,10 @@ func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string)
 func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
 	wg := new(sync.WaitGroup)
 	wg.Add(p.Peers.Length())
-	for _, peer := range p.Peers.Entries() {
+	for pubKey, info := range p.Peers.Entries() {
 		go func() {
 			f := e.Clone()
-			f.SetRecipient(peer)
+			f.SetRecipient(info.Recompose(pubKey))
 			send(p, f)
 			wg.Done()
 		}()
@@ -66,8 +66,7 @@ func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e po
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
 
-			//	we know that peer is alive
-			err := p.KB.UpdateAlives(e.Sender, true)
+			err := p.SetPeerAliveness(e.Sender, true)
 			if err != nil {
 				return
 			}

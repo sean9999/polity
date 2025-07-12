@@ -8,10 +8,9 @@ import (
 // Dump everything we know about the world
 func handleDump[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) error {
 
-	fmt.Println(p.KB.String())
-
-	for nick := range p.Peers.Entries() {
-		fmt.Println(nick)
+	for key, info := range p.Peers.Entries() {
+		fmt.Println(key.Nickname())
+		fmt.Println(info)
 	}
 
 	return nil

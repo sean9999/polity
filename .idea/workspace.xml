@@ -5,13 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/v2/adr/peer_knowledge.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/four_by_four.sh" beforeDir="false" afterPath="$PROJECT_DIR$/four_by_four.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/polity.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/polity.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/v2/Makefile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/fact_base.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/kb.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/util.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/peer.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/peer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/principal.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/principal.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/subj/subjects.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/subj/subjects.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,6 +75,7 @@
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
@@ -77,11 +85,11 @@
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/mnt/bag/seanmacdonald/Documents/repos/go-stable-map",
+    "last_opened_file_path": "/mnt/bag/seanmacdonald/repos/go-stable-map",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
+    "settings.editor.selected.configurable": "project.scopes"
   }
 }]]></component>
   <component name="RunManager" selected="Go Build.polityd join quiet-bird">
@@ -126,8 +134,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-3b128438d3f6-34ac7aa8f6ab-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.23774.430" />
-        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-GO-251.23774.430" />
+        <option value="bundled-gosdk-3b128438d3f6-07d2d2d66b1e-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.26927.50" />
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-GO-251.26927.50" />
       </set>
     </attachedChunks>
   </component>

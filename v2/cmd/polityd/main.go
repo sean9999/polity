@@ -62,10 +62,11 @@ func main() {
 		done <- errors.New("goodbye")
 	}()
 
-	//	KB events
+	//	knowledge-base events
 	go func() {
-		for ev := range p.KB.LiveEvents {
-			prettyNote(ev)
+		for ev := range p.Peers.Events {
+			msg := fmt.Sprintf("%s was %v and is now %v", ev.Key, ev.OldVal, ev.NewVal)
+			prettyNote(msg)
 		}
 	}()
 
@@ -81,14 +82,18 @@ func main() {
 	}
 
 	//	send out "hello, I'm alive" to all my friends (if I have any)
-	for k, v := range p.Peers.Entries() {
-		fmt.Printf("sending hello to %s\n", k)
+	for pubKey, info := range p.Peers.Entries() {
+		fmt.Printf("sending hello to %s\n", pubKey)
 
-		//body := []byte("hello. I'm alive.")
-		e := p.Compose(nil, v, bootId)
+		e := p.Compose(nil, info.Recompose(pubKey), bootId)
 		_ = e.Subject(subj.Hello)
 		_ = send(p, e)
-		_ = p.KB.UpdateAlives(v, false)
+
+		//	should we assume the peer is dead until we hear back?
+		//	this might be too chatty. It requires the peer to respond.
+		info.IsAlive = false
+		p.Peers.Set(pubKey, info)
+
 	}
 
 	err = <-done

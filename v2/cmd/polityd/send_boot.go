@@ -12,8 +12,8 @@ func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId,
 
 	if p.Peers.Length() > 0 {
 		message += fmt.Sprintln("here are my peers:")
-		for _, v := range p.Peers.Entries() {
-			message += fmt.Sprintf("%s\t@ %s", v.Nickname(), v.Addr.String())
+		for pubKey, info := range p.Peers.Entries() {
+			message += fmt.Sprintf("%s\t@ %s", pubKey.Nickname(), info.Addr.String())
 		}
 	}
 

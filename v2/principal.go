@@ -16,15 +16,6 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
-type pubKey = delphi.Peer
-
-type PeerKnowledge[A Addresser] struct {
-	IsAlive bool
-	Kudos   int
-	Trust   int
-	Addr    Addresser
-}
-
 /*
 A Principal is an entity (node) in the graph (cluster) that can:
 - send messages
@@ -38,7 +29,7 @@ type Principal[A AddressConnector] struct {
 	Net     A
 	conn    net.PacketConn
 	Inbox   chan Envelope[A]
-	Peers   *stablemap.ActiveMap[pubKey, PeerKnowledge[A]]
+	Peers   *stablemap.ActiveMap[delphi.Key, PeerInfo[A]]
 	Slogger *slog.Logger
 }
 
@@ -126,7 +117,7 @@ func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A]
 
 func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A], error) {
 	gork := goracle.NewPrincipal(rand, nil)
-	m := stablemap.NewActiveMap[pubKey, PeerKnowledge[A]]()
+	m := stablemap.NewActiveMap[delphi.Key, PeerInfo[A]]()
 	inbox := make(chan Envelope[A])
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -200,7 +191,7 @@ func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
 	if _, exists := p.Peers.Get(peer.PublicKey()); exists {
 		return ErrPeerExists
 	}
-	p.Peers.Set(peer.PublicKey(), PeerKnowledge[A]{})
+	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{})
 	return nil
 }
 
@@ -241,7 +232,7 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 			if err != nil {
 				return err
 			}
-			p.Peers.Set(pee.PublicKey(), PeerKnowledge[A]{
+			p.Peers.Set(pee.PublicKey(), PeerInfo[A]{
 				Addr: pee.Addr,
 			})
 		}
@@ -255,4 +246,11 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 		return errors.New("could not decode bytes into a PEM")
 	}
 	return p.UnmarshalPEMBlock(block, network)
+}
+
+func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
+	pubKey := p.PublicKey()
+	info, _ := p.Peers.Get(pubKey)
+	info.IsAlive = true
+	return p.Peers.Set(pubKey, info)
 }

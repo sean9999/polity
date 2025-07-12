@@ -8,9 +8,11 @@ import (
 // Hello is a friendly way for one peer to tell another it's alive.
 func handleHello[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
 
-	_ = p.KB.UpdateAlives(e.Sender, true)
+	//_ = p.KB.UpdateAlives(e.Sender, true)
 
-	p.Peers.Set(e.Sender.Nickname(), e.Sender)
+	//p.AddPeer(e.Sender)
+
+	p.SetPeerAliveness(e.Sender, true)
 
 	f := e.Reply()
 	f.Subject(subj.HelloBack)
@@ -20,7 +22,9 @@ func handleHello[A polity.AddressConnector](p *polity.Principal[A], e polity.Env
 
 func handleHello2[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
 
-	p.Peers.Set(e.Sender.Nickname(), e.Sender)
-	_ = p.KB.UpdateAlives(e.Sender, true)
+	//p.Peers.Set(e.Sender.Nickname(), e.Sender)
+	//_ = p.KB.UpdateAlives(e.Sender, true)
 
+	p.SetPeerAliveness(e.Sender, true)
+	
 }

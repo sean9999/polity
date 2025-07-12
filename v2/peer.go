@@ -14,6 +14,38 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+// PeerInfo contains everything that can be known about a Peer except for its pubKey, which is kept elsewhere.
+type PeerInfo[A Addresser] struct {
+	IsAlive   bool
+	Closeness int
+	Trust     int
+	Addr      A
+	Props     *stablemap.StableMap[string, string]
+}
+
+func NewPeerInfo[A Addresser]() PeerInfo[A] {
+	props := stablemap.New[string, string]()
+	return PeerInfo[A]{
+		Props: props,
+	}
+}
+
+func (p *Peer[A]) Decompose() (delphi.Key, PeerInfo[A]) {
+	pubkey := p.PublicKey()
+	info := NewPeerInfo[A]()
+	info.Props = p.Props
+	info.Addr = p.Addr
+	return pubkey, info
+}
+
+func (info *PeerInfo[A]) Recompose(pub delphi.Key) *Peer[A] {
+	gork := goracle.PeerFrom(pub.Bytes(), info.Props.AsMap())
+	p := NewPeer[A]()
+	p.Peer = gork
+	p.Addr = info.Addr
+	return p
+}
+
 // a peerRecord is a convenient way to serialize a Peer
 type peerRecord[A Addresser] struct {
 	Pubkey []byte            `json:"pub" msgpack:"pub"`
