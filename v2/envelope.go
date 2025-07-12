@@ -13,8 +13,6 @@ import (
 
 type MessageId uuid.UUID
 
-var SubjPrivateKey = "POLITY PRIVATE KEY"
-
 func NewMessageId() *MessageId {
 	u := MessageId(uuid.New())
 	return &u
