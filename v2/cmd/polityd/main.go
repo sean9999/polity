@@ -91,14 +91,6 @@ func main() {
 		_ = p.KB.UpdateAlives(v, false)
 	}
 
-	//time.Sleep(time.Second * 3)
-	//dmp := p.Compose(nil, p.AsPeer(), bootId)
-	//_ = dmp.Subject(subj.DumpThyself)
-	//_ = send(p, dmp)
-	//
-	//time.Sleep(time.Second * 1)
-	//p.Disconnect()
-
 	err = <-done
 	//	bye bye
 	_, _ = fmt.Fprintln(os.Stderr, err)

@@ -3,8 +3,10 @@
 SESSION="main"
 SESSIONEXISTS=$(tmux list-sessions | grep -w "$SESSION")
 
-USER_1="billowing-water"
-USER_2="dark-haze"
+USER_1="blue-shadow"
+USER_2="little-violet"
+USER_3="quiet-bird"
+USER_4="broken-hill"
 
 if [ "$SESSIONEXISTS" = "" ]
 then
@@ -16,14 +18,16 @@ then
 	tmux split-window	-h
 
 	tmux select-pane	-t "$SESSION":0.0
-	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_1.json" Enter
+	tmux send-keys		-t "$SESSION" "cd v2 && go run ./cmd/polityd/*.go -conf=testdata/$USER_1.pem" Enter
 	tmux select-pane	-t "$SESSION":0.1
-	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go --config=testdata/$USER_2.json" Enter
+	tmux send-keys		-t "$SESSION" "cd v2 && go run ./cmd/polityd/*.go -conf=testdata/$USER_2.pem" Enter
 	tmux select-pane	-t "$SESSION":0.2
-	tmux send-keys		-t "$SESSION" "alias $USER_1='go run ./cmd/polity/*.go --config=testdata/$USER_1.json'" Enter
+	tmux send-keys		-t "$SESSION" "cd v2 && go run ./cmd/polityd/*.go -conf=testdata/$USER_3.pem" Enter
 	tmux select-pane	-t "$SESSION":0.3
-	tmux send-keys		-t "$SESSION" "alias $USER_2='go run ./cmd/polity/*.go --config=testdata/$USER_2.json'" Enter
+	tmux send-keys		-t "$SESSION" "cd v2 && go run ./cmd/polityd/*.go -conf=testdata/$USER_4.pem" Enter
 
 fi
 
 tmux attach-session -t "$SESSION":0
+
+

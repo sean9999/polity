@@ -5,32 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/polity.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/polity.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/_template__of_Go_Build.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/go_test_v2.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_broken_hill.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_white_grass.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/adr/peer_knowledge.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/four_by_four.sh" beforeDir="false" afterPath="$PROJECT_DIR$/four_by_four.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/pretty_log.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/pretty_log.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/kb.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/kb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/fact_base.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/kb.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/peer.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/peer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/principal.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/principal.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/udp4/net.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/udp4/net.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
   </component>
   <component name="GOROOT" url="file:///usr/local/go" />
   <component name="Git.Settings">
@@ -48,6 +41,12 @@
     &quot;accountId&quot;: &quot;ad7e3474-f9ed-4cdc-8629-79baf02a3c31&quot;
   }
 }</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/go/pkg/mod/github.com/sean9999/go-oracle/v2@v2.2.1/peer.go" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 0
@@ -60,9 +59,10 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultGoTemplateProperty": "Go File",
     "Go Build.polityd as blue-shadow.executor": "Run",
     "Go Build.polityd as quiet-bird.executor": "Run",
-    "Go Build.polityd join quiet-bird.executor": "Debug",
+    "Go Build.polityd join quiet-bird.executor": "Run",
     "Go Build.polityd straight up.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
@@ -73,14 +73,15 @@
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "slog",
+    "git-widget-placeholder": "peer__knowledge",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/mnt/bag/seanmacdonald/Documents/repos/polity/v2/cmd/polityd",
+    "last_opened_file_path": "/mnt/bag/seanmacdonald/Documents/repos/go-stable-map",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   }
 }]]></component>
   <component name="RunManager" selected="Go Build.polityd join quiet-bird">

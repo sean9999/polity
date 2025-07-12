@@ -121,14 +121,18 @@ func (p *Peer[A]) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	pubkey := delphi.Peer{}.From(rec.Pubkey)
+
+	mm := stablemap.New[string, string]()
+	mm.Incorporate(rec.Props)
+
 	gork := goracle.Peer{
 		Peer:  pubkey,
-		Props: stablemap.From(rec.Props),
+		Props: mm,
 	}
 	if gork.IsZero() {
 		return errors.New("zero key")
 	}
-	gork.Props = stablemap.From(rec.Props)
+	gork.Props = mm
 	p.Peer = &gork
 	return nil
 }

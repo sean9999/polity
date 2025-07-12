@@ -16,6 +16,15 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
+type pubKey = delphi.Peer
+
+type PeerKnowledge[A Addresser] struct {
+	IsAlive bool
+	Kudos   int
+	Trust   int
+	Addr    Addresser
+}
+
 /*
 A Principal is an entity (node) in the graph (cluster) that can:
 - send messages
@@ -29,8 +38,7 @@ type Principal[A AddressConnector] struct {
 	Net     A
 	conn    net.PacketConn
 	Inbox   chan Envelope[A]
-	Peers   *stablemap.StableMap[string, *Peer[A]]
-	KB      KnowledgeBase[A]
+	Peers   *stablemap.ActiveMap[pubKey, PeerKnowledge[A]]
 	Slogger *slog.Logger
 }
 
@@ -118,7 +126,7 @@ func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A]
 
 func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A], error) {
 	gork := goracle.NewPrincipal(rand, nil)
-	m := stablemap.New[string, *Peer[A]]()
+	m := stablemap.NewActiveMap[pubKey, PeerKnowledge[A]]()
 	inbox := make(chan Envelope[A])
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -131,7 +139,6 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 		Inbox:     inbox,
 		Peers:     m,
 		Slogger:   logger,
-		KB:        NewKB[A](),
 	}
 	return &p, nil
 }
@@ -190,10 +197,10 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 var ErrPeerExists = errors.New("peer exists")
 
 func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
-	if _, exists := p.Peers.Get(peer.Nickname()); exists {
+	if _, exists := p.Peers.Get(peer.PublicKey()); exists {
 		return ErrPeerExists
 	}
-	p.Peers.Set(peer.Nickname(), peer)
+	p.Peers.Set(peer.PublicKey(), PeerKnowledge[A]{})
 	return nil
 }
 
@@ -205,7 +212,11 @@ func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	pemFile.Type = "POLITY PRIVATE KEY"
 
 	for k, v := range p.Peers.Entries() {
-		pemFile.Headers["polity/peer/"+k] = v.String()
+		fullAddress, err := v.Addr.MarshalText()
+		if err != nil {
+			return nil, err
+		}
+		pemFile.Headers["polity/peer/"+k.Nickname()] = string(fullAddress)
 	}
 
 	return pemFile, nil
@@ -230,7 +241,9 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 			if err != nil {
 				return err
 			}
-			p.Peers.Set(k, pee)
+			p.Peers.Set(pee.PublicKey(), PeerKnowledge[A]{
+				Addr: pee.Addr,
+			})
 		}
 	}
 	return nil
