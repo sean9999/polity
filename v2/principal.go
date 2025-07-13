@@ -249,8 +249,7 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 }
 
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
-	pubKey := p.PublicKey()
-	info, _ := p.Peers.Get(pubKey)
+	info, _ := p.Peers.Get(peer.PublicKey())
 	info.IsAlive = true
-	return p.Peers.Set(pubKey, info)
+	return p.Peers.Set(peer.PublicKey(), info)
 }

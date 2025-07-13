@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 )
@@ -12,7 +13,9 @@ func handleHello[A polity.AddressConnector](p *polity.Principal[A], e polity.Env
 
 	//p.AddPeer(e.Sender)
 
-	p.SetPeerAliveness(e.Sender, true)
+	err := p.SetPeerAliveness(e.Sender, true)
+
+	fmt.Println("SetPeerAliveness", err)
 
 	f := e.Reply()
 	f.Subject(subj.HelloBack)
@@ -26,5 +29,5 @@ func handleHello2[A polity.AddressConnector](p *polity.Principal[A], e polity.En
 	//_ = p.KB.UpdateAlives(e.Sender, true)
 
 	p.SetPeerAliveness(e.Sender, true)
-	
+
 }

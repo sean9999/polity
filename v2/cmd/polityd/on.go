@@ -10,18 +10,18 @@ func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Enve
 
 	prettyLog(e, "INBOX")
 
-	subject := e.Message.Subject
+	s := e.Message.Subject
 
 	switch {
-	case subject.Equals(subj.KillYourself):
+	case subj.KillYourself.Equals(s):
 		handleDeathThreat(p, e)
-	case subject.Equals(subj.FriendRequest):
+	case subj.FriendRequest.Equals(s):
 		handleFriendRequest(p, e, configFile)
-	case subject.Equals(subj.DumpThyself):
+	case subj.DumpThyself.Equals(s):
 		handleDump(p, e)
-	case subject.Equals(subj.Hello):
+	case subj.Hello.Equals(s):
 		handleHello(p, e)
-	case subject.Equals(subj.HelloBack):
+	case subj.HelloBack.Equals(s):
 		handleHello2(p, e)
 	default:
 	}

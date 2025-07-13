@@ -1,6 +1,18 @@
 package subj
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Subject string
+
+func (subj Subject) Equals(thing any) bool {
+	a := fmt.Sprintf("%s", subj)
+	b := fmt.Sprintf("%s", thing)
+	diff := strings.Compare(strings.ToUpper(a), strings.ToUpper(b))
+	return diff == 0
+}
 
 const (
 	Boot                Subject = "Successfully Booted up"

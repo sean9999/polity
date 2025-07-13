@@ -65,7 +65,7 @@ func main() {
 	//	knowledge-base events
 	go func() {
 		for ev := range p.Peers.Events {
-			msg := fmt.Sprintf("%s was %v and is now %v", ev.Key, ev.OldVal, ev.NewVal)
+			msg := fmt.Sprintf("%s was %v and is now %v", ev.Key.Nickname(), ev.OldVal.IsAlive, ev.NewVal.IsAlive)
 			prettyNote(msg)
 		}
 	}()
