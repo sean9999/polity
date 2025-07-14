@@ -1,7 +1,6 @@
 package polity
 
 import (
-	"errors"
 	"fmt"
 	"github.com/sean9999/polity/v2/subj"
 	"strings"
@@ -24,12 +23,8 @@ func (m MessageId) String() string {
 }
 
 // Subject sets the subject of the embedded [delphi.Message], and uppercases it.
-func (e *Envelope[A]) Subject(str subj.Subject) error {
-	if e.Message == nil {
-		return errors.New("nil message in envelope")
-	}
+func (e *Envelope[A]) Subject(str subj.Subject) {
 	e.Message.Subject = delphi.Subject(strings.ToUpper(string(str)))
-	return nil
 }
 
 // An Envelope wraps a [delphi.Message] with information essential for addressing and organizing.

@@ -18,12 +18,15 @@ const (
 // Network is a [Network] that listens on localhost
 // and distinguishes different nodes with different ports.
 type Network struct {
-	addr *net.UDPAddr
-	conn net.PacketConn
+	addr  *net.UDPAddr
+	conn  net.PacketConn
+	inbox chan Envelope[Addresser]
 }
 
 func (lo *Network) New() AddressConnector {
-	return &Network{}
+	return &Network{
+		inbox: make(chan Envelope[Addresser], 1),
+	}
 }
 
 // jsonRecord is an object useful for serializing a [Network].
@@ -129,7 +132,7 @@ func (lo *Network) Address() *net.UDPAddr {
 	return lo.addr
 }
 
-// expose the underlying net.Addr
+// Addr exposes the underlying net.Addr
 func (lo *Network) Addr() net.Addr {
 	return lo.addr
 }
@@ -145,3 +148,32 @@ func (lo *Network) createAddress() *net.UDPAddr {
 	}
 	return ua
 }
+
+//func (lo *Network) SendEphemeral(e Envelope[Addresser]) error {
+//	bin, err := e.Serialize()
+//	if err != nil {
+//		return err
+//	}
+//	conn, err := lo.NewConnection()
+//	if err != nil {
+//		return err
+//	}
+//	_, err = conn.WriteTo(bin, e.Recipient.Addr)
+//	return err
+//}
+//
+//func (lo *Network) Send(e Envelope[Addresser]) error {
+//	bin, err := e.Serialize()
+//	if err != nil {
+//		return err
+//	}
+//	_, err = lo.conn.WriteTo(bin, e.Recipient.Addr)
+//	return err
+//}
+//
+//func (lo *Network) Receive() chan Envelope[Addresser] {
+//
+//
+//
+//	return lo.inbox
+//}

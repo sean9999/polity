@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"github.com/sean9999/polity/v2/subj"
-	"log/slog"
 	"os"
 	"sync"
 
@@ -34,7 +33,7 @@ func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Enve
 		go func() {
 			f := e.Clone()
 			f.SetRecipient(info.Recompose(pubKey))
-			send(p, f)
+			_ = send(p, f)
 			wg.Done()
 		}()
 	}
@@ -49,19 +48,14 @@ func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *p
 		return err
 	}
 	e := p.Compose(peerBytes, nil, polity.NewMessageId())
-	err = e.Subject(subj.SoAndSoIsAlive)
-	if err != nil {
-		return err
-	}
+	e.Subject(subj.SoAndSoIsAlive)
 	e.Message.Headers.Set("polity", "peer_that_is_alive", soAndSo.Nickname())
 	return broadcast(p, e)
 }
 
 // If message is signed and peer is new, add them and send a friend request back
 func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
-
-	//fmt.Println("running handleFriendRequest")
-
+	
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {
@@ -76,15 +70,16 @@ func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e po
 			// f.Message.PlainText = []byte(SubjFriendRequestAccept)
 			err = f.Message.Sign(rand.Reader, p)
 			if err != nil {
-				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
+				p.Slogger.Error("could not sign message", "err", err)
 			}
-			p.Send(f)
+
+			_, err = p.Send(f)
 			if err != nil {
-				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
+				p.Slogger.Error("could not send", "err", err)
 			}
 			err = trySave(p, configFile)
 			if err != nil {
-				p.Slogger.Log(nil, slog.LevelWarn, "err", err)
+				p.Slogger.Error("could not save config", "err", err)
 			}
 
 		}
