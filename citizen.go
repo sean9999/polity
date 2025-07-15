@@ -4,17 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/sean9999/go-oracle"
 	"io"
 	"net"
 	"os"
 	"slices"
 
-	"github.com/sean9999/go-oracle"
-
 	"github.com/sean9999/polity/network"
 )
 
-// a Spool is an ordered series of messages with a a definite lifecycle
+// A Spool is an ordered series of messages with a a definite lifecycle
 type Spool chan Message
 
 type Citizen struct {
