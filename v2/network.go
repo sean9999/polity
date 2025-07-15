@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-// an Addresser provides a network address and a way to serialize it
+// An Addresser provides a network address and a way to serialize/deserialize it
 type Addresser interface {
 	net.Addr
 	encoding.TextMarshaler
