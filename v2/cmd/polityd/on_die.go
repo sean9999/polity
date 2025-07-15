@@ -10,11 +10,12 @@ func handleDeathThreat[A polity.AddressConnector](p *polity.Principal[A], e poli
 	//	if the message is signed, go ahead and die
 	//	TODO: It should not be enough that the message is signed. The peer ought to be known and trusted too
 	if e.IsSigned() {
-		close(p.Inbox)
+		_ = p.Disconnect()
 	} else {
 		f := e.Reply()
 		f.Subject(subj.RefuseToDie)
-		send(p, f)
+		_ = send(p, f)
+		p.Slogger.Debug("I refused to die", "message from", e.Sender.Nickname())
 	}
 
 }

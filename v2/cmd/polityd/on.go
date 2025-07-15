@@ -22,7 +22,7 @@ func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Enve
 	case subj.Hello.Equals(s):
 		handleHello(p, e)
 	case subj.HelloBack.Equals(s):
-		handleHello2(p, e)
+		handleHelloBack(p, e)
 	default:
 	}
 

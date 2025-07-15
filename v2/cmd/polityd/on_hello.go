@@ -1,33 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 )
 
 // Hello is a friendly way for one peer to tell another it's alive.
 func handleHello[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
-
-	//_ = p.KB.UpdateAlives(e.Sender, true)
-
-	//p.AddPeer(e.Sender)
-
-	err := p.SetPeerAliveness(e.Sender, true)
-
-	fmt.Println("SetPeerAliveness", err)
-
+	_ = p.SetPeerAliveness(e.Sender, true)
 	f := e.Reply()
 	f.Subject(subj.HelloBack)
-	send(p, f)
-
+	_ = send(p, f)
 }
 
-func handleHello2[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
-
-	//p.Peers.Set(e.Sender.Nickname(), e.Sender)
-	//_ = p.KB.UpdateAlives(e.Sender, true)
-
-	p.SetPeerAliveness(e.Sender, true)
-
+// A "helo back" message is an acknowledgement of a "hello" message. It's a confirmation that the sender is alive
+func handleHelloBack[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
+	_ = p.SetPeerAliveness(e.Sender, true)
 }
