@@ -1,13 +1,46 @@
 package main
 
 import (
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/sean9999/polity/v2"
+	"os"
 	"sync"
 )
 
 var mu *sync.Mutex = new(sync.Mutex)
+
+// trySave tries to save a Principal to a file indicated by fileName
+func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string) error {
+	if fileName != "" {
+		pemFile, err := p.MarshalPEM()
+		if err != nil {
+			return err
+		}
+		data := pem.EncodeToMemory(pemFile)
+		err = os.WriteFile(fileName, data, 0600)
+		return err
+	}
+	return errors.New("no config file")
+}
+
+// broadcast a message to all my friends
+func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
+	wg := new(sync.WaitGroup)
+	wg.Add(p.Peers.Length())
+	for pubKey, info := range p.Peers.Entries() {
+		go func() {
+			f := e.Clone()
+			f.SetRecipient(info.Recompose(pubKey))
+			_ = send(p, f)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	return nil
+}
 
 // prettyLog logs out an Envelope in a pretty way
 func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
@@ -48,8 +81,8 @@ func prettyNote(s string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	color.Green("\n#\tNOTE")
-	color.Green(s)
+	color.Blue("\n#\tNOTE")
+	color.Blue(s)
 
 }
 

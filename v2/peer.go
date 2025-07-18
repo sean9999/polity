@@ -39,7 +39,11 @@ func (p *Peer[A]) Decompose() (delphi.Key, PeerInfo[A]) {
 }
 
 func (info *PeerInfo[A]) Recompose(pub delphi.Key) *Peer[A] {
-	gork := goracle.PeerFrom(pub.Bytes(), info.Props.AsMap())
+	var m map[string]string
+	if info != nil && info.Props != nil {
+		m = info.Props.AsMap()
+	}
+	gork := goracle.PeerFrom(pub.Bytes(), m)
 	p := NewPeer[A]()
 	p.Peer = gork
 	p.Addr = info.Addr

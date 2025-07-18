@@ -111,7 +111,14 @@ func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A]
 	if err != nil {
 		return nil, err
 	}
+	//err = p.Connect()
+	//if err != nil {
+	//	return nil, err
+	//}
 	err = p.UnmarshalPEM(data, network)
+	if err != nil {
+		return nil, err
+	}
 	return p, err
 }
 
@@ -131,6 +138,10 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 		Peers:     m,
 		Slogger:   logger,
 	}
+	//err := p.Connect()
+	//if err != nil {
+	//	return nil, err
+	//}
 	return &p, nil
 }
 
@@ -156,6 +167,8 @@ func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageI
 }
 
 func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
+
+	p.Connect()
 
 	bin, err := e.Serialize()
 
@@ -191,7 +204,9 @@ func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
 	if _, exists := p.Peers.Get(peer.PublicKey()); exists {
 		return ErrPeerExists
 	}
-	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{})
+	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{}, func(res *stablemap.Result[delphi.Key, PeerInfo[A]]) {
+		res.Msg = fmt.Sprintf("%s was added", peer.PublicKey().Nickname())
+	})
 	return nil
 }
 
@@ -234,6 +249,8 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 			}
 			p.Peers.Set(pee.PublicKey(), PeerInfo[A]{
 				Addr: pee.Addr,
+			}, func(res *stablemap.Result[delphi.Key, PeerInfo[A]]) {
+				res.Msg = fmt.Sprintf("Unmarshaling peer %s with addr %s", res.Key.Nickname(), pee.Addr.String())
 			})
 		}
 	}
@@ -241,6 +258,10 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 }
 
 func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
+	err := p.Connect()
+	if err != nil {
+		return err
+	}
 	block, _ := pem.Decode(data)
 	if block == nil {
 		return errors.New("could not decode bytes into a PEM")
@@ -248,8 +269,24 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 	return p.UnmarshalPEMBlock(block, network)
 }
 
+type aliveness bool
+
+func (a aliveness) String() string {
+	if a {
+		return "alive"
+	}
+	return "dead"
+}
+
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
-	info, _ := p.Peers.Get(peer.PublicKey())
-	info.IsAlive = true
-	return p.Peers.Set(peer.PublicKey(), info)
+	info, exists := p.Peers.Get(peer.PublicKey())
+	info.IsAlive = val
+	fn := func(res *stablemap.Result[delphi.Key, PeerInfo[A]]) {
+		msg := fmt.Sprintf("%s was %s and is now %s", peer.PublicKey().Nickname(), aliveness(res.OldVal.IsAlive), aliveness(res.NewVal.IsAlive))
+		if !exists {
+			msg = fmt.Sprintf("%s is new and %s", peer.PublicKey().Nickname(), aliveness(res.NewVal.IsAlive))
+		}
+		res.Msg = msg
+	}
+	return p.Peers.Set(peer.PublicKey(), info, fn)
 }

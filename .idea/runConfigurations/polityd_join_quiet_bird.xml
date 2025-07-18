@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="polityd join quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="polity" />
+    <working_directory value="$PROJECT_DIR$/v2" />
+    <parameters value="-join udp://e282a7ab4ed4854baa3fd30a4e87da86e69dcc0e945aff08906fbbb81b5b1b2a863a5bff18d7520962a903761582e6e3c2af042f457eb694fc3cf38304ae87e2@127.0.0.1:50971" />
+    <kind value="DIRECTORY" />
+    <package value="github.com/sean9999/polity" />
+    <directory value="$PROJECT_DIR$/v2/cmd/polityd" />
+    <filePath value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>
