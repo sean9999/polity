@@ -13,7 +13,7 @@ func parseFlargs() (model, error) {
 
 	m := model{}
 
-	f := flag.NewFlagSet("fset", flag.ContinueOnError)
+	f := flag.NewFlagSet("fset", flag.ExitOnError)
 
 	f.Func("conf", "private key", func(filename string) error {
 		if len(filename) == 0 {

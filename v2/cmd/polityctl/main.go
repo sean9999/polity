@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
 	"github.com/sean9999/polity/v2/udp4"
 	"log"
 	"time"
@@ -65,14 +65,40 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit // Send quit command to Bubble Tea
 
-		case "c":
+		case "d":
 			return m, func() tea.Msg {
-				// Simulate connecting to polityd
-				connected := connectToPolityd()
-				if connected {
-					return connectMessage{}
+				//	dump thyself
+				e := m.self.Compose([]byte("dump thyself"), m.peer, nil)
+				e.Subject(subj.DumpThyself)
+				i, err := m.self.Send(e)
+				if err != nil {
+					return errorStyle.Render(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
 				}
-				return errorStyle.Render("Failed to connect to polityd")
+				return commandMessage("dump thyself")
+			}
+
+		case "b":
+			return m, func() tea.Msg {
+				//	say hello to all your friends
+				e := m.self.Compose([]byte("broadcast"), m.peer, nil)
+				e.Subject(subj.Broadcast)
+				i, err := m.self.Send(e)
+				if err != nil {
+					return errorStyle.Render(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
+				}
+				return commandMessage("broadcast")
+			}
+
+		case "f":
+			return m, func() tea.Msg {
+				//	ask all your friends who their friends are, and befriend them
+				e := m.self.Compose([]byte("broadcast"), m.peer, nil)
+				e.Subject(subj.CmdMakeFriends)
+				i, err := m.self.Send(e)
+				if err != nil {
+					return errorStyle.Render(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
+				}
+				return commandMessage("friends of friends")
 			}
 
 		case "r": // Example of issuing a read command
@@ -80,11 +106,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			return m, func() tea.Msg {
-				res, err := issueCommand("read")
-				if err != nil {
-					return errorStyle.Render("Error: " + err.Error())
-				}
-				return commandMessage(res)
+				//res, err := issueCommand("read")
+				//if err != nil {
+				//	return errorStyle.Render("Error: " + err.Error())
+				//}
+				return commandMessage("i'm read")
 			}
 
 		case "s": // Example of issuing a status command
@@ -146,24 +172,24 @@ func connectToPolityd() bool {
 }
 
 // Issue a command to polityd
-func issueCommand(cmd string) (string, error) {
-	// Replace with actual command API logic
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	switch cmd {
-	case "status":
-
-		return "Node is running", nil
-	case "read":
-		return "Command executed successfully", nil
-	default:
-		return "", fmt.Errorf("unknown command: %s", cmd)
-	}
-
-	<-ctx.Done() // Simulate executing
-	return "Command executed", nil
-}
+//func issueCommand(cmd string) (string, error) {
+//	// Replace with actual command API logic
+//	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+//	defer cancel()
+//
+//	switch cmd {
+//	case "status":
+//
+//		return "Node is running", nil
+//	case "read":
+//		return "Command executed successfully", nil
+//	default:
+//		return "", fmt.Errorf("unknown command: %s", cmd)
+//	}
+//
+//	<-ctx.Done() // Simulate executing
+//	return "Command executed", nil
+//}
 
 // Main function
 func main() {

@@ -11,7 +11,7 @@ import (
 
 func parseFlargs() (*polity.Peer[*udp4.Network], *polity.Principal[*udp4.Network], string, uint8, error) {
 
-	f := flag.NewFlagSet("fset", flag.ContinueOnError)
+	f := flag.NewFlagSet("fset", flag.ExitOnError)
 
 	//var me *polity.Principal[*udp4.Network] = nil
 	//var joinPeer *polity.Peer[*udp4.Network] = nil
@@ -34,6 +34,7 @@ func parseFlargs() (*polity.Peer[*udp4.Network], *polity.Principal[*udp4.Network
 		if err != nil {
 			return err
 		}
+
 		return nil
 	})
 
@@ -49,14 +50,14 @@ func parseFlargs() (*polity.Peer[*udp4.Network], *polity.Principal[*udp4.Network
 		return nil
 	})
 
-	verbosity := f.Uint("verbosity", 0, "verbosity level")
-	//
-	//if joinPeer != nil && joinPeer.IsZero() {
-	//	joinPeer = nil
-	//}
-	//if me != nil && me.IsZero() {
-	//	me = nil
-	//}
+	verbosity := f.Uint("verbosity", 3, "verbosity level")
+
+	if joinPeer != nil && joinPeer.IsZero() {
+		joinPeer = nil
+	}
+	if me != nil && me.IsZero() {
+		me = nil
+	}
 
 	err := f.Parse(os.Args[1:])
 	return joinPeer, me, confFileName, uint8(*verbosity), err

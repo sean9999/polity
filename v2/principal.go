@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"log/slog"
 	"net"
@@ -26,11 +27,12 @@ A Principal is an entity (node) in the graph (cluster) that can:
 */
 type Principal[A AddressConnector] struct {
 	*goracle.Principal
-	Net     A
-	conn    net.PacketConn
-	Inbox   chan Envelope[A]
-	Peers   *stablemap.ActiveMap[delphi.Key, PeerInfo[A]]
-	Slogger *slog.Logger
+	Net       A
+	conn      net.PacketConn
+	Connected bool
+	Inbox     chan Envelope[A]
+	Peers     *stablemap.ActiveMap[delphi.Key, PeerInfo[A]]
+	Slogger   *slog.Logger
 }
 
 func (p *Principal[A]) AsPeer() *Peer[A] {
@@ -44,12 +46,17 @@ func (p *Principal[A]) AsPeer() *Peer[A] {
 
 func (p *Principal[A]) Disconnect() error {
 	close(p.Inbox)
+	defer p.conn.Close()
+	p.Connected = false
 	return p.conn.Close()
 }
 
 // Connect acquires an address and starts listening on it.
 // After doing so, a node will want to advertise itself
 func (p *Principal[A]) Connect() error {
+	if p.Connected {
+		return nil
+	}
 	pc, err := p.Net.Connection()
 	if err != nil {
 		return err
@@ -71,6 +78,9 @@ func (p *Principal[A]) Connect() error {
 		for {
 			i, addr, err := p.conn.ReadFrom(buf)
 			bin := buf[:i]
+
+			fmt.Println("got some data of len", len(bin))
+
 			e := NewEnvelope[A]()
 			err = e.Deserialize(bin)
 			if err == nil {
@@ -93,7 +103,7 @@ func (p *Principal[A]) Connect() error {
 			}
 		}
 	}()
-
+	p.Connected = true
 	return nil
 }
 
@@ -138,10 +148,10 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 		Peers:     m,
 		Slogger:   logger,
 	}
-	//err := p.Connect()
-	//if err != nil {
-	//	return nil, err
-	//}
+	err := p.Connect()
+	if err != nil {
+		return nil, err
+	}
 	return &p, nil
 }
 
@@ -149,7 +159,10 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A],
 func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageId) *Envelope[A] {
 
 	//	instantiate envelope
-	e := NewEnvelope[A]()
+	//e := NewEnvelope[A]()
+
+	e := new(Envelope[A])
+
 	e.ID = NewMessageId()
 	e.Thread = thread
 
@@ -168,7 +181,11 @@ func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageI
 
 func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 
-	p.Connect()
+	time.Sleep(time.Second * 1)
+
+	fmt.Println("again sending to", e.Recipient.Nickname(), e.Recipient.Addr.String())
+
+	//p.Connect()
 
 	bin, err := e.Serialize()
 
@@ -194,8 +211,10 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 
 	}
 
+	i, err := p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
+
 	// we are sending to someone else
-	return p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
+	return i, err
 }
 
 var ErrPeerExists = errors.New("peer exists")

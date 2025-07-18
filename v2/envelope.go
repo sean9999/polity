@@ -49,14 +49,16 @@ func (e *Envelope[A]) IsSigned() bool {
 
 // NewEnvelope creates a new Envelope, ensuring there are no nil pointers
 func NewEnvelope[A Addresser]() *Envelope[A] {
-	e := Envelope[A]{
+	sender := NewPeer[A]()
+	recipient := NewPeer[A]()
+	e := &Envelope[A]{
 		ID:        nil,
 		Thread:    nil,
-		Sender:    NewPeer[A](),
-		Recipient: NewPeer[A](),
+		Sender:    sender,
+		Recipient: recipient,
 		Message:   delphi.NewMessage(),
 	}
-	return &e
+	return e
 }
 
 func (e *Envelope[A]) Serialize() ([]byte, error) {

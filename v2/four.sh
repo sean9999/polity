@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SESSION="polity3"
+SESSION="polityd"
 SESSION_EXISTS=$(tmux list-sessions | grep -w "$SESSION")
 
 USER_1="blue-shadow"
@@ -13,16 +13,9 @@ then
 
 	tmux new-session 	-d -s "$SESSION"
 
-
-	# Split the window into a 2x2 grid
 	tmux split-window -h -t "$SESSION"        # Split pane 0 horizontally -> pane 1
 	tmux split-window -v -t "$SESSION:0.0"    # Split pane 0 vertically -> pane 2
 	tmux split-window -v -t "$SESSION:0.1"    # Split pane 1 vertically -> pane 3
-
-	#tmux split-window	-v
-	#tmux split-window	-h
-	#tmux select-pane 	-t 1
-	#tmux split-window	-h
 
 	tmux select-layout tiled
 

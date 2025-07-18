@@ -16,11 +16,12 @@ import (
 
 // PeerInfo contains everything that can be known about a Peer except for its pubKey, which is kept elsewhere.
 type PeerInfo[A Addresser] struct {
-	IsAlive   bool
-	Closeness int
-	Trust     int
-	Addr      A
-	Props     *stablemap.StableMap[string, string]
+	IsAlive    bool
+	Closeness  int
+	Trust      int
+	Popularity int
+	Addr       A
+	Props      *stablemap.StableMap[string, string]
 }
 
 func NewPeerInfo[A Addresser]() PeerInfo[A] {

@@ -6,7 +6,7 @@ import (
 	"github.com/sean9999/polity/v2/subj"
 )
 
-func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquaintance *polity.Peer[A], threadId *polity.MessageId) error {
+func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquaintance *polity.Peer[A], threadId *polity.MessageId, a appState) error {
 	e := p.Compose([]byte("i want to join you"), acquaintance, threadId)
 	e.Subject(subj.FriendRequest)
 	//	a friend request must be signed
@@ -15,9 +15,7 @@ func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquai
 		return err
 	}
 	//p.Connect()
-	send(p, e)
-
-	//err = p.KB.UpdateAlives(acquaintance, false)
+	_ = send(p, e, a)
 
 	err = p.SetPeerAliveness(acquaintance, false)
 

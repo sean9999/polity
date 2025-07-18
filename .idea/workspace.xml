@@ -5,20 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/v2/cmd/polityctl/flargs.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v2/cmd/polityctl/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v2/two.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_broadcast.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_make_friends.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/three.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/seanmacdonald.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/seanmacdonald.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_little_violet.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_little_violet.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityctl/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityctl/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/flargs.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/flargs.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/util.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/envelope.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/envelope.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/five.sh" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/four.sh" beforeDir="false" afterPath="$PROJECT_DIR$/v2/four.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/v2/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/v2/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/fp.sh" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/peer.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/peer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v2/principal.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/principal.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/subj/subjects.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/subj/subjects.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/two.sh" beforeDir="false" afterPath="$PROJECT_DIR$/v2/two.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +77,7 @@
     "DefaultGoTemplateProperty": "Go File",
     "Go Build.polityctl quiet-bird.executor": "Run",
     "Go Build.polityd as blue-shadow.executor": "Run",
+    "Go Build.polityd as little-violet.executor": "Debug",
     "Go Build.polityd as quiet-bird.executor": "Debug",
     "Go Build.polityd join quiet-bird.executor": "Run",
     "Go Build.polityd straight up.executor": "Run",
@@ -84,7 +90,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "with__ctl",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "junie.onboarding.icon.badge.shown": "true",
@@ -92,10 +98,10 @@
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "project.scopes"
+    "settings.editor.selected.configurable": "preferences.keymap"
   }
 }]]></component>
-  <component name="RunManager" selected="Go Build.polityctl quiet-bird">
+  <component name="RunManager" selected="Go Build.polityd as little-violet">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="polity" />
       <working_directory value="$PROJECT_DIR$" />
@@ -159,6 +165,26 @@
           <url>file://$PROJECT_DIR$/v2/cmd/polityctl/flargs.go</url>
           <line>18</line>
           <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/v2/cmd/polityd/on_make_friends.go</url>
+          <line>20</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/v2/cmd/polityd/on_make_friends.go</url>
+          <line>45</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/v2/cmd/polityd/on.go</url>
+          <line>13</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/v2/envelope.go</url>
+          <line>50</line>
+          <option name="timeStamp" value="37" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

@@ -6,7 +6,7 @@ import (
 	"github.com/sean9999/polity/v2/subj"
 )
 
-func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId, error) {
+func boot[A polity.AddressConnector](p *polity.Principal[A], a appState) (*polity.MessageId, error) {
 
 	message := fmt.Sprintf("Greetings! I'm %s at %s. Join me with:\npolityd -join %s\n", p.Nickname(), p.Net, p.AsPeer().String())
 
@@ -20,6 +20,6 @@ func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId,
 	// send a message to ourselves indicating that we've booted up
 	e := p.Compose([]byte(message), p.AsPeer(), nil)
 	e.Subject(subj.Boot)
-	send(p, e)
+	_ = send(p, e, a)
 	return e.ID, nil
 }

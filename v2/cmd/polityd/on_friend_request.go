@@ -8,7 +8,7 @@ import (
 )
 
 // send a notice that so-and-so is alive
-func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *polity.Peer[A]) error {
+func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *polity.Peer[A], a appState) error {
 	peerBytes, err := soAndSo.MarshalBinary()
 	if err != nil {
 		return err
@@ -16,11 +16,11 @@ func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *p
 	e := p.Compose(peerBytes, nil, polity.NewMessageId())
 	e.Subject(subj.SoAndSoIsAlive)
 	e.Message.Headers.Set("polity", "peer_that_is_alive", soAndSo.Nickname())
-	return broadcast(p, e)
+	return broadcast(p, e, a)
 }
 
 // If message is signed and peer is new, add them and send a friend request back
-func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
+func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string, a appState) {
 
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
@@ -53,7 +53,7 @@ func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e po
 		//	A peer I've added just asked me to add them again.
 		//	This is weird. It could indicate they went away and came back.
 		//	Let's tell everyone
-		go sendAliveness(p, e.Sender)
+		go sendAliveness(p, e.Sender, a)
 
 	}
 	//	if message is not signed, drop it. No action taken

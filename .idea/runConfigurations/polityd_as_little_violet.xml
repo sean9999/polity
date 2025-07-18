@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="polityd as little-violet" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="polity" />
-    <working_directory value="$PROJECT_DIR$" />
+    <working_directory value="$PROJECT_DIR$/v2" />
     <parameters value="-conf testdata/little-violet.pem" />
     <kind value="DIRECTORY" />
     <package value="github.com/sean9999/polity" />

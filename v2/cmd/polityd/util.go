@@ -27,14 +27,14 @@ func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string)
 }
 
 // broadcast a message to all my friends
-func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
+func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A], a appState) error {
 	wg := new(sync.WaitGroup)
 	wg.Add(p.Peers.Length())
 	for pubKey, info := range p.Peers.Entries() {
 		go func() {
 			f := e.Clone()
 			f.SetRecipient(info.Recompose(pubKey))
-			_ = send(p, f)
+			_ = send(p, f, a)
 			wg.Done()
 		}()
 	}
@@ -43,7 +43,7 @@ func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Enve
 }
 
 // prettyLog logs out an Envelope in a pretty way
-func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
+func prettyLog[A polity.Addresser](e polity.Envelope[A], source string, a appState) {
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -60,10 +60,12 @@ func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
 
 	//	log out message
 	color.Magenta("\n#\t<< %s >>\t%s", source, string(subj))
-	//color.Cyan("MsgId: \t%s\n", e.ID)
-	//color.Cyan("Thread:\t%s\n", e.Thread)
-	//color.Blue("Signed:\t%v\n", msg.Verify())
-	//color.Blue("Enc:   \t%v\n", msg.Encrypted())
+	if a.verbosity >= 4 {
+		color.Cyan("MsgId: \t%s\n", e.ID)
+		color.Cyan("Thread:\t%s\n", e.Thread)
+		color.Blue("Signed:\t%v\n", msg.Verify())
+		color.Blue("Enc:   \t%v\n", msg.Encrypted())
+	}
 
 	if source == "INBOX" {
 		color.Green("From: \t%s @ %s\n", e.Message.SenderKey.Nickname(), e.Sender.Addr.String())
@@ -80,14 +82,17 @@ func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
 func prettyNote(s string) {
 	mu.Lock()
 	defer mu.Unlock()
-
 	color.Blue("\n#\tNOTE")
 	color.Blue(s)
-
 }
 
-func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
-	prettyLog[A](*e, "OUTBOX")
+func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A], a appState) error {
+
+	fmt.Println("sending")
+
+	if a.verbosity >= 2 {
+		prettyLog[A](*e, "OUTBOX", a)
+	}
 	_, err := p.Send(e)
 	return err
 }
