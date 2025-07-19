@@ -19,6 +19,8 @@ func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string)
 			return err
 		}
 		data := pem.EncodeToMemory(pemFile)
+
+		//	todo: use afero
 		err = os.WriteFile(fileName, data, 0600)
 		return err
 	}
@@ -26,7 +28,7 @@ func trySave[A polity.AddressConnector](p *polity.Principal[A], fileName string)
 }
 
 // broadcast a message to all my friends
-func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
+func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) {
 	wg := new(sync.WaitGroup)
 	wg.Add(p.Peers.Length())
 	for pubKey, info := range p.Peers.Entries() {
@@ -38,24 +40,23 @@ func broadcast[A polity.AddressConnector](p *polity.Principal[A], e *polity.Enve
 		}()
 	}
 	wg.Wait()
-	return nil
 }
 
 // send a notice that so-and-so is alive
-func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *polity.Peer[A]) error {
+func sendAliveness[A polity.AddressConnector](p *polity.Principal[A], soAndSo *polity.Peer[A]) {
 	peerBytes, err := soAndSo.MarshalBinary()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	e := p.Compose(peerBytes, nil, polity.NewMessageId())
 	e.Subject(subj.SoAndSoIsAlive)
 	e.Message.Headers.Set("polity", "peer_that_is_alive", soAndSo.Nickname())
-	return broadcast(p, e)
+	broadcast(p, e)
 }
 
 // If message is signed and peer is new, add them and send a friend request back
 func handleFriendRequest[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
-	
+
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
 		if !errors.Is(err, polity.ErrPeerExists) {

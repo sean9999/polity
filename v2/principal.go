@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 
 	"log/slog"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/sean9999/go-delphi"
@@ -28,9 +28,10 @@ type Principal[A AddressConnector] struct {
 	*goracle.Principal
 	Net     A
 	conn    net.PacketConn
-	Inbox   chan Envelope[A]
+	inbox   chan Envelope[A]
 	Peers   *stablemap.ActiveMap[delphi.Key, PeerInfo[A]]
 	Slogger *slog.Logger
+	Logger  *log.Logger
 }
 
 func (p *Principal[A]) AsPeer() *Peer[A] {
@@ -43,13 +44,16 @@ func (p *Principal[A]) AsPeer() *Peer[A] {
 }
 
 func (p *Principal[A]) Disconnect() error {
-	close(p.Inbox)
+	close(p.inbox)
 	return p.conn.Close()
 }
 
 // Connect acquires an address and starts listening on it.
 // After doing so, a node will want to advertise itself
 func (p *Principal[A]) Connect() error {
+	if p.conn != nil {
+		return nil
+	}
 	pc, err := p.Net.Connection()
 	if err != nil {
 		return err
@@ -63,9 +67,21 @@ func (p *Principal[A]) Connect() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *Principal[A]) Inbox() chan Envelope[A] {
+	if p.inbox != nil {
+		return p.inbox
+	}
+	if p.conn == nil {
+		_ = p.Connect()
+	}
+
+	p.inbox = make(chan Envelope[A], 1)
+
 	//	listen for Envelopes on the socket and send over channel
 	go func() {
-		ch := p.Inbox
 		//	NOTE: is this a good maximum size?
 		buf := make([]byte, 4096)
 		for {
@@ -79,14 +95,14 @@ func (p *Principal[A]) Connect() error {
 				}
 			}
 			if e.ID != nil {
-				ch <- *e
+				p.inbox <- *e
 			} else {
 				e := NewEnvelope[A]()
 				e.Message.PlainText = bin
-				//e.Subject("ERROR. " + err.Error())
 				e.Message.Subject = "ERROR"
-				ch <- *e
-				_, err := fmt.Fprintln(os.Stderr, "Unmarshal err is", err)
+				e.Message.Headers.Set("polity", "error", err.Error())
+				p.inbox <- *e
+				p.Slogger.Error("Unmarshal err is", err)
 				if err != nil {
 					return
 				}
@@ -94,11 +110,11 @@ func (p *Principal[A]) Connect() error {
 		}
 	}()
 
-	return nil
+	return p.inbox
 }
 
-func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Principal[A], error) {
-	p, err := NewPrincipal(nil, network)
+func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, outStream io.Writer, network A) (*Principal[A], error) {
+	p, err := NewPrincipal(nil, outStream, network)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +122,8 @@ func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Pr
 	return p, err
 }
 
-func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A], error) {
-	p, err := NewPrincipal(nil, network)
+func PrincipalFromPEM[A AddressConnector](data []byte, outStream io.Writer, network A) (*Principal[A], error) {
+	p, err := NewPrincipal(nil, outStream, network)
 	if err != nil {
 		return nil, err
 	}
@@ -115,21 +131,21 @@ func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A]
 	return p, err
 }
 
-func NewPrincipal[A AddressConnector](rand io.Reader, network A) (*Principal[A], error) {
-	gork := goracle.NewPrincipal(rand, nil)
+func NewPrincipal[A AddressConnector](rand io.Reader, outStream io.Writer, network A) (*Principal[A], error) {
+	prince := goracle.NewPrincipal(rand, nil)
 	m := stablemap.NewActiveMap[delphi.Key, PeerInfo[A]]()
-	inbox := make(chan Envelope[A])
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slogger := slog.New(slog.NewJSONHandler(outStream, nil))
+	logger := log.New(outStream, "", log.LstdFlags)
 
 	network.Initialize()
 
 	p := Principal[A]{
-		Principal: gork,
+		Principal: prince,
 		Net:       network,
-		Inbox:     inbox,
 		Peers:     m,
-		Slogger:   logger,
+		Slogger:   slogger,
+		Logger:    logger,
 	}
 	return &p, nil
 }
@@ -164,7 +180,7 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 	}
 
 	//	are we sending to ourselves? then open an ephemeral connection.
-	//	NOTE: is it better to circumvent the network stack? we could simply send to Inbox.
+	//	NOTE: is it better to circumvent the network stack? we could simply send to inbox.
 	if p.Net.String() == e.Recipient.Addr.String() {
 		pc, err := p.Net.NewConnection()
 		if err != nil {
@@ -249,8 +265,29 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 	return p.UnmarshalPEMBlock(block, network)
 }
 
+type aliveness bool
+
+func (a aliveness) String() string {
+	if a {
+		return "alive"
+	}
+	return "dead"
+}
+
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
 	info, _ := p.Peers.Get(peer.PublicKey())
 	info.IsAlive = true
-	return p.Peers.Set(peer.PublicKey(), info, nil)
+	return p.Peers.Set(peer.PublicKey(), info, func(res stablemap.Result[delphi.Key, PeerInfo[A]]) string {
+		word := "now"
+		if res.OldVal.IsAlive == res.NewVal.IsAlive {
+			word = "still"
+		}
+		return fmt.Sprintf(
+			"%s was %s and is %s %s",
+			res.Key.Nickname(),
+			aliveness(res.OldVal.IsAlive),
+			word,
+			aliveness(res.NewVal.IsAlive),
+		)
+	})
 }

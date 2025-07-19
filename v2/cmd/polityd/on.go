@@ -8,7 +8,7 @@ import (
 // onEnvelope handles an Envelope, according to what's inside
 func onEnvelope[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A], configFile string) {
 
-	prettyLog(e, "INBOX")
+	prettyLog(p.Logger.Writer(), e, "INBOX")
 
 	s := e.Message.Subject
 

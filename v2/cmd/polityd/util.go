@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/sean9999/polity/v2"
+	"io"
 	"sync"
 )
 
 var mu *sync.Mutex = new(sync.Mutex)
 
 // prettyLog logs out an Envelope in a pretty way
-func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
+func prettyLog[A polity.Addresser](outStream io.Writer, e polity.Envelope[A], source string) {
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -26,6 +27,8 @@ func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
 	}
 
 	//	log out message
+	color.Output = outStream
+
 	color.Magenta("\n#\t<< %s >>\t%s", source, string(subj))
 	//color.Cyan("MsgId: \t%s\n", e.ID)
 	//color.Cyan("Thread:\t%s\n", e.Thread)
@@ -44,9 +47,11 @@ func prettyLog[A polity.Addresser](e polity.Envelope[A], source string) {
 
 }
 
-func prettyNote(s string) {
+func prettyNote(outStream io.Writer, s string) {
 	mu.Lock()
 	defer mu.Unlock()
+
+	color.Output = outStream
 
 	color.Green("\n#\tNOTE")
 	color.Green(s)
@@ -54,7 +59,10 @@ func prettyNote(s string) {
 }
 
 func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
-	prettyLog[A](*e, "OUTBOX")
+
+	color.Output = p.Logger.Writer()
+
+	prettyLog[A](p.Logger.Writer(), *e, "OUTBOX")
 	_, err := p.Send(e)
 	return err
 }

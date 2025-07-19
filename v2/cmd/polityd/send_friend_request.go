@@ -15,9 +15,10 @@ func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquai
 		return err
 	}
 	//p.Connect()
-	send(p, e)
-
-	//err = p.KB.UpdateAlives(acquaintance, false)
+	err = send(p, e)
+	if err != nil {
+		return err
+	}
 
 	err = p.SetPeerAliveness(acquaintance, false)
 

@@ -13,7 +13,7 @@ func handleHello[A polity.AddressConnector](p *polity.Principal[A], e polity.Env
 	_ = send(p, f)
 }
 
-// A "helo back" message is an acknowledgement of a "hello" message. It's a confirmation that the sender is alive
+// A "hello back" message is an acknowledgement of a "hello" message. It's a confirmation that the sender is alive
 func handleHelloBack[A polity.AddressConnector](p *polity.Principal[A], e polity.Envelope[A]) {
 	_ = p.SetPeerAliveness(e.Sender, true)
 }
