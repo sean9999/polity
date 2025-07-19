@@ -191,7 +191,8 @@ func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
 	if _, exists := p.Peers.Get(peer.PublicKey()); exists {
 		return ErrPeerExists
 	}
-	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{})
+
+	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{}, nil)
 	return nil
 }
 
@@ -234,7 +235,7 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 			}
 			p.Peers.Set(pee.PublicKey(), PeerInfo[A]{
 				Addr: pee.Addr,
-			})
+			}, nil)
 		}
 	}
 	return nil
@@ -251,5 +252,5 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
 	info, _ := p.Peers.Get(peer.PublicKey())
 	info.IsAlive = true
-	return p.Peers.Set(peer.PublicKey(), info)
+	return p.Peers.Set(peer.PublicKey(), info, nil)
 }

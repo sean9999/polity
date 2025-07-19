@@ -40,7 +40,7 @@ func main() {
 
 	//	knowledge-base events
 	go func() {
-		for ev := range me.Peers.Events {
+		for ev := range me.Peers.Events() {
 			msg := fmt.Sprintf("%s on %s was %v and is now %v", ev.Action, ev.Key.Nickname(), ev.OldVal.IsAlive, ev.NewVal.IsAlive)
 			prettyNote(msg)
 		}
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	//	if our process was started with a "-join=pubkey@address" flag, try to join that peer
-	if join.Peer != nil {
+	if join != nil && join.Peer != nil {
 		err = sendFriendRequest(me, join, bootId)
 		//	if we can't join a peer, we should kill ourselves.
 		if err != nil {
@@ -72,7 +72,7 @@ func main() {
 		//	NOTE: should we assume the peer is dead until we hear back?
 		//	This might be too chatty. It requires the peer to respond.
 		info.IsAlive = false
-		_ = me.Peers.Set(pubKey, info)
+		_ = me.Peers.Set(pubKey, info, nil)
 
 	}
 
