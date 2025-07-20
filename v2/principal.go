@@ -45,7 +45,7 @@ func (p *Principal[A]) AsPeer() *Peer[A] {
 
 func (p *Principal[A]) Disconnect() error {
 	close(p.inbox)
-	return p.conn.Close()
+	return nil
 }
 
 // Connect acquires an address and starts listening on it.
@@ -276,7 +276,7 @@ func (a aliveness) String() string {
 
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
 	info, _ := p.Peers.Get(peer.PublicKey())
-	info.IsAlive = true
+	info.IsAlive = val
 	return p.Peers.Set(peer.PublicKey(), info, func(res stablemap.Result[delphi.Key, PeerInfo[A]]) string {
 		word := "now"
 		if res.OldVal.IsAlive == res.NewVal.IsAlive {

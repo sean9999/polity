@@ -27,6 +27,7 @@ type Connector interface {
 	Initialize()
 	Connection() (net.PacketConn, error)    // persistent connection
 	NewConnection() (net.PacketConn, error) // for ephemeral one-off connections
+	Close() error
 }
 
 // An AddressConnector is an [Addresser] and [Connector].

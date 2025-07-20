@@ -51,16 +51,12 @@ func prettyNote(outStream io.Writer, s string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	color.Output = outStream
-
 	color.Green("\n#\tNOTE")
 	color.Green(s)
 
 }
 
 func send[A polity.AddressConnector](p *polity.Principal[A], e *polity.Envelope[A]) error {
-
-	color.Output = p.Logger.Writer()
 
 	prettyLog[A](p.Logger.Writer(), *e, "OUTBOX")
 	_, err := p.Send(e)

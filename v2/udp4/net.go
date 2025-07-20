@@ -18,15 +18,13 @@ const (
 // Network is a [Network] that listens on localhost
 // and distinguishes different nodes with different ports.
 type Network struct {
-	addr  *net.UDPAddr
-	conn  net.PacketConn
-	inbox chan Envelope[Addresser]
+	addr *net.UDPAddr
+	conn net.PacketConn
+	//inbox chan Envelope[Addresser]
 }
 
 func (lo *Network) New() AddressConnector {
-	return &Network{
-		inbox: make(chan Envelope[Addresser], 1),
-	}
+	return &Network{}
 }
 
 // jsonRecord is an object useful for serializing a [Network].
@@ -91,6 +89,13 @@ func (lo *Network) UnmarshalJSON(data []byte) error {
 		Zone: s.Zone,
 	}
 
+	return nil
+}
+
+func (lo *Network) Close() error {
+	if lo.conn != nil {
+		return lo.conn.Close()
+	}
 	return nil
 }
 
