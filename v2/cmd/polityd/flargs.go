@@ -5,9 +5,10 @@ import (
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/udp4"
+	"log/slog"
 )
 
-func parseFlargs(env hermeti.Env) (*polity.Peer[*udp4.Network], *polity.Principal[*udp4.Network], string, uint8, error) {
+func parseFlargs(env hermeti.Env, app *polityApp) error {
 
 	f := flag.NewFlagSet("fset", flag.ContinueOnError)
 
@@ -41,8 +42,21 @@ func parseFlargs(env hermeti.Env) (*polity.Peer[*udp4.Network], *polity.Principa
 		return err
 	})
 
-	verbosity := f.Uint("verbosity", 0, "verbosity level")
+	verbosity := f.Uint("verbosity", 2, "verbosity level")
+	colour := f.Bool("colour", true, "colour output")
+	debugLevel := f.Int("level", -4, "debug level")
 
 	err := f.Parse(env.Args[1:])
-	return joinPeer, me, confFileName, uint8(*verbosity), err
+	if err != nil {
+		return err
+	}
+
+	app.join = joinPeer
+	app.me = me
+	app.conf = confFileName
+	app.verbosity = uint8(*verbosity)
+	app.colour = *colour
+	app.debugLevel = slog.Level(*debugLevel)
+
+	return nil
 }

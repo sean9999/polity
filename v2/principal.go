@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"log"
+	"slices"
+	"sync"
 
 	"log/slog"
 	"net"
@@ -49,7 +52,8 @@ func (p *Principal[A]) Disconnect() error {
 }
 
 // Connect acquires an address and starts listening on it.
-// After doing so, a node will want to advertise itself
+// After doing so, a node will want to advertise itself.
+// It will also want to process incoming data using [Inbox].
 func (p *Principal[A]) Connect() error {
 	if p.conn != nil {
 		return nil
@@ -135,8 +139,10 @@ func NewPrincipal[A AddressConnector](rand io.Reader, outStream io.Writer, netwo
 	prince := goracle.NewPrincipal(rand, nil)
 	m := stablemap.NewActiveMap[delphi.Key, PeerInfo[A]]()
 
-	slogger := slog.New(slog.NewJSONHandler(outStream, nil))
-	logger := log.New(outStream, "", log.LstdFlags)
+	slogger := slog.New(slog.NewJSONHandler(outStream, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	logger := log.New(outStream, "", log.Lmsgprefix)
+	logger.SetPrefix("")
 
 	network.Initialize()
 
@@ -171,7 +177,76 @@ func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageI
 	return e
 }
 
+func (p *Principal[A]) EachPeer() iter.Seq[*Peer[A]] {
+	return func(yield func(*Peer[A]) bool) {
+		for pub, attrs := range p.Peers.Entries() {
+			thisPeer := attrs.ToPeer(pub)
+			if !yield(thisPeer) {
+				return
+			}
+		}
+	}
+}
+
+func (p *Principal[A]) AllPeers() []*Peer[A] {
+	return slices.Collect(p.EachPeer())
+}
+
+func (p *Principal[A]) Broadcast(e *Envelope[A]) {
+
+	p.Slogger.Debug("broadcasting envelope", "subj", e.Message.Subject)
+
+	for thisPeer := range p.EachPeer() {
+
+		p.Logger.Printf("sending %q to peer %s and i am %s", e.Message.Subject, thisPeer.Nickname(), p.Nickname())
+
+		e.Recipient = thisPeer
+		_, err := p.Send(e)
+		if err != nil {
+			p.Slogger.Error("error sending to peer", "peer", thisPeer.Addr.String(), "subj", e.Message.Subject, "err", err)
+		}
+	}
+}
+
+func (p *Principal[A]) BroadcastParallel(e *Envelope[A]) {
+	wg := new(sync.WaitGroup)
+	wg.Add(p.Peers.Length())
+
+	p.Slogger.Debug("broadcasting envelope", "subj", e.Message.Subject)
+
+	for thisPeer := range p.EachPeer() {
+		go func(peer *Peer[A]) {
+			e.Recipient = peer
+			_, err := p.Send(e)
+			if err != nil {
+				p.Slogger.Error("error sending to peer", "peer", peer.Addr.String(), "subj", e.Message.Subject, "err", err)
+			}
+			wg.Done()
+		}(thisPeer)
+	}
+	wg.Wait()
+}
+
+func (p *Principal[A]) sendEphemeral(e *Envelope[A]) (int, error) {
+	bin, err := e.Serialize()
+	pc, err := p.Net.NewConnection()
+	if err != nil {
+		return -1, err
+	}
+	defer pc.Close()
+	p.Slogger.Debug("sending ephemeral", "recipient", e.Recipient.Addr.String(), "subj", e.Message.Subject)
+
+	i, err := pc.WriteTo(bin, e.Recipient.Addr.Addr())
+	return i, err
+}
+
 func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
+
+	//	are we sending to ourselves? then open an ephemeral connection.
+	//	NOTE: is it better to circumvent the network stack? we could simply send to inbox.
+	if p.Net.String() == e.Recipient.Addr.String() {
+		return p.sendEphemeral(e)
+	}
 
 	bin, err := e.Serialize()
 
@@ -179,23 +254,7 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 		return 0, err
 	}
 
-	//	are we sending to ourselves? then open an ephemeral connection.
-	//	NOTE: is it better to circumvent the network stack? we could simply send to inbox.
-	if p.Net.String() == e.Recipient.Addr.String() {
-		pc, err := p.Net.NewConnection()
-		if err != nil {
-			return -1, err
-		}
-
-		//fromAddr := pc.LocalAddr().String()
-		//toAddr := e.Recipient.Addr.String()
-		//p.Log.Printf("from is %q and to is %q", fromAddr, toAddr)
-
-		i, err := pc.WriteTo(bin, e.Recipient.Addr.Addr())
-		pc.Close()
-		return i, err
-
-	}
+	p.Slogger.Debug("sending envelope", "recipient", e.Recipient.Addr.String(), "subj", e.Message.Subject)
 
 	// we are sending to someone else
 	return p.conn.WriteTo(bin, e.Recipient.Addr.Addr())
@@ -220,11 +279,8 @@ func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
 	pemFile.Type = "POLITY PRIVATE KEY"
 
 	for k, v := range p.Peers.Entries() {
-		fullAddress, err := v.Addr.MarshalText()
-		if err != nil {
-			return nil, err
-		}
-		pemFile.Headers["polity/peer/"+k.Nickname()] = string(fullAddress)
+		friend := v.ToPeer(k)
+		pemFile.Headers["polity/peer/"+k.Nickname()] = friend.String()
 	}
 
 	return pemFile, nil
@@ -237,6 +293,8 @@ func (p *Principal[A]) UnmarshalPEMBlock(block *pem.Block, network A) error {
 		return err
 	}
 	p.Principal = gorkPrince
+
+	p.Net = network.New().(A)
 
 	err = p.Net.UnmarshalText([]byte(block.Headers["polity/addr"]))
 	if err != nil {

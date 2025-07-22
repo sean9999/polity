@@ -6,21 +6,16 @@ import (
 	"github.com/sean9999/polity/v2/subj"
 )
 
-func boot[A polity.AddressConnector](p *polity.Principal[A]) (*polity.MessageId, error) {
+func boot(app *polityApp) (*polity.MessageId, error) {
 
-	message := fmt.Sprintf("Greetings! I'm %s at %s. Join me with:\npolityd -join %s\n", p.Nickname(), p.Net, p.AsPeer().String())
+	me := app.me
 
-	if p.Peers.Length() > 0 {
-		message += fmt.Sprintln("here are my peers:")
-		for pubKey, info := range p.Peers.Entries() {
-			message += fmt.Sprintf("%s\t@ %s", pubKey.Nickname(), info.Addr.String())
-		}
-	}
+	message := fmt.Sprintf("Greetings! I'm %s at %s. Join me with:\npolityd -join %s\n", me.Nickname(), me.Net, me.AsPeer().String())
 
 	// send a message to ourselves indicating that we've booted up
-	e := p.Compose([]byte(message), p.AsPeer(), nil)
+	e := me.Compose([]byte(message), me.AsPeer(), nil)
 	e.Subject(subj.Boot)
-	err := send(p, e)
+	err := send(app, e)
 	if err != nil {
 		return nil, err
 	}

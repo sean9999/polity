@@ -2,6 +2,9 @@
   <dictionary name="default.user">
     <words>
       <w>addresser</w>
+      <w>friendify</w>
+      <w>hermeti</w>
+      <w>slogger</w>
     </words>
   </dictionary>
 </component>

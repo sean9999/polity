@@ -38,7 +38,7 @@ func (p *Peer[A]) Decompose() (delphi.Key, PeerInfo[A]) {
 	return pubkey, info
 }
 
-func (info *PeerInfo[A]) Recompose(pub delphi.Key) *Peer[A] {
+func (info *PeerInfo[A]) ToPeer(pub delphi.Key) *Peer[A] {
 	gork := goracle.PeerFrom(pub.Bytes(), info.Props.AsMap())
 	p := NewPeer[A]()
 	p.Peer = gork
@@ -122,8 +122,7 @@ func (p *Peer[A]) UnmarshalBinary(data []byte) error {
 func (p *Peer[A]) String() string {
 	addr := p.Addr.String()
 	pub := p.PublicKey().ToHex()
-	net := p.Addr.Network()
-	return fmt.Sprintf("%s://%s@%s", net, pub, addr)
+	return fmt.Sprintf("%s@%s", pub, addr)
 }
 
 func NewPeer[A Addresser]() *Peer[A] {

@@ -4,9 +4,13 @@ import (
 	"crypto/rand"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
-func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquaintance *polity.Peer[A], threadId *polity.MessageId) error {
+func sendFriendRequest(app *polityApp, acquaintance *polity.Peer[*udp4.Network], threadId *polity.MessageId) error {
+
+	p := app.me
+
 	e := p.Compose([]byte("i want to join you"), acquaintance, threadId)
 	e.Subject(subj.FriendRequest)
 	//	a friend request must be signed
@@ -15,7 +19,7 @@ func sendFriendRequest[A polity.AddressConnector](p *polity.Principal[A], acquai
 		return err
 	}
 	//p.Connect()
-	err = send(p, e)
+	err = send(app, e)
 	if err != nil {
 		return err
 	}

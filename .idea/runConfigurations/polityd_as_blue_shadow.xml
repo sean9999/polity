@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="polityd as blue-shadow" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="polityd as blue-shadow" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
     <module name="polity" />
     <working_directory value="$PROJECT_DIR$/v2" />
-    <parameters value="-conf testdata/blue-shadow.pem" />
+    <parameters value="-conf testdata/broken-hill.pem" />
     <kind value="DIRECTORY" />
     <package value="github.com/sean9999/polity" />
     <directory value="$PROJECT_DIR$/v2/cmd/polityd" />

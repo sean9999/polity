@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"strings"
 
 	. "github.com/sean9999/polity/v2"
 )
@@ -48,6 +49,9 @@ func (lo *Network) MarshalText() ([]byte, error) {
 }
 
 func (lo *Network) String() string {
+	if lo == nil {
+		return ""
+	}
 	if lo.addr == nil {
 		return ""
 	}
@@ -55,6 +59,9 @@ func (lo *Network) String() string {
 }
 
 func (lo *Network) UnmarshalText(data []byte) error {
+	if lo == nil {
+		lo = &Network{}
+	}
 	addr, err := net.ResolveUDPAddr(NetworkName, string(data))
 	if err != nil {
 		return err
@@ -92,6 +99,7 @@ func (lo *Network) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Close closes the [Network] connection
 func (lo *Network) Close() error {
 	if lo.conn != nil {
 		return lo.conn.Close()
@@ -99,6 +107,12 @@ func (lo *Network) Close() error {
 	return nil
 }
 
+// includesText returns true if the error contains the text
+func includesText(err error, text string) bool {
+	return err != nil && strings.Contains(err.Error(), text)
+}
+
+// Connection returns the persistent connection, establishing it first if necessary
 func (lo *Network) Connection() (net.PacketConn, error) {
 
 	if lo.conn != nil {
@@ -110,6 +124,20 @@ func (lo *Network) Connection() (net.PacketConn, error) {
 		return nil, errors.New("no address")
 	}
 	pc, err := net.ListenPacket(addr.Network(), addr.String())
+
+	//	if after 5 attempts we fail to create a connection, we give up
+	for range 5 {
+		if includesText(err, "address already in use") {
+			addr := lo.createAddress()
+			pc, err = net.ListenPacket(addr.Network(), addr.String())
+			if err == nil {
+				break
+			}
+		} else {
+			break
+		}
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -122,13 +150,13 @@ func (lo *Network) Connection() (net.PacketConn, error) {
 	return pc, nil
 }
 
+// NewConnection establishes a new connection
 func (lo *Network) NewConnection() (net.PacketConn, error) {
 	addr := lo.createAddress()
-	//return net.ListenUDP(NetworkName, addr)
 	return net.ListenPacket(addr.Network(), addr.String())
 }
 
-// Address returns our persistent [net.Addr]
+// Address returns, our persistent [net.Addr], acquiring it first if necessary
 func (lo *Network) Address() *net.UDPAddr {
 	if lo.addr != nil {
 		return lo.addr
@@ -137,11 +165,12 @@ func (lo *Network) Address() *net.UDPAddr {
 	return lo.addr
 }
 
-// Addr exposes the underlying net.Addr
+// Addr exposes the underlying [net.Addr]
 func (lo *Network) Addr() net.Addr {
 	return lo.addr
 }
 
+// Initialize does initialization work. In particular, it establishes a persistent connection
 func (lo *Network) Initialize() {
 	lo.Address()
 }

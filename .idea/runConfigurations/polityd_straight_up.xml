@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="polityd straight up" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="polityd straight up" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
     <module name="polity" />
     <working_directory value="$PROJECT_DIR$/v2" />
     <kind value="DIRECTORY" />

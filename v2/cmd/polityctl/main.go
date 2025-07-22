@@ -3,26 +3,24 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
+	tea "github.com/charmbracelet/bubbletea"
+	lipgloss "github.com/charmbracelet/lipgloss"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 	"github.com/sean9999/polity/v2/udp4"
 	"log"
-	"time"
-
-	tea "github.com/charmbracelet/bubbletea"
-	lipgloss "github.com/charmbracelet/lipgloss"
 )
 
 type model struct {
 	//isConnected bool
 	//status      string
 	//input       string
-	quitting  bool
-	output    string
-	nick      string
-	self      *polity.Principal[*udp4.Network]
-	peer      *polity.Peer[*udp4.Network]
-	verbosity uint
+	quitting   bool
+	output     string
+	nick       string
+	self       *polity.Principal[*udp4.Network]
+	selfAsPeer *polity.Peer[*udp4.Network]
+	verbosity  uint
 }
 
 // Initialize the genericModel
@@ -68,11 +66,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "d":
 			//	dump thyself
 			return m, func() tea.Msg {
-				e := m.self.Compose([]byte("dump thyself"), m.peer, nil)
+				e := m.self.Compose([]byte("dump thyself"), m.selfAsPeer, nil)
 				e.Subject(subj.DumpThyself)
 				i, err := m.self.Send(e)
 				if err != nil {
-
 					return errorMessage(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
 				}
 				return commandMessage("dump thyself")
@@ -81,8 +78,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "b":
 			//	broadcast (say hello to all your friends)
 			return m, func() tea.Msg {
-				e := m.self.Compose([]byte("broadcast"), m.peer, nil)
-				e.Subject(subj.Broadcast)
+				e := m.self.Compose([]byte("broadcast"), m.selfAsPeer, nil)
+				e.Subject(subj.CmdBroadcast)
 				i, err := m.self.Send(e)
 				if err != nil {
 					return errorMessage(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
@@ -93,7 +90,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "f":
 			//	ask all your friends who their friends are, and befriend them
 			return m, func() tea.Msg {
-				e := m.self.Compose([]byte("broadcast"), m.peer, nil)
+				e := m.self.Compose([]byte("broadcast"), m.selfAsPeer, nil)
 				e.Subject(subj.CmdMakeFriends)
 				i, err := m.self.Send(e)
 				if err != nil {
@@ -105,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "k":
 			// kill yourself
 			return m, func() tea.Msg {
-				e := m.self.Compose([]byte("kill yourself"), m.peer, nil)
+				e := m.self.Compose([]byte("kill yourself"), m.selfAsPeer, nil)
 				e.Subject(subj.KillYourself)
 				e.Message.Sign(rand.Reader, m.self)
 				i, err := m.self.Send(e)
@@ -118,7 +115,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "s":
 			// sleep (stay alive but stop responding to messages)
 			return m, func() tea.Msg {
-				e := m.self.Compose([]byte("go to sleep"), m.peer, nil)
+				e := m.self.Compose([]byte("go to sleep"), m.selfAsPeer, nil)
 				e.Subject(subj.Sleep)
 				i, err := m.self.Send(e)
 				if err != nil {
@@ -152,20 +149,13 @@ func (m model) View() string {
 	divider := textStyle.Render("------------------------------") + "\n"
 	commands := textStyle.Render(`
 [d] dump thyself
-[b] broadcast
-[f] friendify
+[b] broadcast hello
+[f] ask for friends
 [k] kill yourself
 [s] sleep
 `)
 	output := fmt.Sprintf("\n%s\n\n", m.output)
 	return header + divider + divider + commands + divider + output
-}
-
-// Connect to the polityd process
-func connectToPolityd() bool {
-	// Replace with actual connection logic
-	time.Sleep(1 * time.Second) // Simulate connection delay
-	return true
 }
 
 // Main function

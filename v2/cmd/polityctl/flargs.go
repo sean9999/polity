@@ -40,18 +40,11 @@ func parseFlargs() (model, error) {
 		if err != nil {
 			return err
 		}
-		m.peer = j
+		m.selfAsPeer = j
 		return nil
 	})
 
-	verbosity := f.Uint("verbosity", 0, "verbosity level")
-	//
-	//if joinPeer != nil && joinPeer.IsZero() {
-	//	joinPeer = nil
-	//}
-	//if me != nil && me.IsZero() {
-	//	me = nil
-	//}
+	verbosity := f.Uint("verbosity", 2, "verbosity level")
 
 	err := f.Parse(os.Args[1:])
 	if err != nil {
@@ -62,11 +55,11 @@ func parseFlargs() (model, error) {
 	if m.self == nil {
 		return m, errors.New("self is nil")
 	}
-	if m.peer == nil {
-		return m, errors.New("peer is nil")
+	if m.selfAsPeer == nil {
+		return m, errors.New("selfAsPeer is nil")
 	}
 
-	if !m.self.PublicKey().Equal(m.peer.PublicKey()) {
+	if !m.self.PublicKey().Equal(m.selfAsPeer.PublicKey()) {
 		return m, errors.New("conf and join must be same")
 	}
 

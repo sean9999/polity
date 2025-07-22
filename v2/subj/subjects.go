@@ -29,11 +29,12 @@ const (
 	RefuseToDie            Subject = "Fuck you. I won't die"
 	KillYourself           Subject = "Kill yourself"
 	Sleep                  Subject = "Go to sleep"
-	Broadcast              Subject = "Say hello to all your friends"
+	CmdBroadcast           Subject = "Say hello to all your friends"
 	CmdMakeFriends         Subject = "ask all your friends who their friends are, and then make friends with them"
 	IWantToMeetYourFriends Subject = "i want to meet your friends"
 	HereAreMyFriends       Subject = "Here are my friends"
 	IHaveNoFriends         Subject = "I have no friends"
+	ByeBye                 Subject = "Good bye. I'm going away now"
 )
 
 func ValidResponses(s Subject) []Subject {
