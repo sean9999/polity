@@ -9,8 +9,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/sean9999/go-delphi v1.1.0
 	github.com/sean9999/go-oracle/v2 v2.2.2
-	github.com/sean9999/go-stable-map v0.1.3
-	github.com/sean9999/hermeti v0.5.2
+	github.com/sean9999/go-stable-map v1.2.0
+	github.com/sean9999/hermeti v0.6.0
 	github.com/stretchr/testify v1.10.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 )
