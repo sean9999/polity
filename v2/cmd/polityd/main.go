@@ -35,14 +35,13 @@ func (app *polityApp) Init(env *hermeti.Env) error {
 		return fmt.Errorf("could not initialise polityApp. %w", err)
 	}
 
-	me := app.me
-
 	//	if there is no me, create me.
-	if me == nil {
-		me, err = polity.NewPrincipal(rand.Reader, env.OutStream, new(udp4.Network))
+	if app.me == nil {
+		me, err := polity.NewPrincipal(rand.Reader, env.OutStream, new(udp4.Network))
 		if err != nil {
 			return fmt.Errorf("could create app new Principal. %w", err)
 		}
+		app.me = me
 	}
 	//
 	//app.colour = colour
