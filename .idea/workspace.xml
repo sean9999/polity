@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/v2/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/testdata/little-violet.pem" beforeDir="false" afterPath="$PROJECT_DIR$/v2/testdata/little-violet.pem" afterDir="false" />
-    </list>
+    <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
