@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/v2/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v2/testdata/little-violet.pem" beforeDir="false" afterPath="$PROJECT_DIR$/v2/testdata/little-violet.pem" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,39 +62,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
-    &quot;Go Build.as broken-hill.executor&quot;: &quot;Debug&quot;,
-    &quot;Go Build.polityd as blue-shadow.executor&quot;: &quot;Run&quot;,
-    &quot;Go Build.polityd as little-violet.executor&quot;: &quot;Debug&quot;,
-    &quot;Go Build.polityd as quiet-bird.executor&quot;: &quot;Run&quot;,
-    &quot;Go Build.polityd join quiet-bird.executor&quot;: &quot;Run&quot;,
-    &quot;Go Build.polityd straight up.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginOnboarding&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;I do mind&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/seanmacdonald&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;project.scopes&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.as broken-hill.executor": "Debug",
+    "Go Build.polityd as blue-shadow.executor": "Run",
+    "Go Build.polityd as little-violet.executor": "Run",
+    "Go Build.polityd as quiet-bird.executor": "Run",
+    "Go Build.polityd join quiet-bird.executor": "Run",
+    "Go Build.polityd straight up.executor": "Run",
+    "Go Build.straight up.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.GoLinterPluginOnboarding": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "SHELLCHECK.PATH": "I do mind",
+    "git-widget-placeholder": "develop",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/Users/seanmacdonald",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "project.scopes"
   }
-}</component>
-  <component name="RunManager" selected="Go Build.polityd as little-violet">
+}]]></component>
+  <component name="RunManager" selected="Go Build.straight up">
     <configuration name="as broken-hill" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
       <module name="polity" />
       <working_directory value="$PROJECT_DIR$/v2" />
@@ -100,7 +105,7 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="polityd as little-violet" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
+    <configuration name="as little-violet" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
       <module name="polity" />
       <working_directory value="$PROJECT_DIR$/v2" />
       <parameters value="-conf testdata/little-violet.pem" />
@@ -110,7 +115,7 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="polityd as quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
+    <configuration name="as quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
       <module name="polity" />
       <working_directory value="$PROJECT_DIR$/v2" />
       <parameters value="-conf testdata/quiet-bird.pem" />
@@ -120,7 +125,7 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="polityd join quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
+    <configuration name="join quiet-bird" type="GoApplicationRunConfiguration" factoryName="Go Application" folderName="polityd">
       <module name="polity" />
       <working_directory value="$PROJECT_DIR$/v2" />
       <parameters value="-join udp://e282a7ab4ed4854baa3fd30a4e87da86e69dcc0e945aff08906fbbb81b5b1b2a863a5bff18d7520962a903761582e6e3c2af042f457eb694fc3cf38304ae87e2@127.0.0.1:50971" />
@@ -131,11 +136,11 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Build.polityd as blue-shadow" />
-      <item itemvalue="Go Build.polityd as little-violet" />
-      <item itemvalue="Go Build.polityd as quiet-bird" />
-      <item itemvalue="Go Build.polityd join quiet-bird" />
-      <item itemvalue="Go Build.polityd straight up" />
+      <item itemvalue="Go Build.as blue-shadow" />
+      <item itemvalue="Go Build.as little-violet" />
+      <item itemvalue="Go Build.as quiet-bird" />
+      <item itemvalue="Go Build.join quiet-bird" />
+      <item itemvalue="Go Build.straight up" />
       <item itemvalue="Go Build.as broken-hill" />
     </list>
   </component>
