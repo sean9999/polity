@@ -5,29 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fdaadcbe-cd70-49cd-a6b9-ed376de3a64d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/v2/three.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/default_user.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/default_user.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_as_blue_shadow.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/runConfigurations/polityd_straight_up.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityctl/flargs.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityctl/flargs.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityctl/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityctl/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/flargs.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/flargs.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_die.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_dump_thyself.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_friend_request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/on_hello.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_boot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/send_friend_request.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/cmd/polityd/util.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/cmd/polityd/util.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/peer.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/peer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/principal.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/principal.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/subj/subjects.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/subj/subjects.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/testdata/blue-shadow.pem" beforeDir="false" afterPath="$PROJECT_DIR$/v2/testdata/blue-shadow.pem" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v2/udp4/net.go" beforeDir="false" afterPath="$PROJECT_DIR$/v2/udp4/net.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
