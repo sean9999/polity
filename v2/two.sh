@@ -12,7 +12,6 @@ then
 	tmux new-session 	-d -s "$SESSION"
 	tmux split-window -v -t "$SESSION"
 
-
 	tmux select-pane	-t "$SESSION":0.0
 	tmux send-keys		-t "$SESSION" "go run ./cmd/polityd/*.go -conf=testdata/$USER_1.pem" Enter
 	tmux select-pane	-t "$SESSION":0.1
