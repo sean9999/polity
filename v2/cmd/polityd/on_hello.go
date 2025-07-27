@@ -56,13 +56,18 @@ func handleHereAreMyFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
 	friendsText := string(e.Message.PlainText)
 	friends := strings.Split(friendsText, "\n")
 	for _, friend := range friends {
-		friendPeer, err := polity.PeerFromString(friend, new(udp4.Network))
+		friendPeer, err := polity.PeerFromString(friend, &udp4.Network{})
 		if err != nil {
 			app.me.Slogger.Error("Error parsing friend", "friend", friend, "err", err)
 			continue
 		}
 
-		app.me.Slogger.Debug("Adding friend", "friend", friend)
+		//	don't add self
+		if friendPeer.Equal(app.me.PublicKey()) {
+			app.me.Slogger.Info("Not adding self as friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())
+			continue
+		}
+		app.me.Slogger.Debug("Adding friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())
 
 		err = app.me.AddPeer(friendPeer)
 		if err != nil {

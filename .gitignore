@@ -1,2 +1,24 @@
+
+#   general cruft
+*.log
+*.tmp
+*.private
+private.*
+
+#   workspaces
 go.work
 go.work.sum
+.idea/workspace.xml
+*.code-workspace
+
+#   build artefacts
+bin/
+
+#   some IDE config data is worth sharing. Some not
+!.idea/runConfigurations
+!.idea/inspectionProfiles
+!.idea/dictionaries
+.idea/
+
+#   v2 is where most dev is happening
+#include ./v2/.gitignore

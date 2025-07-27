@@ -139,7 +139,7 @@ func NewPrincipal[A AddressConnector](rand io.Reader, outStream io.Writer, netwo
 	prince := goracle.NewPrincipal(rand, nil)
 	m := stablemap.NewActiveMap[delphi.Key, PeerInfo[A]]()
 
-	slogger := slog.New(slog.NewJSONHandler(outStream, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	slogger := slog.New(slog.NewJSONHandler(outStream, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	logger := log.New(outStream, "", log.Lmsgprefix)
 	logger.SetPrefix("")

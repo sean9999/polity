@@ -5,7 +5,11 @@ import (
 	"strings"
 )
 
+// A Subject is a type of message
 type Subject string
+
+// A Command is functionally a Subject, but used for sending commands to oneself.
+type Command = Subject
 
 func (subj Subject) Equals(thing any) bool {
 	a := fmt.Sprintf("%s", subj)
@@ -27,14 +31,18 @@ const (
 	TellMeEverything       Subject = "Tell me everything you know"
 	ThisIsWhatIKnow        Subject = "This is what I know"
 	RefuseToDie            Subject = "Fuck you. I won't die"
-	KillYourself           Subject = "Kill yourself"
+	KillYourself           Subject = "Kill yourself, gracefully if possible"
 	Sleep                  Subject = "Go to sleep"
-	CmdBroadcast           Subject = "Say hello to all your friends"
-	CmdMakeFriends         Subject = "ask all your friends who their friends are, and then make friends with them"
 	IWantToMeetYourFriends Subject = "i want to meet your friends"
 	HereAreMyFriends       Subject = "Here are my friends"
 	IHaveNoFriends         Subject = "I have no friends"
 	ByeBye                 Subject = "Good bye. I'm going away now"
+)
+
+const (
+	CmdBroadcast    Command = "Say hello to all your friends"
+	CmdMakeFriends  Command = "ask all your friends who their friends are, and then make friends with them"
+	CmdEveryoneDump Command = "tell your friends to dump themselves"
 )
 
 func ValidResponses(s Subject) []Subject {
