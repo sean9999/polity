@@ -164,16 +164,20 @@ func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageI
 	e.ID = NewMessageId()
 	e.Thread = thread
 
+	e.Sender = p.AsPeer()
+
 	//	create delphi message
 	msg := delphi.ComposeMessage(nil, delphi.PlainMessage, body)
 	msg.SenderKey = p.PublicKey()
-	msg.RecipientKey = recipient.PublicKey()
 	e.Message = msg
 
-	//	attach peers
-	e.Sender = p.AsPeer()
-	e.Recipient = recipient
-
+	if recipient != nil {
+		msg.RecipientKey = recipient.PublicKey()
+		e.Recipient = recipient
+	} else {
+		e.Recipient = nil
+	}
+	
 	return e
 }
 

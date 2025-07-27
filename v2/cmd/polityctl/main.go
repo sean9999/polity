@@ -75,6 +75,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return commandMessage("dump thyself")
 			}
 
+		case "D":
+			//	tell everyone to dump
+			return m, func() tea.Msg {
+				e := m.self.Compose([]byte("tell everyone dump thyself"), m.selfAsPeer, nil)
+				e.Subject(subj.CmdEveryoneDump)
+				i, err := m.self.Send(e)
+				if err != nil {
+					return errorMessage(fmt.Errorf("failed to send %d bytes. %w", i, err).Error())
+				}
+				return commandMessage("tell everyone dump thyself")
+			}
+
 		case "b":
 			//	broadcast (say hello to all your friends)
 			return m, func() tea.Msg {

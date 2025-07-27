@@ -24,6 +24,8 @@ func onEnvelope(app *polityApp, e polity.Envelope[*udp4.Network]) {
 		handleFriendRequest(app, e, app.conf)
 	case subj.DumpThyself.Equals(s):
 		handleDump(p, e)
+	case subj.CmdEveryoneDump.Equals(s):
+		handleMegaDump(p, e)
 	case subj.Hello.Equals(s):
 		handleHello(app, e)
 	case subj.HelloBack.Equals(s):
