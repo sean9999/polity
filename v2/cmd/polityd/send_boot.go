@@ -14,7 +14,7 @@ func boot(app *polityApp) (*polity.MessageId, error) {
 
 	// send a message to ourselves indicating that we've booted up
 	e := me.Compose([]byte(message), me.AsPeer(), nil)
-	e.Subject(subj.Boot)
+	e.Subject(subj.CmdBoot)
 	err := send(app, e)
 	if err != nil {
 		return nil, err
