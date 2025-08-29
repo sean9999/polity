@@ -66,12 +66,8 @@ func handleFriendRequest(app *polityApp, e polity.Envelope[*udp4.Network], confi
 
 	if e.IsSigned() {
 		err := p.AddPeer(e.Sender)
+		_ = p.SetPeerAliveness(e.Sender, true)
 		if !errors.Is(err, polity.ErrPeerExists) {
-
-			err := p.SetPeerAliveness(e.Sender, true)
-			if err != nil {
-				return
-			}
 
 			f := e.Reply()
 			f.Subject(subj.FriendRequestAccept)

@@ -40,7 +40,7 @@ func onEnvelope(app *polityApp, e polity.Envelope[*udp4.Network]) {
 		handleHereAreMyFriends(app, e)
 
 	default:
-		p.Slogger.Info("No handler for this envelope", "subj", e.Message.Subject)
+		p.Slogger.Debug("No handler for this envelope", "subj", e.Message.Subject)
 	}
 
 }

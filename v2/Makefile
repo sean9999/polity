@@ -25,7 +25,6 @@ bin/polityd: bin
 	env GOOS=darwin GOARCH=arm64 go build -o bin/polityd_darwin_arm64 -ldflags="-X 'main.Version=$(REF)'" ./cmd/polityd/
 	env GOOS=freebsd GOARCH=amd64 go build -o bin/polityd_freebsd_amd64 -ldflags="-X 'main.Version=$(REF)'" ./cmd/polityd/
 
-
 bin/polityctl: bin
 	go build -v -o bin/polityctl -ldflags="-X 'main.Version=$(REF)'" ./cmd/polityctl/
 	env GOOS=linux GOARCH=arm go build -o bin/polityd_linux_arm -ldflags="-X 'main.Version=$(REF)'" ./cmd/polityctl/

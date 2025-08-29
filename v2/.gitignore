@@ -1,8 +1,8 @@
 bin/
+!bin/.gitkeep
 *.log
 *.private
 private.*
 *.private.*
 *.tmp
-.vscode/
 testdata/logs/

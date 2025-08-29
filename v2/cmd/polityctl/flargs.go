@@ -23,7 +23,7 @@ func parseFlargs() (model, error) {
 		if err != nil {
 			return err
 		}
-		me, err := polity.PrincipalFromPEM(fileData, os.Stdout, new(udp4.Network))
+		me, err := polity.PrincipalFromPEM(fileData, new(udp4.Network))
 		if err != nil {
 			return err
 		}

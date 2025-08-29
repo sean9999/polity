@@ -5,24 +5,27 @@ import (
 	"github.com/sean9999/polity/v2/subj"
 )
 
-// Dump everything we know about the world
-func handleDump[A polity.AddressConnector](p *polity.Principal[A], _ polity.Envelope[A]) {
-
-	//	TODO: dump more info. In particular, show which peers are alive and dead
+func dump[A polity.AddressConnector](p *polity.Principal[A]) {
 	for key, info := range p.Peers.Entries() {
 		p.Logger.Println(key.Nickname(), info)
 	}
+}
+
+// Dump everything we know about the world
+func handleDump[A polity.AddressConnector](p *polity.Principal[A], _ polity.Envelope[A]) {
+
+	//	TODO: dump more info. In particular show which peers are alive and dead
+	dump(p)
 
 }
 
 func handleMegaDump[A polity.AddressConnector](p *polity.Principal[A], _ polity.Envelope[A]) {
 
 	//	first dump self
-	for key, info := range p.Peers.Entries() {
-		p.Logger.Println(key.Nickname(), info)
-	}
+	dump(p)
 
-	e := p.Compose([]byte("dump yourself"), nil, nil)
+	//	now tell everyone else to do the same
+	e := p.Compose([]byte("dump yourself"), nil, polity.NewMessageId())
 	e.Subject(subj.DumpThyself)
 	p.Broadcast(e)
 

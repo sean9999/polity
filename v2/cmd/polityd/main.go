@@ -7,12 +7,14 @@ import (
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 	"github.com/sean9999/polity/v2/udp4"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 type polityApp struct {
@@ -37,18 +39,23 @@ func (app *polityApp) Init(env *hermeti.Env) error {
 
 	//	if there is no me, create me.
 	if app.me == nil {
-		me, err := polity.NewPrincipal(rand.Reader, env.OutStream, new(udp4.Network))
+		me, err := polity.NewPrincipal(rand.Reader, new(udp4.Network))
 		if err != nil {
 			return fmt.Errorf("could create app new Principal. %w", err)
 		}
 		app.me = me
 	}
-	//
-	//app.colour = colour
-	//app.join = join
-	//app.me = me
-	//app.conf = meConf
-	//app.verbosity = verbosity
+
+	//	logger
+	withLogger := polity.WithLogger[*udp4.Network]
+	logger := log.New(env.OutStream, "", log.Lshortfile)
+	app.me.With(withLogger(logger))
+
+	//	slogger
+	withSlogger := polity.WithSlogger[*udp4.Network]
+	slogger := slog.New(slog.NewTextHandler(env.OutStream, &slog.HandlerOptions{Level: app.debugLevel}))
+	app.me.With(withSlogger(slogger))
+
 	return nil
 }
 
@@ -124,14 +131,19 @@ func (app *polityApp) Run(env hermeti.Env) {
 	}
 
 	//	say "hello, I'm alive" to all my friends
-	for pubKey, info := range app.me.Peers.Entries() {
+	e := app.me.Compose(nil, nil, bootId)
+	e.Subject(subj.Hello)
+	app.me.Broadcast(e)
 
-		e := app.me.Compose(nil, info.ToPeer(pubKey), bootId)
-		e.Subject(subj.Hello)
-		_ = send(app, e)
-		_ = app.me.SetPeerAliveness(info.ToPeer(pubKey), false)
-	}
+	time.Sleep(time.Second * 1)
 
+	//	make friends
+	e = app.me.Compose(nil, nil, bootId)
+	e.Subject(subj.IWantToMeetYourFriends)
+	app.me.Broadcast(e)
+
+	time.Sleep(time.Second * 1)
+	dump(app.me)
 	wg.Wait()
 
 	// say "bye, bye!" to all my friends (shut down gracefully)

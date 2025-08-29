@@ -26,7 +26,7 @@ func parseFlargs(env hermeti.Env, app *polityApp) error {
 		if err != nil {
 			return err
 		}
-		me, err = polity.PrincipalFromPEM(fileData, env.OutStream, new(udp4.Network))
+		me, err = polity.PrincipalFromPEM(fileData, new(udp4.Network))
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func parseFlargs(env hermeti.Env, app *polityApp) error {
 
 	verbosity := f.Uint("verbosity", 2, "verbosity level")
 	colour := f.Bool("colour", true, "colour output")
-	debugLevel := f.Int("level", -4, "debug level")
+	debugLevel := f.Int("level", 0, "debug level")
 
 	err := f.Parse(env.Args[1:])
 	if err != nil {

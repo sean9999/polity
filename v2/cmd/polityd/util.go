@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-var mu *sync.Mutex = new(sync.Mutex)
+var mu = new(sync.Mutex)
 
 // prettyLog logs out an Envelope in a pretty way
 func prettyLog(app *polityApp, e polity.Envelope[*udp4.Network], source string) {
@@ -51,12 +51,9 @@ func prettyLog(app *polityApp, e polity.Envelope[*udp4.Network], source string) 
 func prettyNote(app *polityApp, s string) {
 	mu.Lock()
 	defer mu.Unlock()
-
 	color.Output = app.me.Logger.Writer()
-
 	color.Green("\n#\tNOTE")
 	color.Green(s)
-
 }
 
 func send(app *polityApp, e *polity.Envelope[*udp4.Network]) error {

@@ -42,17 +42,26 @@ func handleCmdMakeFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
 
 // if a peer asks for my friends, send them a list of my friends
 func handleAskForFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
+
+	_ = app.me.SetPeerAliveness(e.Sender, true)
+
 	f := e.Reply()
 	f.Subject(subj.HereAreMyFriends)
 	friends := make([]string, 0, app.me.Peers.Length())
-	for _, peer := range app.me.AllPeers() {
-		friends = append(friends, peer.String())
+	for peer := range app.me.EachPeer() {
+		if peer.Addr.String() == "" {
+			app.me.Slogger.Error("Peer has no address", "peer", peer.Nickname())
+		}
+		friends = append(friends, peer.String()+"?nick="+peer.Nickname()+"")
 	}
 	f.Message.PlainText = []byte(strings.Join(friends, "\n"))
 	_ = send(app, f)
 }
 
 func handleHereAreMyFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
+
+	app.me.AddPeer(e.Sender)
+
 	friendsText := string(e.Message.PlainText)
 	friends := strings.Split(friendsText, "\n")
 	for _, friend := range friends {
@@ -62,9 +71,14 @@ func handleHereAreMyFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
 			continue
 		}
 
+		if friendPeer.Addr.String() == "" {
+			app.me.Slogger.Error("Friend has no address", "friend", friendPeer.Nickname())
+			continue
+		}
+
 		//	don't add self
 		if friendPeer.Equal(app.me.PublicKey()) {
-			app.me.Slogger.Info("Not adding self as friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())
+			app.me.Slogger.Debug("Not adding self as friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())
 			continue
 		}
 		app.me.Slogger.Debug("Adding friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())

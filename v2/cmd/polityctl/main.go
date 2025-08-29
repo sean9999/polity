@@ -12,9 +12,6 @@ import (
 )
 
 type model struct {
-	//isConnected bool
-	//status      string
-	//input       string
 	quitting   bool
 	output     string
 	nick       string
@@ -48,8 +45,6 @@ type errorMessage string
 
 // Init initializes the genericModel
 func (m model) Init() tea.Cmd {
-	// Initialize with no commands
-	m.nick = "Ray Charles"
 	return nil
 }
 

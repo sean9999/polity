@@ -7,12 +7,11 @@ import (
 	"io"
 	"iter"
 	"log"
-	"slices"
-	"sync"
-
 	"log/slog"
 	"net"
+	"slices"
 	"strings"
+	"sync"
 
 	"github.com/sean9999/go-delphi"
 	goracle "github.com/sean9999/go-oracle/v2"
@@ -47,13 +46,14 @@ func (p *Principal[A]) AsPeer() *Peer[A] {
 }
 
 func (p *Principal[A]) Disconnect() error {
+
 	close(p.inbox)
 	return nil
 }
 
 // Connect acquires an address and starts listening on it.
-// After doing so, a node will want to advertise itself.
-// It will also want to process incoming data using [Inbox].
+// After doing so, a node will probably want to advertise itself.
+// It will probably also want to process incoming data using [Inbox].
 func (p *Principal[A]) Connect() error {
 	if p.conn != nil {
 		return nil
@@ -117,8 +117,8 @@ func (p *Principal[A]) Inbox() chan Envelope[A] {
 	return p.inbox
 }
 
-func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, outStream io.Writer, network A) (*Principal[A], error) {
-	p, err := NewPrincipal(nil, outStream, network)
+func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, network A) (*Principal[A], error) {
+	p, err := NewPrincipal(nil, network)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func PrincipalFromPEMBlock[A AddressConnector](block *pem.Block, outStream io.Wr
 	return p, err
 }
 
-func PrincipalFromPEM[A AddressConnector](data []byte, outStream io.Writer, network A) (*Principal[A], error) {
-	p, err := NewPrincipal(nil, outStream, network)
+func PrincipalFromPEM[A AddressConnector](data []byte, network A) (*Principal[A], error) {
+	p, err := NewPrincipal(nil, network)
 	if err != nil {
 		return nil, err
 	}
@@ -135,14 +135,9 @@ func PrincipalFromPEM[A AddressConnector](data []byte, outStream io.Writer, netw
 	return p, err
 }
 
-func NewPrincipal[A AddressConnector](rand io.Reader, outStream io.Writer, network A) (*Principal[A], error) {
+func NewPrincipal[A AddressConnector](rand io.Reader, network A, opts ...PrincipalOption[A]) (*Principal[A], error) {
 	prince := goracle.NewPrincipal(rand, nil)
 	m := stablemap.NewActiveMap[delphi.Key, PeerInfo[A]]()
-
-	slogger := slog.New(slog.NewJSONHandler(outStream, &slog.HandlerOptions{Level: slog.LevelDebug}))
-
-	logger := log.New(outStream, "", log.Lmsgprefix)
-	logger.SetPrefix("")
 
 	network.Initialize()
 
@@ -150,10 +145,42 @@ func NewPrincipal[A AddressConnector](rand io.Reader, outStream io.Writer, netwo
 		Principal: prince,
 		Net:       network,
 		Peers:     m,
-		Slogger:   slogger,
-		Logger:    logger,
 	}
+
+	for _, fn := range opts {
+		p.With(fn)
+	}
+
+	if p.Logger == nil {
+		logger := log.New(io.Discard, "", log.Lmsgprefix)
+		logger.SetPrefix("")
+		p.Logger = logger
+	}
+
+	if p.Slogger == nil {
+		slogger := slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
+		p.Slogger = slogger
+	}
+
 	return &p, nil
+}
+
+type PrincipalOption[A AddressConnector] func(principal *Principal[A])
+
+func (p *Principal[AddressConnector]) With(fn PrincipalOption[AddressConnector]) {
+	fn(p)
+}
+
+func WithLogger[A AddressConnector](log *log.Logger) PrincipalOption[A] {
+	return func(p *Principal[A]) {
+		p.Logger = log
+	}
+}
+
+func WithSlogger[A AddressConnector](slog *slog.Logger) PrincipalOption[A] {
+	return func(p *Principal[A]) {
+		p.Slogger = slog
+	}
 }
 
 // Compose a [delphi.Message], wrapped in an [Envelope], addressed to a particular [Peer].
@@ -177,7 +204,7 @@ func (p *Principal[A]) Compose(body []byte, recipient *Peer[A], thread *MessageI
 	} else {
 		e.Recipient = nil
 	}
-	
+
 	return e
 }
 
@@ -196,14 +223,17 @@ func (p *Principal[A]) AllPeers() []*Peer[A] {
 	return slices.Collect(p.EachPeer())
 }
 
+func (p *Principal[A]) Shutdown() {
+	p.Disconnect()
+
+}
+
 func (p *Principal[A]) Broadcast(e *Envelope[A]) {
-
-	p.Slogger.Debug("broadcasting envelope", "subj", e.Message.Subject)
-
+	//wg := new(sync.WaitGroup)
+	//wg.Add(p.Peers.Length())
+	p.Slogger.Debug("broadcasting (serial)", "subj", e.Message.Subject)
 	for thisPeer := range p.EachPeer() {
-
-		p.Logger.Printf("sending %q to peer %s and i am %s", e.Message.Subject, thisPeer.Nickname(), p.Nickname())
-
+		p.Slogger.Info("sending %q to peer %s and i am %s", e.Message.Subject, thisPeer.Nickname(), p.Nickname())
 		e.Recipient = thisPeer
 		_, err := p.Send(e)
 		if err != nil {
@@ -216,7 +246,7 @@ func (p *Principal[A]) BroadcastParallel(e *Envelope[A]) {
 	wg := new(sync.WaitGroup)
 	wg.Add(p.Peers.Length())
 
-	p.Slogger.Debug("broadcasting envelope", "subj", e.Message.Subject)
+	p.Slogger.Debug("broadcasting (in parallel)", "subj", e.Message.Subject)
 
 	for thisPeer := range p.EachPeer() {
 		go func(peer *Peer[A]) {
@@ -267,12 +297,21 @@ func (p *Principal[A]) Send(e *Envelope[A]) (int, error) {
 var ErrPeerExists = errors.New("peer exists")
 
 func (p *Principal[A]) AddPeer(peer *Peer[A]) error {
+
+	if peer.Addr.String() == p.Net.String() {
+		return errors.New("peer has zero-length address")
+	}
+
 	if _, exists := p.Peers.Get(peer.PublicKey()); exists {
 		return ErrPeerExists
 	}
 
-	p.Peers.Set(peer.PublicKey(), PeerInfo[A]{}, nil)
-	return nil
+	return p.Peers.Set(peer.PublicKey(), PeerInfo[A]{
+		Addr:  peer.Addr,
+		Props: peer.Props,
+	}, func(res stablemap.Result[delphi.Key, PeerInfo[A]]) string {
+		return fmt.Sprintf("added peer %s with addr %s", peer.Nickname(), peer.Addr.String())
+	})
 }
 
 func (p *Principal[A]) MarshalPEM() (*pem.Block, error) {
@@ -337,6 +376,10 @@ func (a aliveness) String() string {
 }
 
 func (p *Principal[A]) SetPeerAliveness(peer *Peer[A], val bool) error {
+
+	//	ensure peer record exists
+	_ = p.AddPeer(peer)
+
 	info, _ := p.Peers.Get(peer.PublicKey())
 	info.IsAlive = val
 	return p.Peers.Set(peer.PublicKey(), info, func(res stablemap.Result[delphi.Key, PeerInfo[A]]) string {

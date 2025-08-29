@@ -6,9 +6,13 @@ REF := $$(git describe --dirty --tags --always)
 info:
 	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(REPO) $(SEMVER) $(BRANCH) $(REF)
 
-binaries: bin/polityd
+binaries: bin/polityd bin/polity
 	mkdir -p bin
-	
+
+bin/polity:
+	go build -v -o bin/polity -ldflags="-X 'main.Version=$(REF)'" v2/cmd/polity/**.go
+
+
 bin/polityd:	
 	go build -v -o bin/polityd -ldflags="-X 'main.Version=$(REF)'" v2/cmd/polityd/**.go
 
