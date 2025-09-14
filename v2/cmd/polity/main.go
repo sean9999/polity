@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	. "github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/udp4"
@@ -30,8 +31,8 @@ func (a *app) Init(e *Env) error {
 			return err
 		}
 	}
-	if len(a.bag[polity.SubjPrivateKey]) > 0 {
-		self, err := polity.PrincipalFromPEMBlock(a.bag[polity.SubjPrivateKey][0], a.network)
+	if len(a.bag["POLITY PRIVATE KEY"]) > 0 {
+		self, err := polity.PrincipalFromPEMBlock(a.bag["POLITY PRIVATE KEY"][0], a.network)
 		if err != nil {
 			return err
 		}

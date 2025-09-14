@@ -6,7 +6,7 @@ REF := $$(git describe --dirty --tags --always)
 info:
 	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(REPO) $(SEMVER) $(BRANCH) $(REF)
 
-binaries: bin/polityd bin/polity bin/polityctl
+binaries: vet bin/polityd bin/polity bin/polityctl
 
 bin:
 	mkdir -p bin
@@ -56,6 +56,9 @@ publish:
 test:
 	go test ./...
 
+vet:
+	go vet ./...
+
 coverage:
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
@@ -83,4 +86,4 @@ coverage-check:
 		echo "✅ Coverage meets 70% threshold"; \
 	fi
 
-.PHONY: test coverage coverage-summary coverage-html coverage-check
+.PHONY: test coverage coverage-summary coverage-html coverage-check vet

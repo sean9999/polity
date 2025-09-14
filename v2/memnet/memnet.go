@@ -8,13 +8,12 @@ import (
 	. "github.com/sean9999/polity/v2"
 )
 
-
 var _ AddressConnector = (*Network)(nil)
 
 type Network struct {
-	self *Peer[*Network]
-	addr string
-	conn chan []byte
+	self  *Peer[*Network]
+	addr  string
+	conn  chan []byte
 	Peers PeerMap[*Network]
 }
 
@@ -49,15 +48,8 @@ func (n *Network) UnmarshalText(text []byte) error {
 	return nil
 }
 
-
 func (n *Network) Addr() net.Addr {
-
-	addr := interface{
-		Network() string
-		Addr() string
-	}
-
-	//return n
+	return n
 }
 
 func (n *Network) Initialize() {

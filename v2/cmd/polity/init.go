@@ -6,6 +6,7 @@ import (
 
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
 func dieOn(err error, env hermeti.Env) {
@@ -17,9 +18,9 @@ func dieOn(err error, env hermeti.Env) {
 
 func _init(e hermeti.Env, _ *app) {
 
-	udpnet := new(polity.LocalUDP4Net)
+	udpNet := new(udp4.Network)
 
-	p, err := polity.NewPrincipal(e.Randomness, udpnet)
+	p, err := polity.NewPrincipal(e.Randomness, udpNet)
 	dieOn(err, e)
 	// if err != nil {
 	// 	fmt.Println(e.ErrStream, err)
@@ -27,7 +28,7 @@ func _init(e hermeti.Env, _ *app) {
 	// 	return
 	// }
 
-	brokenHill, err := polity.PrincipalFromFile("../../testdata/broken-hill.pem", new(polity.LocalUDP4Net))
+	brokenHill, err := polity.PrincipalFromFile("../../testdata/broken-hill.pem", udpNet)
 	// if err != nil {
 	// 	fmt.Println(e.ErrStream, err)
 	// 	e.Exit(1)

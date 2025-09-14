@@ -9,6 +9,7 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -106,7 +107,7 @@ func (p *Principal[A]) Inbox() chan Envelope[A] {
 				e.Message.Subject = "ERROR"
 				e.Message.Headers.Set("polity", "error", err.Error())
 				p.inbox <- *e
-				p.Slogger.Error("Unmarshal err is", err)
+				p.Slogger.Error("Unmarshal error", "err", err)
 				if err != nil {
 					return
 				}
@@ -226,7 +227,7 @@ func (p *Principal[A]) AllPeers() []*Peer[A] {
 }
 
 func (p *Principal[A]) Shutdown() {
-	p.Disconnect()
+	_ = p.Disconnect()
 
 }
 
@@ -366,6 +367,22 @@ func (p *Principal[A]) UnmarshalPEM(data []byte, network A) error {
 		return errors.New("could not decode bytes into a PEM")
 	}
 	return p.UnmarshalPEMBlock(block, network)
+}
+
+func PrincipalFromFile[A AddressConnector](s string, network A) (*Principal[A], error) {
+	data, err := os.ReadFile(s)
+	if err != nil {
+		return nil, fmt.Errorf("could not create principal from file %q: %w", s, err)
+	}
+	p, err := NewPrincipal(nil, network)
+	if err != nil {
+		return nil, fmt.Errorf("could not create principal from file %q: %w", s, err)
+	}
+	err = p.UnmarshalPEM(data, network)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal principal from file %q: %w", s, err)
+	}
+	return p, nil
 }
 
 type aliveness bool
