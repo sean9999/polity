@@ -56,4 +56,31 @@ publish:
 test:
 	go test ./...
 
-.PHONY: test
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated:"
+	@echo "  - Text summary: go tool cover -func=coverage.out"
+	@echo "  - HTML report: open coverage.html"
+
+coverage-summary:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
+coverage-html:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "HTML coverage report generated: coverage.html"
+
+coverage-check:
+	@go test -coverprofile=coverage.out ./... > /dev/null
+	@COVERAGE=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//'); \
+	echo "Total coverage: $$COVERAGE%"; \
+	if [ "$$(echo "$$COVERAGE < 70" | bc -l)" ]; then \
+		echo "❌ Coverage below 70% threshold"; \
+		exit 1; \
+	else \
+		echo "✅ Coverage meets 70% threshold"; \
+	fi
+
+.PHONY: test coverage coverage-summary coverage-html coverage-check
