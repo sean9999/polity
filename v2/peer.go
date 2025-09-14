@@ -171,3 +171,5 @@ func (p *Peer[A]) UnmarshalJSON(data []byte) error {
 func (p *Peer[A]) PublicKey() delphi.Key {
 	return p.Peer.Peer
 }
+
+type PeerMap[A Addresser] map[delphi.Key]*Peer[A]

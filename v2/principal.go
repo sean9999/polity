@@ -151,12 +151,14 @@ func NewPrincipal[A AddressConnector](rand io.Reader, network A, opts ...Princip
 		p.With(fn)
 	}
 
+	//	default logger
 	if p.Logger == nil {
 		logger := log.New(io.Discard, "", log.Lmsgprefix)
 		logger.SetPrefix("")
 		p.Logger = logger
 	}
 
+	//	default slogger
 	if p.Slogger == nil {
 		slogger := slog.New(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
 		p.Slogger = slogger
@@ -233,7 +235,7 @@ func (p *Principal[A]) Broadcast(e *Envelope[A]) {
 	//wg.Add(p.Peers.Length())
 	p.Slogger.Debug("broadcasting (serial)", "subj", e.Message.Subject)
 	for thisPeer := range p.EachPeer() {
-		p.Slogger.Info("sending %q to peer %s and i am %s", e.Message.Subject, thisPeer.Nickname(), p.Nickname())
+		p.Slogger.Debug("sending message", "subj", e.Message.Subject, "them", thisPeer.Nickname(), "me", p.Nickname())
 		e.Recipient = thisPeer
 		_, err := p.Send(e)
 		if err != nil {

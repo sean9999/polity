@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 	"github.com/sean9999/polity/v2/udp4"

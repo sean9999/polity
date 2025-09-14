@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
+	"log/slog"
+
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/udp4"
-	"log/slog"
 )
 
 func parseFlargs(env hermeti.Env, app *polityApp) error {

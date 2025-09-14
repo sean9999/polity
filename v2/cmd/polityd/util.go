@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/fatih/color"
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/udp4"
-	"sync"
 )
 
 var mu = new(sync.Mutex)
@@ -52,7 +53,7 @@ func prettyNote(app *polityApp, s string) {
 	mu.Lock()
 	defer mu.Unlock()
 	color.Output = app.me.Logger.Writer()
-	color.Green("\n#\tNOTE")
+	color.Blue("\n#\tNOTE")
 	color.Green(s)
 }
 

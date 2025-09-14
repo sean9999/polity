@@ -3,10 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/sean9999/hermeti"
-	"github.com/sean9999/polity/v2"
-	"github.com/sean9999/polity/v2/subj"
-	"github.com/sean9999/polity/v2/udp4"
 	"log"
 	"log/slog"
 	"os"
@@ -15,6 +11,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/sean9999/hermeti"
+	"github.com/sean9999/polity/v2"
+	"github.com/sean9999/polity/v2/subj"
+	"github.com/sean9999/polity/v2/udp4"
 )
 
 type polityApp struct {
@@ -48,12 +49,13 @@ func (app *polityApp) Init(env *hermeti.Env) error {
 
 	//	logger
 	withLogger := polity.WithLogger[*udp4.Network]
-	logger := log.New(env.OutStream, "", log.Lshortfile)
+	logger := log.New(env.OutStream, "", 0)
 	app.me.With(withLogger(logger))
 
 	//	slogger
 	withSlogger := polity.WithSlogger[*udp4.Network]
-	slogger := slog.New(slog.NewTextHandler(env.OutStream, &slog.HandlerOptions{Level: app.debugLevel}))
+	//slogger := slog.New(slog.NewTextHandler(env.OutStream, &slog.HandlerOptions{Level: app.debugLevel}))
+	slogger := slog.New(slog.NewJSONHandler(env.OutStream, &slog.HandlerOptions{Level: app.debugLevel}))
 	app.me.With(withSlogger(slogger))
 
 	return nil
@@ -162,6 +164,7 @@ func (app *polityApp) Run(env hermeti.Env) {
 func main() {
 
 	app := new(polityApp)
+
 	cli := hermeti.NewRealCli(app)
 	cli.Run()
 

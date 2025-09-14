@@ -1,10 +1,11 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 	"github.com/sean9999/polity/v2/udp4"
-	"strings"
 )
 
 // Hello is a friendly way for one peer to tell another it's alive.
@@ -83,9 +84,19 @@ func handleHereAreMyFriends(app *polityApp, e polity.Envelope[*udp4.Network]) {
 		}
 		app.me.Slogger.Debug("Adding friend", "friend", friendPeer.Nickname(), "addr", friendPeer.Addr.String())
 
+		//	add friend
 		err = app.me.AddPeer(friendPeer)
+
+		//	even after adding friend, we're not sure they're alive.
+		//	say "hello, I'm alive" and hope to hear back.
+		f := app.me.Compose(nil, friendPeer, e.ID)
+		f.Subject(subj.Hello)
+		_ = send(app, f)
+
+		//app.me.SetPeerAliveness(friendPeer, true)
+
 		if err != nil {
-			app.me.Slogger.Error("Error adding friend", "friend", friend, "err", err)
+			app.me.Slogger.Debug("Error adding friend", "friend", friend, "err", err)
 		}
 	}
 }

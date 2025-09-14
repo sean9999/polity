@@ -1,13 +1,27 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 )
 
+func aliveness(alive bool) string {
+	if alive {
+		return "alive"
+	}
+	return "dead"
+}
+
 func dump[A polity.AddressConnector](p *polity.Principal[A]) {
+
 	for key, info := range p.Peers.Entries() {
-		p.Logger.Println(key.Nickname(), info)
+
+		msg := fmt.Sprintf("%s is %s", key.Nickname(), aliveness(info.IsAlive))
+		p.Logger.Println(msg)
+		//p.Slogger.Info("dump thyself", "nick", key.Nickname(), "alive", info.IsAlive, "props", info.Props)
+		//p.Logger.Println(key.Nickname(), info)
 	}
 }
 

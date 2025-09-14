@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/sean9999/polity/v2"
 	"github.com/sean9999/polity/v2/subj"
 )

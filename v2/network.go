@@ -20,8 +20,8 @@ type Mailer interface {
 	Receive() chan Envelope[Addresser]
 }
 
-// A Connector provides one persistent and one ad-hoc packet connection.
-// Your ephemeral connection should be closed after first use.
+// A Connector provides one persistent and one ad hoc packet connection.
+// The ephemeral connection should be closed after each use.
 // The persistent connection should be closed at shutdown
 type Connector interface {
 	Initialize()
