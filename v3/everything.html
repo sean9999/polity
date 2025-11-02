@@ -1,0 +1,674 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>v3: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/sean9999/polity/v3/citizen.go (98.6%)</option>
+				
+				<option value="file1">github.com/sean9999/polity/v3/envelope.go (93.3%)</option>
+				
+				<option value="file2">github.com/sean9999/polity/v3/letter.go (91.1%)</option>
+				
+				<option value="file3">github.com/sean9999/polity/v3/peer.go (0.0%)</option>
+				
+				<option value="file4">github.com/sean9999/polity/v3/peerset.go (40.7%)</option>
+				
+				<option value="file5">github.com/sean9999/polity/v3/vitals.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package polity
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "sync"
+
+        oracle "github.com/sean9999/go-oracle/v3"
+        delphi "github.com/sean9999/go-oracle/v3/delphi"
+
+        "io"
+        "net/url"
+)
+
+// An Oracle is an oracle.Principal.
+// Calling it Oracle rather than Principal lessens some ambiguity
+type Oracle = oracle.Principal
+
+// A Citizen is a Node and Oracle combined.
+type Citizen struct {
+        Node
+        *Oracle
+        Peers  PeerSet
+        Vitals *VitalSet
+}
+
+func (c *Citizen) AsPeer() *Peer <span class="cov8" title="1">{
+        orc := c.Oracle.AsPeer()
+        return &amp;Peer{orc}
+}</span>
+
+//
+//func (c *Citizen) Seal(bytes []byte, bytes2 []byte, bytes3 []byte, bytes4 []byte) ([]byte, error) {
+//        //TODO implement me
+//        panic("implement me")
+//}
+//
+//func (c *Citizen) GenerateSharedSecret(reader io.Reader, key delphi.PublicKey) ([]byte, []byte, error) {
+//        //TODO implement me
+//        panic("implement me")
+//}
+
+func NewCitizen(randy io.Reader, node Node) *Citizen <span class="cov8" title="1">{
+        orc := oracle.NewPrincipal(randy)
+        return &amp;Citizen{
+                Node:   node,
+                Oracle: orc,
+                Peers:  NewPeerSet(orc.Peers),
+        }
+}</span>
+
+func (c *Citizen) AcquireAddress(ctx context.Context, pk delphi.PublicKey) error <span class="cov8" title="1">{
+        err := c.Node.AcquireAddress(ctx, pk)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to acquire address: %w", err)
+        }</span>
+        <span class="cov8" title="1">c.Props["addr"] = c.Address().String()
+        return nil</span>
+}
+
+func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan error, error) <span class="cov8" title="1">{
+
+        //        An uninitiated citizen is no citizen at all.
+        if c.Oracle == nil </span><span class="cov8" title="1">{
+                return nil, nil, nil, errors.New("no oracle")
+        }</span>
+        <span class="cov8" title="1">if c.Node == nil </span><span class="cov8" title="1">{
+                return nil, nil, nil, errors.New("no network")
+        }</span>
+
+        //        before joining a network, one must acquire an address.
+        <span class="cov8" title="1">err := c.AcquireAddress(ctx, c.Oracle.KeyPair.PublicKey())
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, nil, nil, fmt.Errorf("could not join. %w", err)
+        }</span>
+
+        //        incoming and outgoing channels
+        <span class="cov8" title="1">errs := make(chan error)
+        incomingBytes, err := c.Node.Listen(ctx)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, nil, nil, fmt.Errorf("could not join. %w", err)
+        }</span>
+        <span class="cov8" title="1">inbox := make(chan Envelope)
+        outbox := make(chan Envelope)
+
+        //        range over incoming bytes.
+        //        marshal them to Envelope.
+        //        pipe to our inbox, which is a channel of Envelope.
+        //        our user will decide what to do with it then.
+        //        if the incoming bytes channel is closed, we close inbox.
+        go func() </span><span class="cov8" title="1">{
+                for bin := range incomingBytes </span><span class="cov8" title="1">{
+                        e := new(Envelope)
+                        err := e.Deserialize(bin)
+                        if err != nil </span><span class="cov8" title="1">{
+                                errs &lt;- err
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">inbox &lt;- *e</span>
+                }
+                <span class="cov8" title="1">close(inbox)</span>
+        }()
+
+        //        range over outbox, which is a channel of Envelope which our user has decided they want to send.
+        //        marshal to bytes and send along to outgoingBytes, which takes bytes and a destination address.
+        //        I don't know how an Envelope would fail to serialize, but we nevertheless check and send
+        //        to the errs channel if that happens.
+        //        if outbox gets closed, we close outgoingBytes.
+        <span class="cov8" title="1">go func() </span><span class="cov8" title="1">{
+                for envelope := range outbox </span><span class="cov8" title="1">{
+                        bin, err := envelope.Serialize()
+                        if err != nil </span><span class="cov8" title="1">{
+                                errs &lt;- err
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">if envelope.Recipient == nil </span><span class="cov8" title="1">{
+                                errs &lt;- errors.New("nil recipient")
+                                continue</span>
+                        }
+                        <span class="cov8" title="1">err = c.Node.Send(ctx, bin, *envelope.Recipient)
+                        if err != nil </span><span class="cov8" title="1">{
+                                errs &lt;- err
+                                continue</span>
+                        }
+                }
+        }()
+
+        <span class="cov8" title="1">return inbox, outbox, errs, nil</span>
+}
+
+// Compose is a convenience function to create an Envelope intended for a particular recipient
+func (c *Citizen) Compose(r io.Reader, recipient *url.URL) *Envelope <span class="cov8" title="1">{
+        e := NewEnvelope(r)
+        e.Recipient = recipient
+        e.Sender = c.Address()
+        return e
+}</span>
+
+// ComposePlain is an even more convenient convenience function.
+func (c *Citizen) ComposePlain(recipient *url.URL, str string) *Envelope <span class="cov8" title="1">{
+        e := c.Compose(nil, recipient)
+        e.Letter.PlainText = []byte(str)
+        e.Letter.SetSubject("plain message")
+        return e
+}</span>
+
+func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, recipient *url.URL) error <span class="cov8" title="1">{
+        e := c.Compose(randy, recipient)
+        e.Letter = letter
+        bin, err := e.Serialize()
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return c.Node.Send(ctx, bin, *e.Recipient)</span>
+}
+
+func (c *Citizen) Announce(ctx context.Context, randy io.Reader, letter Letter, recipients []url.URL) error <span class="cov8" title="1">{
+        var err error
+        wg := new(sync.WaitGroup)
+        wg.Add(len(recipients))
+        for _, recipient := range recipients </span><span class="cov8" title="1">{
+                er := c.Send(ctx, randy, letter, &amp;recipient)
+                if er != nil </span><span class="cov0" title="0">{
+                        err = errors.Join(err, er)
+                }</span>
+                <span class="cov8" title="1">wg.Done()</span>
+        }
+        <span class="cov8" title="1">wg.Wait()
+        return err</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package polity
+
+import (
+        "fmt"
+        "io"
+        "net/url"
+
+        "github.com/vmihailenco/msgpack/v5"
+)
+
+// An Envelope is a Letter with a recipient and sender
+type Envelope struct {
+        Letter    Letter   `json:"letter" msgpack:"letter"`
+        Sender    *url.URL `json:"sender,omitempty" msgpack:"sender"`
+        Recipient *url.URL `json:"recipient,omitempty" msgpack:"recipient"`
+}
+
+func (env *Envelope) Serialize() ([]byte, error) <span class="cov8" title="1">{
+        _, err := decodeAAD(env.Letter.Message.AAD)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("refusing to serialize. %w", err)
+        }</span>
+        <span class="cov8" title="1">return msgpack.Marshal(env)</span>
+}
+
+func (env *Envelope) Deserialize(p []byte) error <span class="cov8" title="1">{
+        err := msgpack.Unmarshal(p, env)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("could not deserialize. %w", err)
+        }</span>
+        <span class="cov8" title="1">headers, err := decodeAAD(env.Letter.AAD)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("refusing to deserialize. %w", err)
+        }</span>
+        <span class="cov8" title="1">env.Letter.headers = headers
+        return msgpack.Unmarshal(p, env)</span>
+}
+
+func NewEnvelope(r io.Reader) *Envelope <span class="cov8" title="1">{
+        e := new(Envelope)
+        e.Letter = NewLetter(r)
+        return e
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package polity
+
+import (
+        "bytes"
+        "crypto"
+        "errors"
+        "fmt"
+        "io"
+        "maps"
+
+        "github.com/sean9999/go-oracle/v3/delphi"
+        "github.com/sean9999/go-oracle/v3/message"
+
+        stablemap "github.com/sean9999/go-stable-map"
+)
+
+// A Letter is a message.Message, but with a subject and headers.
+// Headers are stored in the message's AAD field.
+// Subject is too. It's stored in the "pemType" key.
+// It is an error to have AAD data that cannot be marshaled into a map[string, string].
+type Letter struct {
+        message.Message
+        headers map[string]string
+}
+
+func (letter *Letter) Sign(r io.Reader, signer crypto.Signer) error <span class="cov8" title="1">{
+
+        letter.Message.Nonce = make([]byte, 16)
+        _, err := r.Read(letter.Message.Nonce)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">pubkey, ok := signer.Public().(fmt.Stringer)
+        if !ok </span><span class="cov8" title="1">{
+                return errors.New("pubkey cannot stringify")
+        }</span>
+        <span class="cov8" title="1">letter.SetHeader("pubkey", pubkey.String())
+        return letter.Message.Sign(signer)</span>
+}
+
+func (letter *Letter) Equal(f Letter) bool <span class="cov8" title="1">{
+        e := *letter
+        if !bytes.Equal(e.PlainText, f.PlainText) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if !bytes.Equal(e.CipherText, f.CipherText) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if !bytes.Equal(e.Signature, f.Signature) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if !bytes.Equal(e.Nonce, f.Nonce) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if !bytes.Equal(e.AAD, f.AAD) </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">if !maps.Equal(e.headers, f.headers) </span><span class="cov0" title="0">{
+                return false
+        }</span>
+        <span class="cov8" title="1">return true</span>
+}
+
+func NewLetter(r io.Reader) Letter <span class="cov8" title="1">{
+        msg := message.NewMessage(r)
+        var headers map[string]string
+        letter := Letter{
+                Message: *msg,
+                headers: headers,
+        }
+        return letter
+}</span>
+
+type Verifier interface {
+        Verify(pubKey crypto.PublicKey, digest []byte, signature []byte) bool
+        Public() crypto.PublicKey
+}
+
+func (letter *Letter) Verify(v Verifier) error <span class="cov8" title="1">{
+        senderStr, exists := letter.headers["pubkey"]
+        if !exists </span><span class="cov8" title="1">{
+                return errors.New("no public senderKey")
+        }</span>
+
+        //        if there is a recipient_pubkey, it must be mine
+        <span class="cov8" title="1">recipientStr, exists := letter.headers["recipient_pubkey"]
+        if exists </span><span class="cov8" title="1">{
+                me := v.Public().(fmt.Stringer).String()
+                if me != recipientStr </span><span class="cov8" title="1">{
+                        return errors.New("recipient public key is not mine")
+                }</span>
+        }
+
+        <span class="cov8" title="1">senderKey, err := delphi.KeyFromString(senderStr)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">pubkey := delphi.PublicKey(senderKey)
+        ok := letter.Message.Verify(pubkey.Signing(), v)
+        if !ok </span><span class="cov0" title="0">{
+                return errors.New("verify failed")
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+type kv struct {
+        key string
+        val string
+}
+
+func decodeAAD(data []byte) (map[string]string, error) <span class="cov8" title="1">{
+        if data == nil </span><span class="cov0" title="0">{
+                return nil, nil
+        }</span>
+        <span class="cov8" title="1">if len(data) == 0 </span><span class="cov8" title="1">{
+                return map[string]string{}, nil
+        }</span>
+        <span class="cov8" title="1">lm := stablemap.NewLexicalMap[string, string]()
+        err := lm.UnmarshalBinary(data)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">m := lm.AsMap()
+        if m == nil </span><span class="cov0" title="0">{
+                return nil, errors.New("nil map")
+        }</span>
+        <span class="cov8" title="1">return m, nil</span>
+}
+
+func encodeAAD(m map[string]string) ([]byte, error) <span class="cov8" title="1">{
+        lexMap := stablemap.NewLexicalMap[string, string]()
+        lexMap.Incorporate(m)
+        return lexMap.MarshalBinary()
+}</span>
+
+func (letter *Letter) Headers() (map[string]string, error) <span class="cov8" title="1">{
+        if letter.Message.AAD == nil &amp;&amp; len(letter.headers) == 0 </span><span class="cov8" title="1">{
+                return nil, nil
+        }</span>
+        <span class="cov8" title="1">m, err := decodeAAD(letter.Message.AAD)
+        letter.headers = m
+        return m, err</span>
+}
+
+func (letter *Letter) Serialize() []byte <span class="cov8" title="1">{
+        aad, err := encodeAAD(letter.headers)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+        <span class="cov8" title="1">letter.Message.AAD = aad
+        return letter.Message.Serialize()</span>
+}
+
+func (letter *Letter) GetHeader(key string) (string, bool) <span class="cov8" title="1">{
+        v, ok := letter.headers[key]
+        return v, ok
+}</span>
+
+func (letter *Letter) SetHeaders(m map[string]string) error <span class="cov8" title="1">{
+        if m == nil </span><span class="cov8" title="1">{
+                letter.Message.AAD = nil
+                return nil
+        }</span>
+        <span class="cov8" title="1">letter.headers = m
+        aad, err := encodeAAD(m)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">letter.Message.AAD = aad
+        return nil</span>
+}
+
+func (letter *Letter) SetHeader(k, v string) error <span class="cov8" title="1">{
+        if letter.headers == nil </span><span class="cov8" title="1">{
+                letter.headers = make(map[string]string, 1)
+        }</span>
+        <span class="cov8" title="1">letter.headers[k] = v
+        aad, err := encodeAAD(letter.headers)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">letter.Message.AAD = aad
+        return nil</span>
+}
+
+func (letter *Letter) Subject() string <span class="cov8" title="1">{
+        str, _ := letter.GetHeader("pemType")
+        return str
+}</span>
+
+func (letter *Letter) SetSubject(str string) error <span class="cov8" title="1">{
+        return letter.SetHeader("pemType", str)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package polity
+
+import (
+        "net/url"
+
+        "github.com/sean9999/go-oracle/v3"
+        "github.com/sean9999/go-oracle/v3/delphi"
+        "github.com/vmihailenco/msgpack/v5"
+)
+
+// A Peer is an oracle.Peer with a convenient way to access its address.
+type Peer struct {
+        oracle.Peer
+}
+
+func (p *Peer) Serialize() []byte <span class="cov0" title="0">{
+        bin, err := msgpack.Marshal(p)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+        <span class="cov0" title="0">return bin</span>
+}
+
+func (p *Peer) Deserialize(data []byte) error <span class="cov0" title="0">{
+        return msgpack.Unmarshal(data, p)
+}</span>
+
+func (p *Peer) Address() *url.URL <span class="cov0" title="0">{
+        if p == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov0" title="0">str, exists := p.Props["addr"]
+        if !exists </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov0" title="0">u, err := url.Parse(str)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov0" title="0">return u</span>
+}
+
+func PeerFromKey(key delphi.PublicKey) *Peer <span class="cov0" title="0">{
+        orc := oracle.Peer{PublicKey: key}
+        p := new(Peer)
+        p.Peer = orc
+        p.Props = make(map[string]string)
+        return p
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package polity
+
+import (
+        "net/url"
+
+        "github.com/sean9999/go-oracle/v3"
+        "github.com/sean9999/go-oracle/v3/delphi"
+)
+
+type PeerSet struct {
+        store map[delphi.PublicKey]oracle.Props
+}
+
+func NewPeerSet(underlying map[delphi.PublicKey]oracle.Props) PeerSet <span class="cov8" title="1">{
+        return PeerSet{underlying}
+}</span>
+
+func (ps *PeerSet) Add(peer Peer, fn func()) <span class="cov8" title="1">{
+        ps.store[peer.PublicKey] = peer.Props
+        if fn != nil </span><span class="cov0" title="0">{
+                fn()
+        }</span>
+}
+
+func (ps PeerSet) Minus(key delphi.PublicKey) PeerSet <span class="cov0" title="0">{
+        if _, ok := ps.store[key]; ok </span><span class="cov0" title="0">{
+                delete(ps.store, key)
+        }</span>
+        <span class="cov0" title="0">return ps</span>
+}
+
+func (ps PeerSet) URLs() []url.URL <span class="cov8" title="1">{
+        urls := make([]url.URL, 0, len(ps.store))
+        for _, props := range ps.store </span><span class="cov8" title="1">{
+                addr, exists := props["addr"]
+                if !exists </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">u, err := url.Parse(addr)
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">urls = append(urls, *u)</span>
+        }
+        <span class="cov8" title="1">return urls</span>
+}
+
+func (ps *PeerSet) Remove(peer Peer) <span class="cov0" title="0">{
+        delete(ps.store, peer.PublicKey)
+}</span>
+func (ps *PeerSet) Contains(peer Peer) bool <span class="cov0" title="0">{
+        _, ok := ps.store[peer.PublicKey]
+        return ok
+}</span>
+func (ps *PeerSet) Len() int <span class="cov0" title="0">{
+        return len(ps.store)
+}</span>
+func (ps *PeerSet) Get(pubKey delphi.PublicKey) *Peer <span class="cov0" title="0">{
+        props, ok := ps.store[pubKey]
+        if !ok </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov0" title="0">p := new(Peer)
+        p.Props = props
+        return p</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package polity
+
+import (
+        "errors"
+
+        "github.com/sean9999/go-oracle/v3/delphi"
+)
+
+// A Vital is information about a peer that you don't share with anyone.
+type Vital struct {
+        PubKey delphi.PublicKey
+        Alive  bool
+}
+
+type VitalSet map[delphi.PublicKey]Vital
+
+func (vs *VitalSet) SetAliveness(pubKey delphi.PublicKey, alive bool) error <span class="cov8" title="1">{
+        if vs == nil || *vs == nil </span><span class="cov8" title="1">{
+                return errors.New("nil VitalSet")
+        }</span>
+        <span class="cov8" title="1">m := *vs
+        _, exists := m[pubKey]
+        if !exists </span><span class="cov8" title="1">{
+                return errors.New("vital does not exist")
+        }</span>
+        <span class="cov8" title="1">m[pubKey] = Vital{Alive: alive}
+        return nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

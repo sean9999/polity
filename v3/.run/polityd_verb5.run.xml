@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="polityd_verb5" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="pollywolly" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="-verbosity=5 -join=memnet://3ebc399da70668071eb62c812e56ee5fe681a447c3aa888b2dd0a56865e8e978fa7a3c5ae1bf28a3fe2c1c12bf5d26b4c40bf00ef4e77866b841fca7147c97ff@memory" />
+    <kind value="PACKAGE" />
+    <package value="pollywolly/cmd/polityd" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/polityd/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
