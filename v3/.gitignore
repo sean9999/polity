@@ -2,3 +2,7 @@ go.work
 go.work.sum
 .idea/
 bin/**
+*.cov
+*.html
+*.out
+*.log

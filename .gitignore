@@ -15,8 +15,8 @@ go.work.sum
 bin/
 
 #   coverage reports
-coverage.out
-coverage.html
+#coverage.out
+#coverage.html
 
 #   some IDE config data is worth sharing. Some not
 !.idea/runConfigurations
@@ -24,5 +24,3 @@ coverage.html
 !.idea/dictionaries
 .idea/
 
-#   v2 is where most dev is happening
-#include ./v2/.gitignore

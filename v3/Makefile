@@ -6,6 +6,9 @@ REF := $$(git describe --dirty --tags --always)
 info:
 	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(REPO) $(SEMVER) $(BRANCH) $(REF)
 
+container:
+	docker build -t polityd -t polityd:$(BRANCH) -t polityd:$(REF) -t polityd:$(SEMVER) .
+
 binaries: bin/polityd bin/polity
 	mkdir -p bin
 

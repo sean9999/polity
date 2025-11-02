@@ -281,3 +281,7 @@ func TestLetter_Verify_SuccessAndFailurePaths(t *testing.T) {
 	err = l.Verify(bob.KeyPair)
 	assert.NoError(t, err)
 }
+
+func TestLetter_Encrypt(t *testing.T) {
+	
+}

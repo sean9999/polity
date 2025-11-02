@@ -21,8 +21,8 @@ type Oracle = oracle.Principal
 type Citizen struct {
 	Node
 	*Oracle
-	Peers  PeerSet
-	Vitals *VitalSet
+	Peers    PeerSet
+	Profiles *ProfileSet
 }
 
 func (c *Citizen) AsPeer() *Peer {

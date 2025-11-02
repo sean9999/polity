@@ -30,7 +30,7 @@ func handleHello(env hermeti.Env, me *polity.Citizen, e polity.Envelope) {
 	peer := me.Peers.Get(pubKey)
 	if peer != nil {
 		//	yes. mark them as alive. tell my friends
-		err := me.Vitals.SetAliveness(pubKey, true)
+		err := me.Profiles.SetAliveness(pubKey, true)
 		if err != nil {
 			return
 		}
@@ -39,7 +39,7 @@ func handleHello(env hermeti.Env, me *polity.Citizen, e polity.Envelope) {
 		//	no. add them. tell my friends
 		peer = polity.PeerFromKey(pubKey)
 		me.Peers.Add(*peer, func() {
-			_ = me.Vitals.SetAliveness(pubKey, true)
+			_ = me.Profiles.SetAliveness(pubKey, true)
 		})
 		subj = subject.SoAndSoIsNew
 	}

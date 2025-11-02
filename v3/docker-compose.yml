@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
   a:
-    image: p1
-
+    image: polityd
   b:
-    image: p1
+    image: polityd

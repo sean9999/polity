@@ -1,4 +1,4 @@
-REPO=github.com/sean9999/polity/v2
+REPO=github.com/sean9999/polity/v3
 SEMVER := $$(git tag --sort=-version:refname | head -n 1)
 BRANCH := $$(git branch --show-current)
 REF := $$(git describe --dirty --tags --always)
@@ -10,11 +10,18 @@ binaries: bin/polityd bin/polity
 	mkdir -p bin
 
 bin/polity:
-	go build -v -o bin/polity -ldflags="-X 'main.Version=$(REF)'" v2/cmd/polity/**.go
-
+	go build -o bin/polity -ldflags="-X 'main.Version=$(REF)' -X 'main.Branch=$(BRANCH)'" v3/cmd/polity
+	GOOS=linux  GOARCH=amd64 go build -o bin/polity-linux-amd64  v3/cmd/polity;
+	GOOS=linux  GOARCH=arm64 go build -o bin/polity-linux-arm64  v3/cmd/polity;
+	GOOS=darwin GOARCH=amd64 go build -o bin/polity-darwin-amd64 v3/cmd/polity;
+	GOOS=darwin GOARCH=arm64 go build -o bin/polity-darwin-arm64 v3/cmd/polity;
 
 bin/polityd:	
-	go build -v -o bin/polityd -ldflags="-X 'main.Version=$(REF)'" v2/cmd/polityd/**.go
+	go build -o bin/polityd -ldflags="-X 'main.Version=$(REF)' -X 'main.Branch=$(BRANCH)'" v3/cmd/polityd
+	GOOS=linux  GOARCH=amd64 go build -o bin/polityd-linux-amd64  v3/cmd/polityd;
+	GOOS=linux  GOARCH=arm64 go build -o bin/polityd-linux-arm64  v3/cmd/polityd;
+	GOOS=darwin GOARCH=amd64 go build -o bin/polityd-darwin-amd64 v3/cmd/polityd;
+	GOOS=darwin GOARCH=arm64 go build -o bin/polityd-darwin-arm64 v3/cmd/polityd;
 
 tidy:
 	go mod tidy
