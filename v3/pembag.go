@@ -15,6 +15,14 @@ func (pb *PemBag) Add(key string, block pem.Block) {
 	b[key] = append(b[key], block)
 }
 
+func (pb *PemBag) Size() int {
+	n := 0
+	for _, blocks := range *pb {
+		n += len(blocks)
+	}
+	return n
+}
+
 func cumulativeWrite(bytesWritten int, blocks []*pem.Block, data []byte) (int, []*pem.Block, []byte) {
 	block, rest := pem.Decode(data)
 	if block == nil {

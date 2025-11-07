@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -20,12 +21,16 @@ type appState struct {
 	foo      string
 	me       *polity.Citizen
 	joinPeer *polity.Peer
+	node     polity.Node
 }
 
 func (a *appState) Init(env *hermeti.Env) error {
 
-	node := lan.NewNode(nil)
-	a.me = polity.NewCitizen(env.Randomness, node)
+	if a.node == nil {
+		return errors.New("you need to instantiate a node and attach it your appState before calling Init")
+	}
+
+	a.me = polity.NewCitizen(env.Randomness, a.node)
 
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
@@ -88,6 +93,7 @@ func (a *appState) Run(env hermeti.Env) {
 
 	bootUp(a, env, outbox)
 
+outer:
 	for e := range inbox {
 		switch e.Letter.Subject() {
 		case subject.BootUp:
@@ -99,7 +105,8 @@ func (a *appState) Run(env hermeti.Env) {
 			fmt.Fprintf(env.OutStream, "subj:\t%s\n", e.Letter.Subject())
 			fmt.Fprintf(env.OutStream, "body:\t%s\n", string(e.Letter.Body()))
 		case "go away":
-			break
+			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
+			break outer
 		}
 	}
 
@@ -107,6 +114,7 @@ func (a *appState) Run(env hermeti.Env) {
 
 func main() {
 	a := new(appState)
+	a.node = lan.NewNode(nil)
 	cli := hermeti.NewRealCli(a)
 	cli.Run()
 }

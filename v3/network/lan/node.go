@@ -74,11 +74,29 @@ func udpAddrToURL(addr net.UDPAddr) (url.URL, error) {
 	}, nil
 }
 
-func (n *Node) Send(_ context.Context, data []byte, u url.URL) error {
+func (n *Node) ephemeralSend(_ context.Context, data []byte, u *net.UDPAddr) error {
+	newConn, err := net.DialUDP(networkName, nil, u)
+	if err != nil {
+		return err
+	}
+	defer newConn.Close()
+	_, err = newConn.WriteToUDP(data, u)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n *Node) Send(ctx context.Context, data []byte, u url.URL) error {
 	addr, err := urlToUDPAddr(u)
 	if err != nil {
 		return err
 	}
+
+	if n.Address().Host == u.Host {
+		return n.ephemeralSend(ctx, data, addr)
+	}
+
 	_, err = n.conn.WriteToUDP(data, addr)
 	if err != nil {
 		return err

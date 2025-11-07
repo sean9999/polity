@@ -59,6 +59,14 @@ func (c *Citizen) AcquireAddress(ctx context.Context, pk delphi.PublicKey) error
 	return nil
 }
 
+func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
+	c.Node.Leave(ctx)
+	close(inbox)
+	close(outbox)
+	close(errs)
+	return nil
+}
+
 func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan error, error) {
 
 	//	An uninitiated citizen is no citizen at all.
@@ -109,20 +117,27 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	//	if outbox gets closed, we close outgoingBytes.
 	go func() {
 		for envelope := range outbox {
-			bin, err := envelope.Serialize()
+
+			err := c.Send(ctx, nil, envelope.Letter, envelope.Recipient)
 			if err != nil {
 				errs <- err
 				continue
 			}
-			if envelope.Recipient == nil {
-				errs <- errors.New("nil recipient")
-				continue
-			}
-			err = c.Node.Send(ctx, bin, *envelope.Recipient)
-			if err != nil {
-				errs <- err
-				continue
-			}
+
+			//bin, err := envelope.Serialize()
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
+			//if envelope.Recipient == nil {
+			//	errs <- errors.New("nil recipient")
+			//	continue
+			//}
+			//err = c.Node.Send(ctx, bin, *envelope.Recipient)
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
 		}
 	}()
 
@@ -146,13 +161,24 @@ func (c *Citizen) ComposePlain(recipient *url.URL, str string) *Envelope {
 }
 
 func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, recipient *url.URL) error {
+
+	if recipient == nil {
+		return errors.New("no recipient")
+	}
+
 	e := c.Compose(randy, recipient)
 	e.Letter = letter
+
 	bin, err := e.Serialize()
 	if err != nil {
 		return err
 	}
-	return c.Node.Send(ctx, bin, *e.Recipient)
+
+	err = c.Node.Send(ctx, bin, *recipient)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Citizen) Announce(ctx context.Context, randy io.Reader, letter Letter, recipients []url.URL) error {
