@@ -8,6 +8,7 @@ import (
 
 	oracle "github.com/sean9999/go-oracle/v3"
 	delphi "github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/polity/v3/subject"
 
 	"io"
 	"net/url"
@@ -28,6 +29,25 @@ type Citizen struct {
 func (c *Citizen) AsPeer() *Peer {
 	orc := c.Oracle.AsPeer()
 	return &Peer{orc}
+}
+
+var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
+
+// Do takes a command, checks to see that it's signed, and then does it
+func (c *Citizen) Do(e Envelope) error {
+	err := e.Letter.Verify(c.KeyPair)
+	if err != nil {
+		return err
+	}
+
+	s := subject.From(e.Letter.Subject())
+
+	fn := programs[s]
+	if fn == nil {
+		return fmt.Errorf("no program found for subject %s", s)
+	}
+	go fn(e, c)
+	return nil
 }
 
 //

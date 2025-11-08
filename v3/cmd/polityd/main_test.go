@@ -18,6 +18,8 @@ var (
 	fallingDawnJoin string
 )
 
+var mother *mem.Network
+
 type deterministicRandomness byte
 
 func (d deterministicRandomness) Read(p []byte) (int, error) {
@@ -27,22 +29,23 @@ func (d deterministicRandomness) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func createCitizen(seed byte) hermeti.CLI[*appState] {
+func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*appState] {
 	randy := deterministicRandomness(seed)
-	app := new(appState)
-	app.node = network.Spawn()
-	cli := hermeti.NewTestCli(app, "polityd")
-	out := new(bytes.Buffer)
-	cli.Env.OutStream = out
-	cli.Env.Randomness = randy
-	return cli
+	env.Randomness = randy
+	app := newTestApp(mother)
+	cli := hermeti.NewCLI(&env, app)
+	return *cli
 }
 
-var network *mem.Network
-
 func setup() hermeti.CLI[*appState] {
-	network = mem.NewNetwork()
-	fallingDawnCli = createCitizen(1)
+	mother = mem.NewNetwork()
+	env := hermeti.TestEnv()
+	err := env.MountDir("../../testdata")
+	if err != nil {
+		panic(err)
+	}
+	env.Args = []string{"polityd"}
+	fallingDawnCli = createCitizen(1, env)
 	return fallingDawnCli
 }
 
@@ -59,9 +62,12 @@ func TestMain(m *testing.M) {
 	fallingDawnCli = setup()
 
 	go fallingDawnCli.Run()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 
-	out := fallingDawnCli.Env.OutStream.(*bytes.Buffer)
+	out, err := fallingDawnCli.Env.CaptureOutput()
+	if err != nil {
+		panic(err)
+	}
 
 	c, err := regexp.Compile(` -join=(.*)`)
 

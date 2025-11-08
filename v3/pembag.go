@@ -15,6 +15,12 @@ func (pb *PemBag) Add(key string, block pem.Block) {
 	b[key] = append(b[key], block)
 }
 
+func (pb *PemBag) Get(key string) ([]pem.Block, bool) {
+	m := *pb
+	thing, ok := m[key]
+	return thing, ok
+}
+
 func (pb *PemBag) Size() int {
 	n := 0
 	for _, blocks := range *pb {

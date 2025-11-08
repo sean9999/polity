@@ -5,11 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"net/url"
 
 	"github.com/sean9999/go-oracle/v3"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
+	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/sean9999/polity/v3/subject"
 
 	"github.com/sean9999/go-oracle/v3/delphi"
@@ -24,6 +27,20 @@ type appState struct {
 	node     polity.Node
 }
 
+func newRealApp() *appState {
+	a := appState{
+		node: lan.NewNode(nil),
+	}
+	return &a
+}
+
+func newTestApp(mother *mem.Network) *appState {
+	a := appState{
+		node: mother.Spawn(),
+	}
+	return &a
+}
+
 func (a *appState) Init(env *hermeti.Env) error {
 
 	if a.node == nil {
@@ -34,6 +51,32 @@ func (a *appState) Init(env *hermeti.Env) error {
 
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
+
+	fSet.Func("file", "PEM that contains private key and optinally other stuff", func(s string) error {
+		f, err := env.Filesystem.OpenFile(s, 0440, fs.ModeType)
+		if err != nil {
+			return err
+		}
+		pems := new(polity.PemBag)
+		_, err = io.Copy(pems, f)
+		if err != nil {
+			return err
+		}
+		privs, exist := pems.Get("POLITY PRIVATE KEY")
+		if !exist {
+			return errors.New("no private key found")
+		}
+		privPem := privs[0]
+		privBytes := privPem.Bytes
+
+		kp := new(delphi.KeyPair)
+		_, err = kp.Write(privBytes)
+		if err != nil {
+			return err
+		}
+		a.me.KeyPair = *kp
+		return nil
+	})
 
 	//	do we want to immediately join a peer?
 	fSet.Func("join", "peer to join", func(s string) error {
@@ -113,8 +156,7 @@ outer:
 }
 
 func main() {
-	a := new(appState)
-	a.node = lan.NewNode(nil)
-	cli := hermeti.NewRealCli(a)
+	app := newRealApp()
+	cli := hermeti.NewRealCli(app)
 	cli.Run()
 }

@@ -311,8 +311,8 @@ func TestCitizen_inobox_outbox(t *testing.T) {
 		assert.Fail(t, "timed out waiting for thing")
 	}
 
-	//	after leaving, inbox should be closed
-	err = c.Leave(t.Context())
+	//	after leaving, channels should be closed
+	err = c.Leave(t.Context(), inbox, outbox, errs)
 	assert.NoError(t, err)
 	_, ok := <-inbox
 	assert.False(t, ok)
