@@ -34,21 +34,21 @@ func (c *Citizen) AsPeer() *Peer {
 var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
 
 // Do takes a command, checks to see that it's signed, and then does it
-func (c *Citizen) Do(e Envelope) error {
-	err := e.Letter.Verify(c.KeyPair)
-	if err != nil {
-		return err
-	}
-
-	s := subject.From(e.Letter.Subject())
-
-	fn := programs[s]
-	if fn == nil {
-		return fmt.Errorf("no program found for subject %s", s)
-	}
-	go fn(e, c)
-	return nil
-}
+//func (c *Citizen) Do(e Envelope) error {
+//	err := e.Letter.Verify(c.KeyPair)
+//	if err != nil {
+//		return err
+//	}
+//
+//	s := subject.From(e.Letter.Subject())
+//
+//	fn := programs[s]
+//	if fn == nil {
+//		return fmt.Errorf("no program found for subject %s", s)
+//	}
+//	go fn(e, c)
+//	return nil
+//}
 
 //
 //func (c *Citizen) Seal(bytes []byte, bytes2 []byte, bytes3 []byte, bytes4 []byte) ([]byte, error) {

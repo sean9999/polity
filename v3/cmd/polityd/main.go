@@ -52,7 +52,7 @@ func (a *appState) Init(env *hermeti.Env) error {
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
 
-	fSet.Func("file", "PEM that contains private key and optinally other stuff", func(s string) error {
+	fSet.Func("file", "PEM that contains private key and optionally other stuff", func(s string) error {
 		f, err := env.Filesystem.OpenFile(s, 0440, fs.ModeType)
 		if err != nil {
 			return err
@@ -62,7 +62,7 @@ func (a *appState) Init(env *hermeti.Env) error {
 		if err != nil {
 			return err
 		}
-		privs, exist := pems.Get("POLITY PRIVATE KEY")
+		privs, exist := pems.Get("ORACLE PRIVATE KEY")
 		if !exist {
 			return errors.New("no private key found")
 		}

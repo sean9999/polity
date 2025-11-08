@@ -80,7 +80,7 @@ func (n *Node) ephemeralSend(_ context.Context, data []byte, u *net.UDPAddr) err
 		return err
 	}
 	defer newConn.Close()
-	_, err = newConn.WriteToUDP(data, u)
+	_, err = newConn.Write(data)
 	if err != nil {
 		return err
 	}
