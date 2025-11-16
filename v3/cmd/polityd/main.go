@@ -48,7 +48,6 @@ func (a *appState) Init(env *hermeti.Env) error {
 	}
 
 	a.me = polity.NewCitizen(env.Randomness, a.node)
-
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
 
@@ -63,18 +62,26 @@ func (a *appState) Init(env *hermeti.Env) error {
 			return err
 		}
 		privs, exist := pems.Get("ORACLE PRIVATE KEY")
-		if !exist {
-			return errors.New("no private key found")
+		if exist {
+			//	TODO: maybe panic if there is more than one priv key
+			privPem := privs[0]
+			privBytes := privPem.Bytes
+			kp := new(delphi.KeyPair)
+			_, err = kp.Write(privBytes)
+			if err != nil {
+				return err
+			}
+			a.me.KeyPair = *kp
 		}
-		privPem := privs[0]
-		privBytes := privPem.Bytes
-
-		kp := new(delphi.KeyPair)
-		_, err = kp.Write(privBytes)
-		if err != nil {
-			return err
+		peerPems, _ := pems.Get("ORACLE PEER")
+		for _, thisPem := range peerPems {
+			p := new(polity.Peer)
+			err := p.Deserialize(thisPem.Bytes)
+			if err != nil {
+				return err
+			}
+			a.me.Peers.Add(*p, nil)
 		}
-		a.me.KeyPair = *kp
 		return nil
 	})
 
