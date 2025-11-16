@@ -5,7 +5,7 @@
 		"priv": "014c1f1acfa3085499c95c2eff0da450d4f7fd04abf48306b57930ed8c5529f4",
 		"addrs": {
 			"socket/unixgram": {
-				"Name": "/Users/seanmacdonald/polity/run/blue-surf",
+				"Name": "/run/polity/run/blue-surf",
 				"Net": "unixgram"
 			}
 		}

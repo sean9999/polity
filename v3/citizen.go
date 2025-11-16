@@ -8,6 +8,7 @@ import (
 
 	oracle "github.com/sean9999/go-oracle/v3"
 	delphi "github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/polity/v3/subject"
 
 	"io"
 	"net/url"
@@ -30,16 +31,7 @@ func (c *Citizen) AsPeer() *Peer {
 	return &Peer{orc}
 }
 
-//
-//func (c *Citizen) Seal(bytes []byte, bytes2 []byte, bytes3 []byte, bytes4 []byte) ([]byte, error) {
-//	//TODO implement me
-//	panic("implement me")
-//}
-//
-//func (c *Citizen) GenerateSharedSecret(reader io.Reader, key delphi.PublicKey) ([]byte, []byte, error) {
-//	//TODO implement me
-//	panic("implement me")
-//}
+var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
 
 func NewCitizen(randy io.Reader, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)
@@ -56,6 +48,22 @@ func (c *Citizen) AcquireAddress(ctx context.Context, pk delphi.PublicKey) error
 		return fmt.Errorf("failed to acquire address: %w", err)
 	}
 	c.Props["addr"] = c.Address().String()
+	return nil
+}
+
+// Shutdown sends a signed message to self, telling us to shut down
+func (c *Citizen) Shutdown() {
+	e := c.Compose(nil, c.Address())
+	e.Letter.SetSubject(subject.DieNow)
+	e.Letter.PlainText = []byte(subject.DieNow)
+	_ = c.Send(nil, nil, e.Letter, e.Recipient)
+}
+
+func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
+	c.Node.Leave(ctx)
+	close(inbox)
+	close(outbox)
+	close(errs)
 	return nil
 }
 
@@ -109,20 +117,27 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	//	if outbox gets closed, we close outgoingBytes.
 	go func() {
 		for envelope := range outbox {
-			bin, err := envelope.Serialize()
+
+			err := c.Send(ctx, nil, envelope.Letter, envelope.Recipient)
 			if err != nil {
 				errs <- err
 				continue
 			}
-			if envelope.Recipient == nil {
-				errs <- errors.New("nil recipient")
-				continue
-			}
-			err = c.Node.Send(ctx, bin, *envelope.Recipient)
-			if err != nil {
-				errs <- err
-				continue
-			}
+
+			//bin, err := envelope.Serialize()
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
+			//if envelope.Recipient == nil {
+			//	errs <- errors.New("nil recipient")
+			//	continue
+			//}
+			//err = c.Node.Send(ctx, bin, *envelope.Recipient)
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
 		}
 	}()
 
@@ -146,13 +161,24 @@ func (c *Citizen) ComposePlain(recipient *url.URL, str string) *Envelope {
 }
 
 func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, recipient *url.URL) error {
+
+	if recipient == nil {
+		return errors.New("no recipient")
+	}
+
 	e := c.Compose(randy, recipient)
 	e.Letter = letter
+
 	bin, err := e.Serialize()
 	if err != nil {
 		return err
 	}
-	return c.Node.Send(ctx, bin, *e.Recipient)
+
+	err = c.Node.Send(ctx, bin, *recipient)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Citizen) Announce(ctx context.Context, randy io.Reader, letter Letter, recipients []url.URL) error {

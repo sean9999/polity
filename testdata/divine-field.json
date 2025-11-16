@@ -5,7 +5,7 @@
 		"priv": "2a5e00d4538ca993a874411af34ddec38aacb245ea0d285bcde2586bf21a0dd9",
 		"addrs": {
 			"socket/unixgram": {
-				"Name": "/Users/seanmacdonald/polity/run/divine-field",
+				"Name": "/run/polity/run/divine-field",
 				"Net": "unixgram"
 			}
 		}

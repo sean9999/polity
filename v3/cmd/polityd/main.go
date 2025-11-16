@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"net/url"
 
 	"github.com/sean9999/go-oracle/v3"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
+	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/sean9999/polity/v3/subject"
 
 	"github.com/sean9999/go-oracle/v3/delphi"
@@ -20,15 +24,66 @@ type appState struct {
 	foo      string
 	me       *polity.Citizen
 	joinPeer *polity.Peer
+	node     polity.Node
+}
+
+func newRealApp() *appState {
+	a := appState{
+		node: lan.NewNode(nil),
+	}
+	return &a
+}
+
+func newTestApp(mother *mem.Network) *appState {
+	a := appState{
+		node: mother.Spawn(),
+	}
+	return &a
 }
 
 func (a *appState) Init(env *hermeti.Env) error {
 
-	node := lan.NewNode(nil)
-	a.me = polity.NewCitizen(env.Randomness, node)
+	if a.node == nil {
+		return errors.New("you need to instantiate a node and attach it your appState before calling Init")
+	}
 
+	a.me = polity.NewCitizen(env.Randomness, a.node)
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
+
+	fSet.Func("file", "PEM that contains private key and optionally other stuff", func(s string) error {
+		f, err := env.Filesystem.OpenFile(s, 0440, fs.ModeType)
+		if err != nil {
+			return err
+		}
+		pems := new(polity.PemBag)
+		_, err = io.Copy(pems, f)
+		if err != nil {
+			return err
+		}
+		privs, exist := pems.Get("ORACLE PRIVATE KEY")
+		if exist {
+			//	TODO: maybe panic if there is more than one priv key
+			privPem := privs[0]
+			privBytes := privPem.Bytes
+			kp := new(delphi.KeyPair)
+			_, err = kp.Write(privBytes)
+			if err != nil {
+				return err
+			}
+			a.me.KeyPair = *kp
+		}
+		peerPems, _ := pems.Get("ORACLE PEER")
+		for _, thisPem := range peerPems {
+			p := new(polity.Peer)
+			err := p.Deserialize(thisPem.Bytes)
+			if err != nil {
+				return err
+			}
+			a.me.Peers.Add(*p, nil)
+		}
+		return nil
+	})
 
 	//	do we want to immediately join a peer?
 	fSet.Func("join", "peer to join", func(s string) error {
@@ -88,6 +143,7 @@ func (a *appState) Run(env hermeti.Env) {
 
 	bootUp(a, env, outbox)
 
+outer:
 	for e := range inbox {
 		switch e.Letter.Subject() {
 		case subject.BootUp:
@@ -98,15 +154,17 @@ func (a *appState) Run(env hermeti.Env) {
 			fmt.Fprintf(env.OutStream, "sender:\t%s\n", e.Sender.String())
 			fmt.Fprintf(env.OutStream, "subj:\t%s\n", e.Letter.Subject())
 			fmt.Fprintf(env.OutStream, "body:\t%s\n", string(e.Letter.Body()))
-		case "go away":
-			break
+		case subject.DieNow:
+			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
+			//a.me.Leave(ctx, inbox, outbox, errs)
+			break outer
 		}
 	}
 
 }
 
 func main() {
-	a := new(appState)
-	cli := hermeti.NewRealCli(a)
+	app := newRealApp()
+	cli := hermeti.NewRealCli(app)
 	cli.Run()
 }
