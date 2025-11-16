@@ -5,7 +5,7 @@
 		"priv": "743e3091b7ccf0ddd983564a0dd119ed6e2066b19d0365f933557c1d71f316c0",
 		"addrs": {
 			"socket/unixgram": {
-				"Name": "/Users/seanmacdonald/polity/run/withered-dawn",
+				"Name": "/run/polity/run/withered-dawn",
 				"Net": "unixgram"
 			}
 		}

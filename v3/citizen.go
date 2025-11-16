@@ -33,34 +33,6 @@ func (c *Citizen) AsPeer() *Peer {
 
 var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
 
-// Do takes a command, checks to see that it's signed, and then does it
-//func (c *Citizen) Do(e Envelope) error {
-//	err := e.Letter.Verify(c.KeyPair)
-//	if err != nil {
-//		return err
-//	}
-//
-//	s := subject.From(e.Letter.Subject())
-//
-//	fn := programs[s]
-//	if fn == nil {
-//		return fmt.Errorf("no program found for subject %s", s)
-//	}
-//	go fn(e, c)
-//	return nil
-//}
-
-//
-//func (c *Citizen) Seal(bytes []byte, bytes2 []byte, bytes3 []byte, bytes4 []byte) ([]byte, error) {
-//	//TODO implement me
-//	panic("implement me")
-//}
-//
-//func (c *Citizen) GenerateSharedSecret(reader io.Reader, key delphi.PublicKey) ([]byte, []byte, error) {
-//	//TODO implement me
-//	panic("implement me")
-//}
-
 func NewCitizen(randy io.Reader, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)
 	return &Citizen{
@@ -77,6 +49,14 @@ func (c *Citizen) AcquireAddress(ctx context.Context, pk delphi.PublicKey) error
 	}
 	c.Props["addr"] = c.Address().String()
 	return nil
+}
+
+// Shutdown sends a signed message to self, telling us to shut down
+func (c *Citizen) Shutdown() {
+	e := c.Compose(nil, c.Address())
+	e.Letter.SetSubject(subject.DieNow)
+	e.Letter.PlainText = []byte(subject.DieNow)
+	_ = c.Send(nil, nil, e.Letter, e.Recipient)
 }
 
 func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {

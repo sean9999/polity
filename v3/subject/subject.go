@@ -17,4 +17,5 @@ const (
 	SoAndSoIsNew        = "So and so is new"
 	HereAreMyFriends    = "Here are my friends"
 	IamAlive            = "I'm alive. "
+	DieNow              = "go away"
 )

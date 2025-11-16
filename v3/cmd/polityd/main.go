@@ -154,8 +154,9 @@ outer:
 			fmt.Fprintf(env.OutStream, "sender:\t%s\n", e.Sender.String())
 			fmt.Fprintf(env.OutStream, "subj:\t%s\n", e.Letter.Subject())
 			fmt.Fprintf(env.OutStream, "body:\t%s\n", string(e.Letter.Body()))
-		case "go away":
+		case subject.DieNow:
 			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
+			//a.me.Leave(ctx, inbox, outbox, errs)
 			break outer
 		}
 	}

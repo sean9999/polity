@@ -6,11 +6,14 @@
       <w>fset</w>
       <w>goproxy</w>
       <w>memnet</w>
+      <w>pems</w>
       <w>pkgsite</w>
       <w>polityctl</w>
       <w>polityd</w>
       <w>priv</w>
+      <w>privs</w>
       <w>recip</w>
+      <w>unixgram</w>
     </words>
   </dictionary>
 </component>

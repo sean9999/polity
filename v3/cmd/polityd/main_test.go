@@ -54,10 +54,7 @@ func setup() error {
 
 func teardown() {
 	alice := aliceCli.App.me
-	e := alice.Compose(nil, alice.Address())
-	e.Letter.SetSubject("go away")
-	e.Letter.PlainText = []byte("go away")
-	_ = alice.Send(nil, nil, e.Letter, e.Recipient)
+	alice.Shutdown()
 }
 
 func TestMain(m *testing.M) {
