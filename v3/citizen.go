@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"sync"
 
 	oracle "github.com/sean9999/go-oracle/v3"
 	delphi "github.com/sean9999/go-oracle/v3/delphi"
+
 	"github.com/sean9999/polity/v3/subject"
 
 	"io"
@@ -24,6 +27,8 @@ type Citizen struct {
 	*Oracle
 	Peers    PeerSet
 	Profiles *ProfileSet
+	Plugins  Registry
+	Log      *log.Logger
 }
 
 func (c *Citizen) AsPeer() *Peer {
@@ -36,9 +41,11 @@ var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
 func NewCitizen(randy io.Reader, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)
 	return &Citizen{
-		Node:   node,
-		Oracle: orc,
-		Peers:  NewPeerSet(orc.Peers),
+		Node:    node,
+		Oracle:  orc,
+		Peers:   NewPeerSet(orc.Peers),
+		Plugins: make(Registry),
+		Log:     log.New(os.Stdout, "citizen: ", log.LstdFlags),
 	}
 }
 
@@ -67,6 +74,36 @@ func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan En
 	return nil
 }
 
+func (c *Citizen) loadProgram(prog Program) error {
+	if prog == nil {
+		return errors.New("program cannot be nil")
+	}
+	_, exists := c.Plugins[prog.Name()]
+	if exists {
+		return errors.New("plugin already registered")
+	}
+	c.Plugins[prog.Name()] = prog
+	return nil
+}
+
+func (c *Citizen) LoadPlugins() error {
+
+	programs := make([]Program, 0, len(c.Plugins))
+	programs[0] = new(Heartbeat)
+
+	for _, prog := range programs {
+		err := prog.Initialize(c)
+		if err != nil {
+			return err
+		}
+		err = c.loadProgram(prog)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan error, error) {
 
 	//	An uninitiated citizen is no citizen at all.
@@ -92,6 +129,11 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	inbox := make(chan Envelope)
 	outbox := make(chan Envelope)
 
+	//err = c.LoadPlugins()
+	//if err != nil {
+	//	return nil, nil, nil, fmt.Errorf("could not load plugins. %w", err)
+	//}
+
 	//	range over incoming bytes.
 	//	marshal them to Envelope.
 	//	pipe to our inbox, which is a channel of Envelope.
@@ -106,6 +148,12 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 				continue
 			}
 			inbox <- *e
+			//	in addition to inbox,
+			//	send the envelope to any plugin that is registered to handle this subject
+			//programs := c.Plugins.Programs(e.Letter.Subject())
+			//for _, prog := range programs {
+			//	go prog.Accept(*e)
+			//}
 		}
 		close(inbox)
 	}()

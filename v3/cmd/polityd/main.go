@@ -156,11 +156,9 @@ outer:
 			fmt.Fprintf(env.OutStream, "body:\t%s\n", string(e.Letter.Body()))
 		case subject.DieNow:
 			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
-			//a.me.Leave(ctx, inbox, outbox, errs)
 			break outer
 		}
 	}
-
 }
 
 func main() {
