@@ -25,6 +25,15 @@ func (p *Peer) Deserialize(data []byte) error {
 	return msgpack.Unmarshal(data, p)
 }
 
+func PeerFromURL(u *url.URL) *Peer {
+	keyHex := u.User.Username()
+	key, err := delphi.KeyFromString(keyHex)
+	if err != nil {
+		return nil
+	}
+	return PeerFromKey(delphi.PublicKey(key))
+}
+
 func (p *Peer) Address() *url.URL {
 	if p == nil {
 		return nil

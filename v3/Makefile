@@ -12,6 +12,9 @@ container:
 binaries: bin/polityd bin/polity
 	mkdir -p bin
 
+plugins:
+	go build -buildmode=plugin -o ./cmd/polityd/plugins/heartbeat.so ./cmd/polityd/plugins/heartbeat.go
+
 bin/polity:
 	go build -o bin/polity -ldflags="-X 'main.Version=$(REF)' -X 'main.Branch=$(BRANCH)'" cmd/polity
 	GOOS=linux  GOARCH=amd64 go build -o bin/polity-linux-amd64  cmd/polity;
@@ -78,4 +81,4 @@ coverage-check:
 		echo "✅ Coverage meets 70% threshold"; \
 	fi
 
-.PHONY: test coverage coverage-summary coverage-html coverage-check
+.PHONY: test coverage coverage-summary coverage-html coverage-check plugins

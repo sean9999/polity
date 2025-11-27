@@ -13,6 +13,8 @@ import (
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
 	"github.com/sean9999/polity/v3/network/mem"
+	"github.com/sean9999/polity/v3/programs"
+	_ "github.com/sean9999/polity/v3/programs/heartbeat"
 	"github.com/sean9999/polity/v3/subject"
 
 	"github.com/sean9999/go-oracle/v3/delphi"
@@ -112,6 +114,8 @@ func (a *appState) Run(env hermeti.Env) {
 
 	ctx := context.Background()
 
+	registry := programs.Registry
+
 	inbox, outbox, errs, err := a.me.Join(nil)
 	if err != nil {
 		panic(err)
@@ -143,6 +147,17 @@ func (a *appState) Run(env hermeti.Env) {
 
 	bootUp(a, env, outbox)
 
+	//	registry
+
+	for name, program := range registry {
+		err := program.Initialize(a.me, errs)
+		fmt.Println("initializing", name)
+		if err != nil {
+			a.me.Log.Panicf("error initializing program %q: %v", name, err)
+		}
+		go program.Run(ctx)
+	}
+
 outer:
 	for e := range inbox {
 		switch e.Letter.Subject() {
@@ -151,9 +166,18 @@ outer:
 		case subject.IamAlive:
 
 		default:
+
+			//	Every program registered to handle this subject gets this message.
+			progs := registry.ProgramsThatHandle(e.Letter.Subject())
+			for progName, prog := range progs {
+				fmt.Fprintf(env.OutStream, "handlr:\t%s\n", progName)
+				go prog.Accept(e)
+			}
+
 			fmt.Fprintf(env.OutStream, "sender:\t%s\n", e.Sender.String())
 			fmt.Fprintf(env.OutStream, "subj:\t%s\n", e.Letter.Subject())
 			fmt.Fprintf(env.OutStream, "body:\t%s\n", string(e.Letter.Body()))
+
 		case subject.DieNow:
 			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
 			break outer
