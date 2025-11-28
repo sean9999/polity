@@ -43,7 +43,7 @@ func NewCitizen(randy io.Reader, node Node) *Citizen {
 		Node:   node,
 		Oracle: orc,
 		Peers:  NewPeerSet(orc.Peers),
-		Log:    log.New(os.Stdout, "citizen: ", log.LstdFlags),
+		Log:    log.New(os.Stdout, "", 0),
 	}
 }
 
