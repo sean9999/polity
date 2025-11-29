@@ -9,6 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/decisions" />
       <excludeFolder url="file://$MODULE_DIR$/network" />
       <excludeFolder url="file://$MODULE_DIR$/testdata" />
+      <excludeFolder url="file://$MODULE_DIR$/v2" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

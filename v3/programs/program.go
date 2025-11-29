@@ -28,9 +28,10 @@ func (reg registry) ProgramsThatHandle(subj string) []Program {
 }
 
 type Program interface {
-	Initialize(citizen *polity.Citizen, errs chan error) error
+	Initialize(citizen *polity.Citizen, inbox, outbox chan polity.Envelope, errs chan error) error
 	Subjects() []subject.Subject
 	Inbox() chan polity.Envelope
+	Accept(polity.Envelope)
 	Run(context.Context)
 	Shutdown()
 	Name() string

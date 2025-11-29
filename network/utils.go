@@ -11,7 +11,6 @@ import (
 	"v.io/x/lib/netstate"
 )
 
-
 var ErrNetworkUp = errors.New("can't bring network up")
 var ErrConnection = errors.New("couldn't create connection")
 

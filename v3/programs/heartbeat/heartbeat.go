@@ -17,13 +17,15 @@ type heartbeat struct {
 	errs    chan error
 	done    chan struct{}
 	inbox   chan polity.Envelope
+	outbox  chan polity.Envelope
 }
 
-func (h *heartbeat) Initialize(citizen *polity.Citizen, errs chan error) error {
+func (h *heartbeat) Initialize(citizen *polity.Citizen, inbox chan polity.Envelope, outbox chan polity.Envelope, errs chan error) error {
 	h.citizen = citizen
 	h.errs = errs
 	h.done = make(chan struct{})
-	h.inbox = make(chan polity.Envelope)
+	h.inbox = inbox
+	h.outbox = outbox
 	return nil
 }
 

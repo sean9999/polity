@@ -148,9 +148,8 @@ func (a *appState) Run(env hermeti.Env) {
 	bootUp(a, env, outbox)
 
 	//	registry
-
 	for name, program := range registry {
-		err := program.Initialize(a.me, errs)
+		err := program.Initialize(a.me, inbox, outbox, errs)
 		fmt.Println("initializing", name)
 		if err != nil {
 			a.me.Log.Panicf("error initializing program %q: %v", name, err)
@@ -171,7 +170,7 @@ outer:
 			progs := registry.ProgramsThatHandle(e.Letter.Subject())
 			for progName, prog := range progs {
 				fmt.Fprintf(env.OutStream, "handlr:\t%s\n", progName)
-				go prog.Accept(e)
+				prog.Inbox() <- e
 			}
 
 			fmt.Fprintf(env.OutStream, "sender:\t%s\n", e.Sender.String())
