@@ -8,8 +8,8 @@ import (
 	"os"
 	"sync"
 
-	oracle "github.com/sean9999/go-oracle/v3"
-	delphi "github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v3"
+	"github.com/sean9999/go-oracle/v3/delphi"
 
 	"github.com/sean9999/polity/v3/subject"
 
@@ -18,10 +18,9 @@ import (
 )
 
 // An Oracle is an oracle.Principal.
-// Calling it Oracle rather than Principal lessens some ambiguity
 type Oracle = oracle.Principal
 
-// A Citizen is a Node and Oracle combined.
+// A Citizen is a Node with an Oracle.
 type Citizen struct {
 	Node
 	*Oracle
@@ -34,8 +33,6 @@ func (c *Citizen) AsPeer() *Peer {
 	orc := c.Oracle.AsPeer()
 	return &Peer{orc}
 }
-
-//var programs = map[subject.Subject]func(envelope Envelope, citizen *Citizen){}
 
 func NewCitizen(randy io.Reader, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)

@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// recvWithTimeout waits for an Envelope or fails the test on timeout.
-func recvWithTimeout[T any](t *testing.T, ch <-chan T, d time.Duration) T {
+// receiveEnvelopeOrTimeout waits for an Envelope or fails the test on timeout.
+func receiveEnvelopeOrTimeout[T any](t *testing.T, ch <-chan T, d time.Duration) T {
 	t.Helper()
 	select {
 	case v := <-ch:
@@ -31,18 +31,18 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	ctx := context.Background()
 	// in-memory network and two nodes
 	net := mem.NewNetwork()
-	nA := net.Spawn()
-	nB := net.Spawn()
+	aliceNet := net.Spawn()
+	bobNet := net.Spawn()
 
 	// two citizens on the mem network
-	alice := polity.NewCitizen(rand.Reader, nA)
-	bob := polity.NewCitizen(rand.Reader, nB)
+	alice := polity.NewCitizen(rand.Reader, aliceNet)
+	bob := polity.NewCitizen(rand.Reader, bobNet)
 
-	_, aout, aerrs, err := alice.Join(ctx)
+	_, aliceOut, aliceErrs, err := alice.Join(ctx)
 	if err != nil {
 		t.Fatalf("alice.Join error: %v", err)
 	}
-	bin, _, berrs, err := bob.Join(ctx)
+	bin, _, bobErrs, err := bob.Join(ctx)
 	if err != nil {
 		t.Fatalf("bob.Join error: %v", err)
 	}
@@ -53,63 +53,61 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	}
 
 	// Alice composes and sends a plain message to Bob
-	env := alice.ComposePlain(bob.Address(), "hello bob")
-	// outbox write should be non-blocking due to goroutine in Join consuming it
+	e1 := alice.ComposePlain(bob.Address(), "hello bob")
+
 	select {
-	case aout <- *env:
-		// ok
+	case aliceOut <- *e1:
+		// 👌🏽
 	case <-time.After(2 * time.Second):
 		t.Fatalf("timeout sending envelope to outbox")
 	}
 
 	// Bob should receive exactly one envelope with expected fields
-	recv := recvWithTimeout(t, bin, 2*time.Second)
-	if recv.Recipient == nil || recv.Sender == nil {
-		t.Fatalf("expected non-nil Recipient and Sender, got Recipient=%v Sender=%v", recv.Recipient, recv.Sender)
+	e2 := receiveEnvelopeOrTimeout(t, bin, 2*time.Second)
+	if e2.Recipient == nil || e2.Sender == nil {
+		t.Fatalf("expected non-nil Recipient and Sender, got Recipient=%v Sender=%v", e2.Recipient, e2.Sender)
 	}
-	if recv.Recipient.String() != bob.Address().String() {
-		t.Fatalf("Recipient mismatch: got %s want %s", recv.Recipient, bob.Address())
+	if e2.Recipient.String() != bob.Address().String() {
+		t.Fatalf("Recipient mismatch: got %s want %s", e2.Recipient, bob.Address())
 	}
-	if recv.Sender.String() != alice.Address().String() {
-		t.Fatalf("Sender mismatch: got %s want %s", recv.Sender, alice.Address())
+	if e2.Sender.String() != alice.Address().String() {
+		t.Fatalf("Sender mismatch: got %s want %s", e2.Sender, alice.Address())
 	}
-	if subj := recv.Letter.Subject(); subj != "plain message" {
+	if subj := e2.Letter.Subject(); subj != "plain message" {
 		t.Fatalf("Subject mismatch: got %q want %q", subj, "plain message")
 	}
-	if string(recv.Letter.PlainText) != "hello bob" {
-		t.Fatalf("PlainText mismatch: got %q want %q", string(recv.Letter.PlainText), "hello bob")
+	if string(e2.Letter.PlainText) != "hello bob" {
+		t.Fatalf("PlainText mismatch: got %q want %q", string(e2.Letter.PlainText), "hello bob")
 	}
 
 	// sanity: errs channels should remain quiet
 	select {
-	case e := <-aerrs:
+	case e := <-aliceErrs:
 		t.Fatalf("unexpected error from alice errs: %v", e)
-	case e := <-berrs:
+	case e := <-bobErrs:
 		t.Fatalf("unexpected error from bob errs: %v", e)
 	default:
-		// ok
+		// 👌🏽
 	}
 }
 
 func TestCitizen_Send_and_Announce(t *testing.T) {
 	ctx := context.Background()
 	net := mem.NewNetwork()
-	nA := net.Spawn()
-	nB := net.Spawn()
-	nC := net.Spawn()
-	alice := polity.NewCitizen(rand.Reader, nA)
-	bob := polity.NewCitizen(rand.Reader, nB)
-	carol := polity.NewCitizen(rand.Reader, nC)
 
-	binB, _, berrs, err := bob.Join(ctx)
+	alice := polity.NewCitizen(rand.Reader, net.Spawn())
+	bob := polity.NewCitizen(rand.Reader, net.Spawn())
+	carol := polity.NewCitizen(rand.Reader, net.Spawn())
+
+	bobInbox, _, bobErrs, err := bob.Join(ctx)
 	if err != nil {
 		t.Fatalf("bob.Join error: %v", err)
 	}
-	binC, _, cerrs, err := carol.Join(ctx)
+	carolInbox, _, carolErrs, err := carol.Join(ctx)
 	if err != nil {
 		t.Fatalf("carol.Join error: %v", err)
 	}
-	_, _, aerrs, err := alice.Join(ctx)
+	_, _, aliceErrs, err := alice.Join(ctx)
 	if err != nil {
 		t.Fatalf("alice.Join error: %v", err)
 	}
@@ -123,9 +121,9 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	if err := alice.Send(ctx, rand.Reader, letter, bob.Address()); err != nil {
 		t.Fatalf("alice.Send: %v", err)
 	}
-	recvB := recvWithTimeout(t, binB, 2*time.Second)
-	if string(recvB.Letter.PlainText) != "msg to bob" {
-		t.Fatalf("Send: PlainText mismatch got %q", string(recvB.Letter.PlainText))
+	e3 := receiveEnvelopeOrTimeout(t, bobInbox, 2*time.Second)
+	if string(e3.Letter.PlainText) != "msg to bob" {
+		t.Fatalf("Send: PlainText mismatch got %q", string(e3.Letter.PlainText))
 	}
 
 	// Test Announce: same letter to Bob and Carol
@@ -133,24 +131,35 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	_ = letter2.SetSubject("broadcast")
 	letter2.PlainText = []byte("hi all")
 	recipients := []url.URL{*bob.Address(), *carol.Address()}
+
 	if err := alice.Announce(ctx, rand.Reader, letter2, recipients); err != nil {
 		t.Fatalf("alice.Announce: %v", err)
 	}
-	recvB2 := recvWithTimeout(t, binB, 2*time.Second)
-	recvC2 := recvWithTimeout(t, binC, 2*time.Second)
-	if string(recvB2.Letter.PlainText) != "hi all" || string(recvC2.Letter.PlainText) != "hi all" {
-		t.Fatalf("Announce: recipients got wrong payload: B=%q C=%q", string(recvB2.Letter.PlainText), string(recvC2.Letter.PlainText))
+
+	e4 := receiveEnvelopeOrTimeout(t, bobInbox, 2*time.Second)
+	e5 := receiveEnvelopeOrTimeout(t, carolInbox, 2*time.Second)
+	if string(e4.Letter.PlainText) != "hi all" || string(e5.Letter.PlainText) != "hi all" {
+		t.Fatalf("Announce: recipients got wrong payload: B=%q C=%q", string(e4.Letter.PlainText), string(e5.Letter.PlainText))
 	}
 
-	// errs should be quiet
+	go func() {
+		hiFromBob := polity.NewLetter(nil)
+		hiFromBob.PlainText = []byte("hello to alice from bob")
+		err := alice.Send(ctx, nil, hiFromBob, bob.Address())
+		if err != nil {
+			bobErrs <- err
+		}
+	}()
+
 	select {
-	case e := <-aerrs:
+	case e := <-aliceErrs:
 		t.Fatalf("unexpected error from alice errs: %v", e)
-	case e := <-berrs:
+	case e := <-bobErrs:
 		t.Fatalf("unexpected error from bob errs: %v", e)
-	case e := <-cerrs:
+	case e := <-carolErrs:
 		t.Fatalf("unexpected error from carol errs: %v", e)
-	default:
+	case e := <-bobInbox:
+		assert.Equal(t, "hello to alice from bob", string(e.Letter.PlainText))
 	}
 }
 
@@ -244,7 +253,7 @@ func TestCitizen_Join_broken_node(t *testing.T) {
 
 }
 
-func TestCitizen_inobox_outbox(t *testing.T) {
+func TestCitizen_inbox_outbox(t *testing.T) {
 	net := mem.NewNetwork()
 	n := net.Spawn()
 	c := polity.NewCitizen(rand.Reader, n)
@@ -391,8 +400,8 @@ func TestCitizen_Announce(t *testing.T) {
 	assert.NoError(t, err)
 
 	// both Bob and Carol should receive the envelope
-	recvB := recvWithTimeout(t, binB, 2*time.Second)
-	recvC := recvWithTimeout(t, binC, 2*time.Second)
+	recvB := receiveEnvelopeOrTimeout(t, binB, 2*time.Second)
+	recvC := receiveEnvelopeOrTimeout(t, binC, 2*time.Second)
 	assert.Equal(t, "hi", string(recvB.Letter.PlainText))
 	assert.Equal(t, "hi", string(recvC.Letter.PlainText))
 
