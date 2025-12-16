@@ -1,8 +1,23 @@
 package mem
 
-import "net/url"
+import (
+	"net/url"
+
+	"github.com/sean9999/polity/v3"
+)
+
+var _ polity.Network = (*Network)(nil)
 
 type Network map[url.URL]*Node
+
+func (n *Network) Up() error {
+	return nil
+}
+
+func (n *Network) Down() {
+	m := *n
+	clear(m)
+}
 
 func NewNetwork() *Network {
 	m := make(Network)
@@ -32,7 +47,7 @@ func (n *Network) Delete(k url.URL) {
 	delete(m, k)
 }
 
-func (n *Network) Spawn() *Node {
+func (n *Network) Spawn() polity.Node {
 	node := new(Node)
 	node.parent = n
 	return node

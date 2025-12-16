@@ -24,7 +24,7 @@ func TestNode(t *testing.T) {
 
 		nt := NewNetwork()
 		assert.Len(t, nt.Map(), 0)
-		nd := nt.Spawn()
+		nd := nt.Spawn().(*Node)
 		assert.Len(t, nt.Map(), 0)
 
 		//	before acquiring an address

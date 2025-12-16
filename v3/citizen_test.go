@@ -201,7 +201,7 @@ type brokenNode struct {
 	polity.Node
 }
 
-func (b brokenNode) AcquireAddress(_ context.Context, _ delphi.PublicKey) error {
+func (b brokenNode) AcquireAddress(_ context.Context, _ any) error {
 	return errors.New("broken node")
 }
 
@@ -214,7 +214,7 @@ type badListener struct {
 	polity.Node
 }
 
-func (b badListener) AcquireAddress(_ context.Context, _ delphi.PublicKey) error {
+func (b badListener) AcquireAddress(_ context.Context, _ any) error {
 	return nil
 }
 
@@ -375,6 +375,9 @@ func TestCitizen_Announce(t *testing.T) {
 	ctx := context.Background()
 	// setup in-memory network with three nodes
 	net := mem.NewNetwork()
+
+	net.Up()
+
 	nA := net.Spawn()
 	nB := net.Spawn()
 	nC := net.Spawn()

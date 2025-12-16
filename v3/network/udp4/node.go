@@ -15,17 +15,16 @@ import (
 	"github.com/sean9999/polity/v3"
 )
 
-const (
-	networkName = "udp4"
-	hostName    = "127.0.0.1"
-)
-
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
 	addr *net.UDPAddr
 	conn *net.UDPConn
 	url  *url.URL
+}
+
+func (n *Node) Network() polity.Network {
+	return nil
 }
 
 func (n *Node) Listen(_ context.Context) (chan []byte, error) {
@@ -177,7 +176,12 @@ func (n *Node) WriteDirectly(data []byte) error {
 	return err
 }
 
-func (n *Node) AcquireAddress(ctx context.Context, key delphi.PublicKey) error {
+func (n *Node) AcquireAddress(ctx context.Context, opts any) error {
+
+	key, ok := opts.(delphi.PublicKey)
+	if !ok {
+		return errors.New("invalid opts")
+	}
 
 	err := n.acquireStableAddress(ctx, key)
 	if err != nil {

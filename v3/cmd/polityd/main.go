@@ -30,6 +30,7 @@ type appState struct {
 }
 
 func newRealApp() *appState {
+
 	a := appState{
 		node: lan.NewNode(nil),
 	}

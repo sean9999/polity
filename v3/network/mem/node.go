@@ -18,11 +18,21 @@ type Node struct {
 	bytesListener chan []byte
 }
 
+func (n *Node) Network() polity.Network {
+	return n.parent
+}
+
 func (n *Node) Nickname() string {
 	return n.url.User.String()
 }
 
-func (n *Node) AcquireAddress(_ context.Context, pubKey delphi.PublicKey) error {
+func (n *Node) AcquireAddress(_ context.Context, opts any) error {
+
+	pubKey, ok := opts.(delphi.Key)
+	if !ok {
+		return errors.New("bad key")
+	}
+
 	if n.url.String() != "" {
 		return fmt.Errorf("already acquired an address: %s", n.url.String())
 	}

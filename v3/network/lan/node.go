@@ -22,9 +22,14 @@ const (
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
-	addr *net.UDPAddr
-	conn *net.UDPConn
-	url  *url.URL
+	addr    *net.UDPAddr
+	conn    *net.UDPConn
+	url     *url.URL
+	network *Network
+}
+
+func (n *Node) Network() polity.Network {
+	return n.network
 }
 
 func (n *Node) Listen(_ context.Context) (chan []byte, error) {
@@ -149,12 +154,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 
 	idealPort := uint64ToEphemeralPort(n.KeyToUint64(key))
 
-	host, err := getLocalIP()
-	if err != nil {
-		return err
-	}
-
-	addr, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", host.String(), idealPort))
+	addr, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", n.network.ip.String(), idealPort))
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,12 @@ func (n *Node) WriteDirectly(data []byte) error {
 	return err
 }
 
-func (n *Node) AcquireAddress(ctx context.Context, key delphi.PublicKey) error {
+func (n *Node) AcquireAddress(ctx context.Context, opts polity.AcquireOpts) error {
+
+	key, ok := opts.(delphi.PublicKey)
+	if !ok {
+		return errors.New("opts is not a delphi public key")
+	}
 
 	err := n.acquireStableAddress(ctx, key)
 	if err != nil {

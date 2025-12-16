@@ -1,18 +1,17 @@
 package lan
 
 import (
-	"errors"
 	"fmt"
 	"net"
-
-	"v.io/x/lib/netstate"
+	"net/netip"
 )
 
-func isPrivate(ipnet *net.IPNet) bool {
-	if ipnet == nil {
+// isPrivate finds a subnet suitable for a local area network (LAN)
+func isPrivate(ipNet *net.IPNet) bool {
+	if ipNet == nil {
 		return false
 	}
-	ip := ipnet.IP
+	ip := ipNet.IP
 	if ip == nil || ip.To4() == nil {
 		return false
 	}
@@ -30,21 +29,11 @@ func isPrivate(ipnet *net.IPNet) bool {
 	return false
 }
 
-func getLocalIP() (net.IP, error) {
-
-	state, err := netstate.GetAccessibleIPs()
+// it's weird that the standard library can't do this, but here we are!
+func ipToAddr(a net.IP) *net.UDPAddr {
+	addr, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", a.String(), 0))
 	if err != nil {
-		return net.IPv4zero, err
+		return nil
 	}
-	candidates := state.Filter(netstate.IsUnicastIPv4)
-	for _, candidate := range candidates {
-		for _, addr := range candidate.Interface().Addrs() {
-			ip, subnet, _ := net.ParseCIDR(addr.String())
-			if isPrivate(subnet) {
-				return ip, nil
-			}
-			fmt.Println(addr.String())
-		}
-	}
-	return net.IPv4zero, errors.New("no private ipv4 address")
+	return net.UDPAddrFromAddrPort(addr)
 }
