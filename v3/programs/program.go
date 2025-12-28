@@ -2,7 +2,6 @@ package programs
 
 import (
 	"context"
-	"errors"
 	"slices"
 
 	"github.com/sean9999/polity/v3"
@@ -28,19 +27,18 @@ func (reg registry) ProgramsThatHandle(subj string) []Program {
 }
 
 type Program interface {
-	Initialize(citizen *polity.Citizen, inbox, outbox chan polity.Envelope, errs chan error) error
+	Initialize(citizen *polity.Citizen, outbox chan polity.Envelope, errs chan error) error
 	Subjects() []subject.Subject
-	Inbox() chan polity.Envelope
 	Accept(polity.Envelope)
 	Run(context.Context)
 	Shutdown()
 	Name() string
 }
 
-func ProgramFrom(thing any) (Program, error) {
-	p, ok := thing.(Program)
-	if !ok {
-		return nil, errors.New("could not cast to Program")
-	}
-	return p, nil
-}
+//func ProgramFrom(thing any) (Program, error) {
+//	p, ok := thing.(Program)
+//	if !ok {
+//		return nil, errors.New("could not cast to Program")
+//	}
+//	return p, nil
+//}

@@ -2,24 +2,31 @@ package bootup
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/programs"
 	"github.com/sean9999/polity/v3/subject"
 )
 
+/*
+bootup sends a message to itself with a handy join code, and then exits
+*/
+
+var _ programs.Program = (*proc)(nil)
+
 type proc struct {
-	c      *polity.Citizen
-	inbox  chan polity.Envelope
-	outbox chan polity.Envelope
-	errs   chan error
+	c *polity.Citizen
+	o chan polity.Envelope
+	e chan error
 }
 
-func (p *proc) Initialize(c *polity.Citizen, inbox chan polity.Envelope, outbox chan polity.Envelope, errs chan error) error {
+func (p *proc) Initialize(c *polity.Citizen, outbox chan polity.Envelope, errs chan error) error {
 	p.c = c
-	p.inbox = inbox
-	p.outbox = outbox
-	p.errs = errs
+	p.o = outbox
+	p.e = errs
+	p.o = outbox
+	p.e = errs
 	return nil
 }
 
@@ -30,27 +37,27 @@ func (p *proc) Subjects() []subject.Subject {
 	return s
 }
 
-func (p *proc) Inbox() chan polity.Envelope {
-	return p.inbox
-}
-
 func (p *proc) Accept(e polity.Envelope) {
-
+	p.c.Log.Println(string(e.Letter.Body()))
 }
 
-func (p *proc) Run(ctx context.Context) {
-	//TODO implement me
-	panic("implement me")
+func (p *proc) Run(_ context.Context) {
+	me := p.c
+	e := polity.NewEnvelope(nil)
+	e.Letter.SetSubject(subject.BootUp)
+	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Node.Address())
+	e.Letter.PlainText = []byte(greeting)
+	e.Sender = p.c.Address()
+	e.Recipient = p.c.Address()
+	p.o <- *e
 }
 
-func (p *proc) Shutdown() {
-	//TODO implement me
-	panic("implement me")
-}
+func (p *proc) Shutdown() {}
 
 func (p *proc) Name() string {
-	//TODO implement me
-	panic("implement me")
+	return "bootup"
 }
 
-var _ programs.Program = (*proc)(nil)
+func init() {
+	programs.Register(new(proc))
+}
