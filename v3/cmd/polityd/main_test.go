@@ -15,8 +15,8 @@ import (
 var (
 	aliceCli  hermeti.CLI[*appState]
 	aliceJoin string
-	bobCli    hermeti.CLI[*appState]
-	bobJoin   string
+	//bobCli    hermeti.CLI[*appState]
+	//bobJoin   string
 )
 
 var mother polity.Network
@@ -54,7 +54,7 @@ func setup() error {
 	}
 	env.Args = []string{"polityd"}
 	aliceCli = createCitizen(1, env)
-	bobCli = createCitizen(2, env)
+	//bobCli = createCitizen(2, env)
 	return nil
 }
 
@@ -71,7 +71,7 @@ func TestMain(m *testing.M) {
 	}
 
 	go aliceCli.Run()
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	exitVal := m.Run()
 	teardown()
