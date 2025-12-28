@@ -1,7 +1,7 @@
 package main
 
 /*
-import all your plugins here
+all your plugins are belong to here
 */
 
 import (

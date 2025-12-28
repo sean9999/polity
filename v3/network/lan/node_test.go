@@ -1,6 +1,7 @@
 package lan
 
 import (
+	"io"
 	"testing"
 
 	"github.com/sean9999/polity/v3"
@@ -33,7 +34,7 @@ func TestNewNode(t *testing.T) {
 
 	myNet := newNet(t)
 	n := myNet.Spawn().(*Node)
-	c := polity.NewCitizen(rando(5), n)
+	c := polity.NewCitizen(rando(5), io.Discard, n)
 	assert.NotNil(t, n)
 	assert.NotNil(t, c)
 	assert.Nil(t, n.Address())
@@ -49,7 +50,7 @@ func createCitizen(t testing.TB, seed int) *polity.Citizen {
 		lanNet = newNet(t)
 	}
 	node := lanNet.Spawn()
-	person := polity.NewCitizen(rando(seed), node)
+	person := polity.NewCitizen(rando(seed), io.Discard, node)
 	return person
 }
 

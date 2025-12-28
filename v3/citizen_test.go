@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"io"
 	"net/url"
 	"testing"
 	"time"
 
 	"github.com/sean9999/go-oracle/v3/delphi"
-	polity "github.com/sean9999/polity/v3"
+	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,8 +36,8 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	bobNet := net.Spawn()
 
 	// two citizens on the mem network
-	alice := polity.NewCitizen(rand.Reader, aliceNet)
-	bob := polity.NewCitizen(rand.Reader, bobNet)
+	alice := polity.NewCitizen(rand.Reader, io.Discard, aliceNet)
+	bob := polity.NewCitizen(rand.Reader, io.Discard, bobNet)
 
 	_, aliceOut, aliceErrs, err := alice.Join(ctx)
 	if err != nil {
@@ -95,9 +96,9 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	ctx := context.Background()
 	net := mem.NewNetwork()
 
-	alice := polity.NewCitizen(rand.Reader, net.Spawn())
-	bob := polity.NewCitizen(rand.Reader, net.Spawn())
-	carol := polity.NewCitizen(rand.Reader, net.Spawn())
+	alice := polity.NewCitizen(rand.Reader, io.Discard, net.Spawn())
+	bob := polity.NewCitizen(rand.Reader, io.Discard, net.Spawn())
+	carol := polity.NewCitizen(rand.Reader, io.Discard, net.Spawn())
 
 	bobInbox, _, bobErrs, err := bob.Join(ctx)
 	if err != nil {
@@ -174,7 +175,7 @@ func TestCitizen_Join_Errors(t *testing.T) {
 	// has oracle but no network: construct via NewCitizen then nil out the Node
 	net := mem.NewNetwork()
 	n := net.Spawn()
-	c2 := polity.NewCitizen(rand.Reader, n)
+	c2 := polity.NewCitizen(rand.Reader, io.Discard, n)
 	// explicitly remove network
 	c2.Node = nil
 	if in, out, errs, err := c2.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
@@ -192,7 +193,7 @@ func (r randomizer) Read(p []byte) (int, error) {
 }
 
 func TestCitizen_AsPeer(t *testing.T) {
-	c := polity.NewCitizen(randomizer(1), mem.NewNetwork().Spawn())
+	c := polity.NewCitizen(randomizer(1), io.Discard, mem.NewNetwork().Spawn())
 	assert.Equal(t, c.NickName(), c.AsPeer().NickName())
 }
 
@@ -231,7 +232,7 @@ func (b badListener) Listen(_ context.Context) (chan []byte, error) {
 }
 
 func TestCitizen_AcquireAddress(t *testing.T) {
-	c := polity.NewCitizen(randomizer(1), brokenNode{})
+	c := polity.NewCitizen(randomizer(1), io.Discard, brokenNode{})
 	err := c.AcquireAddress(nil, delphi.PublicKey{})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "failed to acquire address")
@@ -240,13 +241,13 @@ func TestCitizen_AcquireAddress(t *testing.T) {
 func TestCitizen_Join_broken_node(t *testing.T) {
 
 	t.Run("can't acquire address", func(t *testing.T) {
-		c := polity.NewCitizen(randomizer(1), brokenNode{})
+		c := polity.NewCitizen(randomizer(1), io.Discard, brokenNode{})
 		_, _, _, err := c.Join(t.Context())
 		assert.ErrorContains(t, err, "failed to acquire address")
 	})
 
 	t.Run("can't listen", func(t *testing.T) {
-		c := polity.NewCitizen(randomizer(1), badListener{})
+		c := polity.NewCitizen(randomizer(1), io.Discard, badListener{})
 		_, _, _, err := c.Join(t.Context())
 		assert.ErrorContains(t, err, "bad listener")
 	})
@@ -256,7 +257,7 @@ func TestCitizen_Join_broken_node(t *testing.T) {
 func TestCitizen_inbox_outbox(t *testing.T) {
 	net := mem.NewNetwork()
 	n := net.Spawn()
-	c := polity.NewCitizen(rand.Reader, n)
+	c := polity.NewCitizen(rand.Reader, io.Discard, n)
 	inbox, outbox, errs, err := c.Join(t.Context())
 	assert.NoError(t, err)
 
@@ -268,12 +269,6 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	case <-time.After(time.Second):
 		assert.Fail(t, "timed out waiting for broken node")
 	}
-
-	//	a letter with AAD that does not marshal into a map[string]string is an error
-	//l := polity.NewLetter(rand.Reader)
-	//l.AAD = []byte("i do not deserialize into a map[string]string")
-	//err = c.Send(nil, rand.Reader, l, c.Address())
-	//assert.ErrorContains(t, err, "refusing to serialize")
 
 	// letter round trip
 	l2 := polity.NewLetter(rand.Reader)
@@ -346,9 +341,9 @@ func TestCitizen_Announce_sad(t *testing.T) {
 	nB := net.Spawn()
 	nC := net.Spawn()
 
-	alice := polity.NewCitizen(rand.Reader, nA)
-	bob := polity.NewCitizen(rand.Reader, nB)
-	carol := polity.NewCitizen(rand.Reader, nC)
+	alice := polity.NewCitizen(rand.Reader, io.Discard, nA)
+	bob := polity.NewCitizen(rand.Reader, io.Discard, nB)
+	carol := polity.NewCitizen(rand.Reader, io.Discard, nC)
 
 	alice.Peers.Add(*bob.AsPeer(), nil)
 	alice.Peers.Add(*carol.AsPeer(), nil)
@@ -388,22 +383,25 @@ func TestCitizen_Announce(t *testing.T) {
 	// setup in-memory network with three nodes
 	net := mem.NewNetwork()
 
-	net.Up()
+	err := net.Up()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	nA := net.Spawn()
 	nB := net.Spawn()
 	nC := net.Spawn()
 
-	alice := polity.NewCitizen(rand.Reader, nA)
-	bob := polity.NewCitizen(rand.Reader, nB)
-	carol := polity.NewCitizen(rand.Reader, nC)
+	alice := polity.NewCitizen(rand.Reader, io.Discard, nA)
+	bob := polity.NewCitizen(rand.Reader, io.Discard, nB)
+	carol := polity.NewCitizen(rand.Reader, io.Discard, nC)
 
 	// join all citizens to the network
-	binB, _, berrs, err := bob.Join(ctx)
+	binB, _, bErrs, err := bob.Join(ctx)
 	assert.NoError(t, err)
-	binC, _, cerrs, err := carol.Join(ctx)
+	binC, _, cErrs, err := carol.Join(ctx)
 	assert.NoError(t, err)
-	_, _, aerrs, err := alice.Join(ctx)
+	_, _, aErrs, err := alice.Join(ctx)
 	assert.NoError(t, err)
 
 	// build a broadcast letter and announce to Bob and Carol
@@ -415,18 +413,18 @@ func TestCitizen_Announce(t *testing.T) {
 	assert.NoError(t, err)
 
 	// both Bob and Carol should receive the envelope
-	recvB := receiveEnvelopeOrTimeout(t, binB, 2*time.Second)
-	recvC := receiveEnvelopeOrTimeout(t, binC, 2*time.Second)
-	assert.Equal(t, "hi", string(recvB.Letter.PlainText))
-	assert.Equal(t, "hi", string(recvC.Letter.PlainText))
+	receiveB := receiveEnvelopeOrTimeout(t, binB, 2*time.Second)
+	receiveC := receiveEnvelopeOrTimeout(t, binC, 2*time.Second)
+	assert.Equal(t, "hi", string(receiveB.Letter.PlainText))
+	assert.Equal(t, "hi", string(receiveC.Letter.PlainText))
 
 	// ensure no errors were reported
 	select {
-	case e := <-aerrs:
+	case e := <-aErrs:
 		assert.Failf(t, "unexpected error from alice", "%v", e)
-	case e := <-berrs:
+	case e := <-bErrs:
 		assert.Failf(t, "unexpected error from bob", "%v", e)
-	case e := <-cerrs:
+	case e := <-cErrs:
 		assert.Failf(t, "unexpected error from carol", "%v", e)
 	default:
 		// ok

@@ -12,7 +12,6 @@ import (
 	"github.com/sean9999/go-oracle/v3"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
-	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/sean9999/polity/v3/programs"
 
 	"github.com/sean9999/polity/v3/subject"
@@ -29,15 +28,22 @@ type appState struct {
 	node     polity.Node
 }
 
+// a real app uses the lan back-end
 func newRealApp() *appState {
 
+	lNet := new(lan.Network)
+	err := lNet.Up()
+	if err != nil {
+		panic(err)
+	}
 	a := appState{
-		node: lan.NewNode(nil),
+		node: lNet.Spawn(),
 	}
 	return &a
 }
 
-func newTestApp(mother *mem.Network) *appState {
+// a test app uses the mem back-end
+func newTestApp(mother polity.Network) *appState {
 	a := appState{
 		node: mother.Spawn(),
 	}
@@ -50,12 +56,16 @@ func (a *appState) Init(env *hermeti.Env) error {
 		return errors.New("you need to instantiate a node and attach it your appState before calling Init")
 	}
 
-	a.me = polity.NewCitizen(env.Randomness, a.node)
+	a.me = polity.NewCitizen(env.Randomness, env.OutStream, a.node)
+	a.me.Log.SetOutput(env.OutStream)
 	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
 
 	//	are we initializing from a private key?
 	fSet.Func("file", "PEM that contains private key and optionally other stuff", func(s string) error {
+		if s == "" {
+			return nil
+		}
 		f, err := env.Filesystem.OpenFile(s, 0440, fs.ModeType)
 		if err != nil {
 			return err

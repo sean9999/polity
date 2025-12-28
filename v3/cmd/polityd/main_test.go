@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bytes"
 	_ "context"
 	"os"
-	"regexp"
 	"testing"
 	"time"
 
 	"github.com/sean9999/hermeti"
+	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +19,7 @@ var (
 	bobJoin   string
 )
 
-var mother *mem.Network
+var mother polity.Network
 
 type deterministicRandomness byte
 
@@ -40,9 +39,16 @@ func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*appState] {
 }
 
 func setup() error {
+
 	mother = mem.NewNetwork()
+
+	err := mother.Up()
+	if err != nil {
+		return err
+	}
 	env := hermeti.TestEnv()
-	err := env.MountDir("../../testdata")
+
+	err = env.MountDir("../../testdata")
 	if err != nil {
 		return err
 	}
@@ -65,26 +71,7 @@ func TestMain(m *testing.M) {
 	}
 
 	go aliceCli.Run()
-	time.Sleep(250 * time.Millisecond)
-
-	out, err := aliceCli.Env.CaptureOutput()
-	if err != nil {
-		panic(err)
-	}
-
-	c, err := regexp.Compile(` -join=(.*)`)
-
-	if err != nil {
-		panic(err)
-	}
-
-	matches := c.FindAllStringSubmatch(out.String(), -1)
-
-	if len(matches) < 1 || len(matches[0]) < 2 {
-		panic("no matches")
-	}
-
-	aliceJoin = matches[0][1]
+	time.Sleep(1000 * time.Millisecond)
 
 	exitVal := m.Run()
 	teardown()
@@ -92,9 +79,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestCitizen_fallingDawn_boots(t *testing.T) {
-	out := aliceCli.Env.OutStream.(*bytes.Buffer)
+	out, err := aliceCli.Env.CaptureOutput()
+	if err != nil {
+		panic(err)
+	}
 	assert.Contains(t, out.String(), "falling-dawn")
 	assert.Contains(t, out.String(), "a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c")
 	assert.Contains(t, out.String(), "polityd -join=")
+	aliceJoin = aliceCli.App.me.Address().String()
 	assert.Equal(t, "memnet://a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c@memory", aliceJoin)
 }

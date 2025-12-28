@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 
 	"github.com/sean9999/go-oracle/v3"
@@ -34,13 +33,13 @@ func (c *Citizen) AsPeer() *Peer {
 	return &Peer{orc}
 }
 
-func NewCitizen(randy io.Reader, node Node) *Citizen {
+func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)
 	return &Citizen{
 		Node:   node,
 		Oracle: orc,
 		Peers:  NewPeerSet(orc.Peers),
-		Log:    log.New(os.Stdout, "", 0),
+		Log:    log.New(out, "", 0),
 	}
 }
 

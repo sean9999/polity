@@ -18,7 +18,7 @@ func (n *Network) Up() error {
 	return nil
 }
 
-// to bring down a Network is to forget all its Nodes
+// Down brings down a Network by forgetting all its Nodes
 func (n *Network) Down() {
 	m := *n
 	clear(m)
