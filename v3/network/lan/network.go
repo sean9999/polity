@@ -12,6 +12,7 @@ import (
 var _ polity.Network = (*Network)(nil)
 
 // A Network is the encapsulation of a local area network (LAN)
+// operating on one subnet, from one device, using one net.IP
 type Network struct {
 	device netstate.NetworkInterface
 	subNet *net.IPNet
@@ -19,7 +20,8 @@ type Network struct {
 }
 
 // Up brings the Network up by finding a suitable network device
-// and recording its IP address and subnet
+// and recording its IP address and subnet.
+// It does not actually change the state of any physical network device
 func (n *Network) Up() error {
 	state, err := netstate.GetAccessibleIPs()
 	if err != nil {
@@ -37,10 +39,11 @@ func (n *Network) Up() error {
 			return nil
 		}
 	}
-	return net.InvalidAddrError("no suitable IP address")
+	return net.InvalidAddrError("no suitable device found")
 }
 
-// Down brings the network down, which is a no-op in this case
+// Down brings the network down, which is a no-op in this case.
+// We do not actually want to bring the physical device down.
 func (n *Network) Down() {
 	// no op
 }
@@ -53,7 +56,7 @@ func (n *Network) Spawn() polity.Node {
 		ip, subnet, _ := net.ParseCIDR(a.String())
 		if isPrivate(subnet) {
 			node.addr = ipToAddr(ip)
-			return nil
+			break
 		}
 	}
 	return node

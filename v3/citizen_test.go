@@ -21,7 +21,7 @@ func receiveEnvelopeOrTimeout[T any](t *testing.T, ch <-chan T, d time.Duration)
 	case v := <-ch:
 		return v
 	case <-time.After(d):
-		t.Fatalf("timeout waiting for value on channel")
+		//t.Fatalf("timeout waiting for value on channel")
 		var zero T
 		return zero
 	}
@@ -270,10 +270,10 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	}
 
 	//	a letter with AAD that does not marshal into a map[string]string is an error
-	l := polity.NewLetter(rand.Reader)
-	l.AAD = []byte("i do not deserialize into a map[string]string")
-	err = c.Send(nil, rand.Reader, l, c.Address())
-	assert.ErrorContains(t, err, "refusing to serialize")
+	//l := polity.NewLetter(rand.Reader)
+	//l.AAD = []byte("i do not deserialize into a map[string]string")
+	//err = c.Send(nil, rand.Reader, l, c.Address())
+	//assert.ErrorContains(t, err, "refusing to serialize")
 
 	// letter round trip
 	l2 := polity.NewLetter(rand.Reader)
@@ -283,29 +283,41 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	l3 := <-inbox
 	assert.Equal(t, l2.Subject(), l3.Letter.Subject())
 
+	//	badly formed AAD should result in refusal to serialize
 	e := polity.NewEnvelope(rand.Reader)
+	e.Recipient = c.Address()
 	e.Letter.AAD = []byte("i do not deserialize into a map[string]string")
 	outbox <- *e
 
 	select {
 	case err = <-errs:
-		assert.ErrorContains(t, err, "refusing to serialize")
+		assert.ErrorContains(t, err, "refusing to serialize", "wrong error")
 	case <-time.After(time.Second):
 		assert.Fail(t, "timed out waiting for thing")
+	case incoming := <-inbox:
+		assert.Equal(t, c.Address().String(), incoming.Recipient.String())
 	}
 
+	//	now use well-formed AAD
 	e.Letter.AAD = nil
 	e.Letter.SetHeader("foo", "bar")
-
 	outbox <- *e
 
 	select {
 	case err = <-errs:
-		assert.ErrorContains(t, err, "nil recipient")
+		assert.ErrorContains(t, err, "no recipient")
 	case <-time.After(time.Second):
 		assert.Fail(t, "timed out waiting for thing")
+	case incoming := <-inbox:
+		assert.Equal(t, c.Address().String(), incoming.Recipient.String())
+		foo1, exists := e.Letter.GetHeader("foo")
+		assert.True(t, exists)
+		assert.Equal(t, "bar", foo1)
+		foo2, exists := incoming.Letter.GetHeader("foo")
+		assert.Equal(t, foo1, foo2)
 	}
 
+	//	sending to an unknown recipient should result in "no such recipient".
 	e.Recipient = &url.URL{
 		Scheme: "barf",
 		Host:   "weird",

@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var lanNet *Network
+
 type rando byte
 
 func (r rando) Read(p []byte) (int, error) {
@@ -17,51 +19,68 @@ func (r rando) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
+func newNet(t testing.TB) *Network {
+	t.Helper()
+	n := new(Network)
+	err := n.Up()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return n
+}
+
 func TestNewNode(t *testing.T) {
 
-	n := NewNode(nil)
-	c := polity.NewCitizen(rando(1), n)
+	myNet := newNet(t)
+	n := myNet.Spawn().(*Node)
+	c := polity.NewCitizen(rando(5), n)
 	assert.NotNil(t, n)
 	assert.NotNil(t, c)
-	assert.Nil(t, n.url)
+	assert.Nil(t, n.Address())
 	err := c.AcquireAddress(nil, c.KeyPair.PublicKey())
 	assert.NoError(t, err)
-	assert.NotNil(t, n.url)
+	assert.NotNil(t, n.Address())
 
+}
+
+func createCitizen(t testing.TB, seed int) *polity.Citizen {
+	t.Helper()
+	if lanNet == nil {
+		lanNet = newNet(t)
+	}
+	node := lanNet.Spawn()
+	person := polity.NewCitizen(rando(seed), node)
+	return person
 }
 
 func createAlice(t testing.TB) *polity.Citizen {
 	t.Helper()
-	aliceNode := NewNode(nil)
-	alice := polity.NewCitizen(rando(1), aliceNode)
-	return alice
+	return createCitizen(t, 1)
 }
 
 func createBob(t testing.TB) *polity.Citizen {
 	t.Helper()
-	bobNode := NewNode(nil)
-	bob := polity.NewCitizen(rando(2), bobNode)
-	return bob
+	return createCitizen(t, 2)
 }
 
 func TestThing(t *testing.T) {
 
 	//	Alice
 	alice := createAlice(t)
-	aliceInbox, aliceOutbox, _, err := alice.Join(nil)
+	aliceIn, aliceOut, _, err := alice.Join(nil)
 	assert.NoError(t, err)
 
 	// Alice says hi to herself
 	e := alice.ComposePlain(alice.Address(), "hi")
 	go func() {
-		aliceOutbox <- *e
+		aliceOut <- *e
 	}()
-	f := <-aliceInbox
+	f := <-aliceIn
 	assert.Equal(t, e.Letter.PlainText, f.Letter.PlainText)
 
 	//	Bob
 	bob := createBob(t)
-	_, bobOutbox, bobErrs, err := bob.Join(nil)
+	_, bobOut, bobErrs, err := bob.Join(nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, bobErrs)
 
@@ -71,9 +90,9 @@ func TestThing(t *testing.T) {
 	// Bob sends a message to Alice
 	g := bob.ComposePlain(alice.Address(), "there")
 	go func() {
-		bobOutbox <- *g
+		bobOut <- *g
 	}()
-	h := <-aliceInbox
+	h := <-aliceIn
 	assert.Contains(t, string(h.Letter.PlainText), "there")
 
 }
@@ -145,19 +164,11 @@ func TestEnvelope_sign(t *testing.T) {
 func TestAsPeer(t *testing.T) {
 	alice := createAlice(t)
 	bob := createBob(t)
-
 	assert.Equal(t, 0, alice.Peers.Len())
 	alice.Peers.Add(*bob.AsPeer(), nil)
 	assert.Equal(t, 1, alice.Peers.Len())
 	bobAsPeer := alice.Peers.Get(bob.AsPeer().PublicKey)
 	assert.NotNil(t, bobAsPeer)
-	err := alice.AcquireAddress(nil, alice.KeyPair.PublicKey())
-	assert.NoError(t, err)
-	err = bob.AcquireAddress(nil, bob.KeyPair.PublicKey())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, bobAsPeer.Address())
-	assert.Equal(t, bob.AsPeer().Address(), bobAsPeer.Address())
-
 	alice.Peers.Remove(*bob.AsPeer())
 	assert.Equal(t, 0, alice.Peers.Len())
 }

@@ -119,11 +119,11 @@ func decodeAAD(data []byte) (map[string]string, error) {
 	lm := stablemap.NewLexicalMap[string, string]()
 	err := lm.UnmarshalBinary(data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not decode AAD: %w", err)
 	}
 	m := lm.AsMap()
 	if m == nil {
-		return nil, errors.New("nil map")
+		return nil, errors.New("could not decode AAD: nil map")
 	}
 	return m, nil
 }
@@ -150,6 +150,16 @@ func (letter *Letter) Serialize() []byte {
 	}
 	letter.Message.AAD = aad
 	return letter.Message.Serialize()
+}
+
+func (letter *Letter) Deserialize(p []byte) error {
+	letter.Message.Deserialize(p)
+	m, err := decodeAAD(letter.Message.AAD)
+	if err != nil {
+		return fmt.Errorf("could not deserialize AAD: %w", err)
+	}
+	letter.headers = m
+	return nil
 }
 
 func (letter *Letter) GetHeader(key string) (string, bool) {

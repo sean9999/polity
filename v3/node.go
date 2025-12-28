@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-// A Packet is arbitrary binary data, with an optional recipient and sender.
+// A Packet is arbitrary binary data, with the notion of recipient and sender.
 type Packet struct {
 	Sender    *url.URL
 	Recipient *url.URL
@@ -14,19 +14,19 @@ type Packet struct {
 
 // A Network can be brought up, put down, and spawn nodes.
 type Network interface {
-	Up() error
-	Down()
-	Spawn() Node
+	Up() error   // bring a Network up
+	Down()       // bring a Network down
+	Spawn() Node // spawn a Node
 }
 
-// A Node establishes a connection and can acquire an address on that connection.
-// It can also listen for and send messages.
+// A Node establishes a connection on a Network and can acquire an address on that connection.
+// It listens for, and send messages.
 type Node interface {
-	AcquireAddress(context.Context, any) error // Acquires a unique address using whatever context is necessary.
-	Listen(context.Context) (chan []byte, error)
-	Send(context.Context, []byte, url.URL) error
-	Announce(context.Context, []byte, []url.URL) error // this should operate in parallel
+	AcquireAddress(context.Context, any) error         // Acquires a unique address using whatever context is necessary.
+	Listen(context.Context) (chan []byte, error)       // listen for messages
+	Send(context.Context, []byte, url.URL) error       // send a message
+	Announce(context.Context, []byte, []url.URL) error // send in parallel
 	Leave(ctx context.Context) error
-	Address() *url.URL
-	Network() Network
+	Address() *url.URL // the address of the Node
+	Network() Network  // the Network this Node is on
 }

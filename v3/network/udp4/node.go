@@ -15,16 +15,21 @@ import (
 	"github.com/sean9999/polity/v3"
 )
 
+const (
+	networkName = "udp4"
+)
+
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
-	addr *net.UDPAddr
-	conn *net.UDPConn
-	url  *url.URL
+	addr    *net.UDPAddr
+	conn    *net.UDPConn
+	url     *url.URL
+	network *Network
 }
 
 func (n *Node) Network() polity.Network {
-	return nil
+	return n.network
 }
 
 func (n *Node) Listen(_ context.Context) (chan []byte, error) {
@@ -74,11 +79,29 @@ func udpAddrToURL(addr net.UDPAddr) (url.URL, error) {
 	}, nil
 }
 
-func (n *Node) Send(_ context.Context, data []byte, u url.URL) error {
+func (n *Node) ephemeralSend(_ context.Context, data []byte, u *net.UDPAddr) error {
+	newConn, err := net.DialUDP(networkName, nil, u)
+	if err != nil {
+		return err
+	}
+	defer newConn.Close()
+	_, err = newConn.Write(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n *Node) Send(ctx context.Context, data []byte, u url.URL) error {
 	addr, err := urlToUDPAddr(u)
 	if err != nil {
 		return err
 	}
+
+	if n.Address().Host == u.Host {
+		return n.ephemeralSend(ctx, data, addr)
+	}
+
 	_, err = n.conn.WriteToUDP(data, addr)
 	if err != nil {
 		return err
@@ -86,14 +109,13 @@ func (n *Node) Send(_ context.Context, data []byte, u url.URL) error {
 	return nil
 }
 
-func (n *Node) Announce(_ context.Context, data []byte, urls []url.URL) error {
+func (n *Node) Announce(ctx context.Context, data []byte, urls []url.URL) error {
 	var err error
 	wg := new(sync.WaitGroup)
-	wg.Add(len(urls))
 	for _, u := range urls {
-		e := n.Send(context.Background(), data, u)
-		if e != nil {
-			err = errors.Join(err, e)
+		er := n.Send(ctx, data, u)
+		if er != nil {
+			err = errors.Join(err, er)
 		}
 		wg.Done()
 	}
@@ -132,7 +154,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 
 	idealPort := uint64ToEphemeralPort(n.KeyToUint64(key))
 
-	addr, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", hostName, idealPort))
+	addr, err := netip.ParseAddrPort(fmt.Sprintf("%s:%d", loopbackAddr, idealPort))
 	if err != nil {
 		return err
 	}
@@ -142,6 +164,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 	if err != nil {
 		return err
 	}
+	//defer conn.Close()
 	_, err = conn.WriteToUDP([]byte("cool"), idealDestinationAddr)
 	if err != nil {
 		conn.Close()
@@ -163,6 +186,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 		conn.Close()
 		return err
 	}
+
 	u.User = url.User(key.String())
 	n.url = &u
 	n.conn = conn
@@ -180,7 +204,7 @@ func (n *Node) AcquireAddress(ctx context.Context, opts any) error {
 
 	key, ok := opts.(delphi.PublicKey)
 	if !ok {
-		return errors.New("invalid opts")
+		return errors.New("opts is not a delphi public key")
 	}
 
 	err := n.acquireStableAddress(ctx, key)

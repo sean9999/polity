@@ -164,6 +164,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 	if err != nil {
 		return err
 	}
+	//defer conn.Close()
 	_, err = conn.WriteToUDP([]byte("cool"), idealDestinationAddr)
 	if err != nil {
 		conn.Close()
@@ -185,6 +186,7 @@ func (n *Node) acquireStableAddress(_ context.Context, key delphi.PublicKey) err
 		conn.Close()
 		return err
 	}
+
 	u.User = url.User(key.String())
 	n.url = &u
 	n.conn = conn
@@ -198,7 +200,7 @@ func (n *Node) WriteDirectly(data []byte) error {
 	return err
 }
 
-func (n *Node) AcquireAddress(ctx context.Context, opts polity.AcquireOpts) error {
+func (n *Node) AcquireAddress(ctx context.Context, opts any) error {
 
 	key, ok := opts.(delphi.PublicKey)
 	if !ok {

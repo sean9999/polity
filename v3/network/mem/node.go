@@ -28,7 +28,7 @@ func (n *Node) Nickname() string {
 
 func (n *Node) AcquireAddress(_ context.Context, opts any) error {
 
-	pubKey, ok := opts.(delphi.Key)
+	pubKey, ok := opts.(delphi.PublicKey)
 	if !ok {
 		return errors.New("bad key")
 	}

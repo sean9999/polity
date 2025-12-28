@@ -169,8 +169,8 @@ outer:
 
 			//	Every program registered to handle this subject gets this message.
 			progs := registry.ProgramsThatHandle(e.Letter.Subject())
-			for progName, prog := range progs {
-				fmt.Fprintf(env.OutStream, "handlr:\t%s\n", progName)
+			for i, prog := range progs {
+				fmt.Fprintf(env.OutStream, "handlr:\t%d\n", i)
 				prog.Inbox() <- e
 			}
 

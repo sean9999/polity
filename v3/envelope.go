@@ -15,25 +15,25 @@ type Envelope struct {
 	Recipient *url.URL `json:"recipient,omitempty" msgpack:"recipient"`
 }
 
-func (env *Envelope) Serialize() ([]byte, error) {
-	_, err := decodeAAD(env.Letter.Message.AAD)
+func (e *Envelope) Serialize() ([]byte, error) {
+	_, err := decodeAAD(e.Letter.Message.AAD)
 	if err != nil {
 		return nil, fmt.Errorf("refusing to serialize. %w", err)
 	}
-	return msgpack.Marshal(env)
+	return msgpack.Marshal(e)
 }
 
-func (env *Envelope) Deserialize(p []byte) error {
-	err := msgpack.Unmarshal(p, env)
+func (e *Envelope) Deserialize(p []byte) error {
+	err := msgpack.Unmarshal(p, e)
 	if err != nil {
 		return fmt.Errorf("could not deserialize. %w", err)
 	}
-	headers, err := decodeAAD(env.Letter.AAD)
+	headers, err := decodeAAD(e.Letter.Message.AAD)
 	if err != nil {
 		return fmt.Errorf("refusing to deserialize. %w", err)
 	}
-	env.Letter.headers = headers
-	return msgpack.Unmarshal(p, env)
+	e.Letter.headers = headers
+	return msgpack.Unmarshal(p, e)
 }
 
 func NewEnvelope(r io.Reader) *Envelope {

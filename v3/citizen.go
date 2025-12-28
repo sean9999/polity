@@ -150,7 +150,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 			//	go prog.Accept(*e)
 			//}
 		}
-		close(inbox)
+		//close(inbox)
 	}()
 
 	//	range over outbox, which is a channel of Envelope which our user has decided they want to send.
@@ -225,16 +225,22 @@ func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, reci
 }
 
 func (c *Citizen) Announce(ctx context.Context, randy io.Reader, letter Letter, recipients []url.URL) error {
-	var err error
 	wg := new(sync.WaitGroup)
 	wg.Add(len(recipients))
+	errs := make(chan error, len(recipients))
 	for _, recipient := range recipients {
-		er := c.Send(ctx, randy, letter, &recipient)
-		if er != nil {
-			err = errors.Join(err, er)
-		}
-		wg.Done()
+		go func() {
+			errs <- c.Send(ctx, randy, letter, &recipient)
+			wg.Done()
+		}()
 	}
 	wg.Wait()
+	close(errs)
+	var err error
+	for e := range errs {
+		if e != nil {
+			err = errors.Join(err, e)
+		}
+	}
 	return err
 }

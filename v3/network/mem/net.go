@@ -8,12 +8,17 @@ import (
 
 var _ polity.Network = (*Network)(nil)
 
+// A Network is a bunch of Nodes
 type Network map[url.URL]*Node
 
 func (n *Network) Up() error {
+	//if n == nil {
+	//	return errors.New("nil network")
+	//}
 	return nil
 }
 
+// to bring down a Network is to forget all its Nodes
 func (n *Network) Down() {
 	m := *n
 	clear(m)
