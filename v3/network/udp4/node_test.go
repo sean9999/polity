@@ -38,7 +38,7 @@ func TestNewNode(t *testing.T) {
 	assert.NotNil(t, n)
 	assert.NotNil(t, c)
 	assert.Nil(t, n.Address())
-	err := c.AcquireAddress(nil, c.KeyPair.PublicKey())
+	err := c.Establish(nil, c.KeyPair.PublicKey())
 	assert.NoError(t, err)
 	assert.NotNil(t, n.Address())
 
@@ -72,7 +72,7 @@ func TestThing(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Alice says hi to herself
-	e := alice.ComposePlain(alice.Address(), "hi")
+	e := alice.ComposePlain(alice.URL(), "hi")
 	go func() {
 		aliceOut <- *e
 	}()
@@ -89,7 +89,7 @@ func TestThing(t *testing.T) {
 	assert.NotEqual(t, bob.NickName(), alice.NickName())
 
 	// Bob sends a message to Alice
-	g := bob.ComposePlain(alice.Address(), "there")
+	g := bob.ComposePlain(alice.URL(), "there")
 	go func() {
 		bobOut <- *g
 	}()

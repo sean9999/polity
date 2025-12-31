@@ -5,11 +5,8 @@ import (
 	"testing"
 
 	"github.com/sean9999/polity/v3"
-
 	"github.com/stretchr/testify/assert"
 )
-
-var lanNet *Network
 
 type rando byte
 
@@ -20,36 +17,24 @@ func (r rando) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func newNet(t testing.TB) *Network {
-	t.Helper()
-	n := new(Network)
-	err := n.Up()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return n
-}
-
 func TestNewNode(t *testing.T) {
 
-	myNet := newNet(t)
-	n := myNet.Spawn().(*Node)
+	n, err := NewConn(nil)
+	assert.NoError(t, err)
 	c := polity.NewCitizen(rando(5), io.Discard, n)
 	assert.NotNil(t, n)
 	assert.NotNil(t, c)
-	assert.Nil(t, n.Address())
-	err := c.AcquireAddress(nil, c.KeyPair.PublicKey())
+	assert.Nil(t, n.URL())
+	err = c.Establish(nil, c.KeyPair)
 	assert.NoError(t, err)
-	assert.NotNil(t, n.Address())
+	assert.NotNil(t, n.URL())
 
 }
 
 func createCitizen(t testing.TB, seed int) *polity.Citizen {
 	t.Helper()
-	if lanNet == nil {
-		lanNet = newNet(t)
-	}
-	node := lanNet.Spawn()
+
+	node, _ := NewConn(nil)
 	person := polity.NewCitizen(rando(seed), io.Discard, node)
 	return person
 }
@@ -72,7 +57,7 @@ func TestThing(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Alice says hi to herself
-	e := alice.ComposePlain(alice.Address(), "hi")
+	e := alice.ComposePlain(alice.URL(), "hi")
 	go func() {
 		aliceOut <- *e
 	}()
@@ -89,7 +74,7 @@ func TestThing(t *testing.T) {
 	assert.NotEqual(t, bob.NickName(), alice.NickName())
 
 	// Bob sends a message to Alice
-	g := bob.ComposePlain(alice.Address(), "there")
+	g := bob.ComposePlain(alice.URL(), "there")
 	go func() {
 		bobOut <- *g
 	}()

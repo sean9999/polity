@@ -55,7 +55,7 @@ func (n *Network) Down() {
 }
 
 // Spawn spawns a Node from a Network
-func (n *Network) Spawn() polity.Node {
+func (n *Network) Spawn() polity.Connection {
 	node := new(Node)
 	node.network = n
 	return node

@@ -316,7 +316,7 @@ func CitizenFrom(rw io.ReadWriter, n network.Network, server bool) (*Citizen, er
 	// }
 
 	//	might be nil. That's ok. It's just a suggestion
-	//addr, _ := net.ResolveUDPAddr("udp6", k.Self.Address)
+	//addr, _ := net.ResolveUDPAddr("udp6", k.Self.URL)
 
 	//conn := network(orc.EncryptionPublicKey.Bytes(), addr)
 

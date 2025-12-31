@@ -58,10 +58,10 @@ func (h *heartbeat) Run(ctx context.Context) {
 		case <-t.C:
 			i++
 			l.SetHeader("i", fmt.Sprintf("%d", i))
-			e := h.citizen.Compose(nil, h.citizen.Address())
+			e := h.citizen.Compose(nil, h.citizen.URL())
 			e.Letter = l
 			h.outbox <- *e
-			//recipients := append(h.citizen.Peers.URLs(), *h.citizen.Address())
+			//recipients := append(h.citizen.Peers.URLs(), *h.citizen.URL())
 			//err := h.citizen.Announce(ctx, nil, l, recipients)
 			//fmt.Println("announce heartbeat ", err)
 			//if err != nil {

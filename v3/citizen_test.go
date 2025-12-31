@@ -49,12 +49,12 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	}
 
 	// ensure both got addresses
-	if alice.Address() == nil || bob.Address() == nil {
-		t.Fatalf("expected both citizens to have an Address after Join")
+	if alice.URL() == nil || bob.URL() == nil {
+		t.Fatalf("expected both citizens to have an URL after Join")
 	}
 
 	// Alice composes and sends a plain message to Bob
-	e1 := alice.ComposePlain(bob.Address(), "hello bob")
+	e1 := alice.ComposePlain(bob.URL(), "hello bob")
 
 	select {
 	case aliceOut <- *e1:
@@ -68,11 +68,11 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	if e2.Recipient == nil || e2.Sender == nil {
 		t.Fatalf("expected non-nil Recipient and Sender, got Recipient=%v Sender=%v", e2.Recipient, e2.Sender)
 	}
-	if e2.Recipient.String() != bob.Address().String() {
-		t.Fatalf("Recipient mismatch: got %s want %s", e2.Recipient, bob.Address())
+	if e2.Recipient.String() != bob.URL().String() {
+		t.Fatalf("Recipient mismatch: got %s want %s", e2.Recipient, bob.URL())
 	}
-	if e2.Sender.String() != alice.Address().String() {
-		t.Fatalf("Sender mismatch: got %s want %s", e2.Sender, alice.Address())
+	if e2.Sender.String() != alice.URL().String() {
+		t.Fatalf("Sender mismatch: got %s want %s", e2.Sender, alice.URL())
 	}
 	if subj := e2.Letter.Subject(); subj != "plain message" {
 		t.Fatalf("Subject mismatch: got %q want %q", subj, "plain message")
@@ -119,7 +119,7 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 		t.Fatalf("SetSubject: %v", err)
 	}
 	letter.PlainText = []byte("msg to bob")
-	if err := alice.Send(ctx, rand.Reader, letter, bob.Address()); err != nil {
+	if err := alice.Send(ctx, rand.Reader, letter, bob.URL()); err != nil {
 		t.Fatalf("alice.Send: %v", err)
 	}
 	e3 := receiveEnvelopeOrTimeout(t, bobInbox, 2*time.Second)
@@ -131,7 +131,7 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	letter2 := polity.NewLetter(rand.Reader)
 	_ = letter2.SetSubject("broadcast")
 	letter2.PlainText = []byte("hi all")
-	recipients := []url.URL{*bob.Address(), *carol.Address()}
+	recipients := []url.URL{*bob.URL(), *carol.URL()}
 
 	if err := alice.Announce(ctx, rand.Reader, letter2, recipients); err != nil {
 		t.Fatalf("alice.Announce: %v", err)
@@ -146,7 +146,7 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	go func() {
 		hiFromBob := polity.NewLetter(nil)
 		hiFromBob.PlainText = []byte("hello to alice from bob")
-		err := alice.Send(ctx, nil, hiFromBob, bob.Address())
+		err := alice.Send(ctx, nil, hiFromBob, bob.URL())
 		if err != nil {
 			bobErrs <- err
 		}
@@ -172,12 +172,12 @@ func TestCitizen_Join_Errors(t *testing.T) {
 		t.Fatalf("expected error for missing oracle/network; got err=%v in=%v out=%v errs=%v", err, in, out, errs)
 	}
 
-	// has oracle but no network: construct via NewCitizen then nil out the Node
+	// has oracle but no network: construct via NewCitizen then nil out the Connection
 	net := mem.NewNetwork()
 	n := net.Spawn()
 	c2 := polity.NewCitizen(rand.Reader, io.Discard, n)
 	// explicitly remove network
-	c2.Node = nil
+	c2.Connection = nil
 	if in, out, errs, err := c2.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
 		t.Fatalf("expected error for missing network; got err=%v", err)
 	}
@@ -199,7 +199,7 @@ func TestCitizen_AsPeer(t *testing.T) {
 
 // a brokenNode fails to acquire an address
 type brokenNode struct {
-	polity.Node
+	polity.Connection
 }
 
 func (b brokenNode) AcquireAddress(_ context.Context, _ any) error {
@@ -212,14 +212,14 @@ func (b brokenNode) Listen(context.Context) (chan []byte, error) {
 
 // badListener acquires an address, but can't start a listener
 type badListener struct {
-	polity.Node
+	polity.Connection
 }
 
 func (b badListener) AcquireAddress(_ context.Context, _ any) error {
 	return nil
 }
 
-func (b badListener) Address() *url.URL {
+func (b badListener) URL() *url.URL {
 	u, err := url.Parse("test://user@host")
 	if err != nil {
 		panic(err)
@@ -233,7 +233,7 @@ func (b badListener) Listen(_ context.Context) (chan []byte, error) {
 
 func TestCitizen_AcquireAddress(t *testing.T) {
 	c := polity.NewCitizen(randomizer(1), io.Discard, brokenNode{})
-	err := c.AcquireAddress(nil, delphi.PublicKey{})
+	err := c.Establish(nil, delphi.PublicKey{})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "failed to acquire address")
 }
@@ -262,7 +262,7 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	assert.NoError(t, err)
 
 	//	receiving a non-envelope should push an error to errs
-	err = n.Send(nil, []byte("i am not a envelope"), *c.Address())
+	err = n.Send(nil, []byte("i am not a envelope"), *c.URL())
 	select {
 	case err = <-errs:
 		assert.ErrorContains(t, err, "could not deserialize")
@@ -273,14 +273,14 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	// letter round trip
 	l2 := polity.NewLetter(rand.Reader)
 	l2.SetSubject("hello")
-	err = c.Send(t.Context(), rand.Reader, l2, c.Address())
+	err = c.Send(t.Context(), rand.Reader, l2, c.URL())
 	assert.NoError(t, err)
 	l3 := <-inbox
 	assert.Equal(t, l2.Subject(), l3.Letter.Subject())
 
 	//	badly formed AAD should result in refusal to serialize
 	e := polity.NewEnvelope(rand.Reader)
-	e.Recipient = c.Address()
+	e.Recipient = c.URL()
 	e.Letter.AAD = []byte("i do not deserialize into a map[string]string")
 	outbox <- *e
 
@@ -290,7 +290,7 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	case <-time.After(time.Second):
 		assert.Fail(t, "timed out waiting for thing")
 	case incoming := <-inbox:
-		assert.Equal(t, c.Address().String(), incoming.Recipient.String())
+		assert.Equal(t, c.URL().String(), incoming.Recipient.String())
 	}
 
 	//	now use well-formed AAD
@@ -304,7 +304,7 @@ func TestCitizen_inbox_outbox(t *testing.T) {
 	case <-time.After(time.Second):
 		assert.Fail(t, "timed out waiting for thing")
 	case incoming := <-inbox:
-		assert.Equal(t, c.Address().String(), incoming.Recipient.String())
+		assert.Equal(t, c.URL().String(), incoming.Recipient.String())
 		foo1, exists := e.Letter.GetHeader("foo")
 		assert.True(t, exists)
 		assert.Equal(t, "bar", foo1)
@@ -408,7 +408,7 @@ func TestCitizen_Announce(t *testing.T) {
 	letter := polity.NewLetter(rand.Reader)
 	_ = letter.SetSubject("broadcast")
 	letter.PlainText = []byte("hi")
-	recipients := []url.URL{*bob.Address(), *carol.Address()}
+	recipients := []url.URL{*bob.URL(), *carol.URL()}
 	err = alice.Announce(ctx, rand.Reader, letter, recipients)
 	assert.NoError(t, err)
 

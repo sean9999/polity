@@ -78,14 +78,14 @@ func (p Peer) Bytes() []byte {
 }
 
 // stable, deterministic address
-// func (p Peer) Address(conn connection.Connection) net.Addr {
+// func (p Peer) URL(conn connection.Connection) net.Addr {
 // 	addr, _ := conn.AddressFromPubkey(p[:], nil)
 // 	return addr
 // }
 
 // func (p Peer) AsMap(conn connection.Connection) map[string]string {
 // 	m := p.Oracle().AsMap()
-// 	m["address"] = p.Address(conn).String()
+// 	m["address"] = p.URL(conn).String()
 // 	return m
 // }
 

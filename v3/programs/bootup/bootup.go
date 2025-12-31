@@ -45,10 +45,10 @@ func (p *proc) Run(_ context.Context) {
 	me := p.c
 	e := polity.NewEnvelope(nil)
 	e.Letter.SetSubject(subject.BootUp)
-	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Node.Address())
+	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Connection.URL())
 	e.Letter.PlainText = []byte(greeting)
-	e.Sender = p.c.Address()
-	e.Recipient = p.c.Address()
+	e.Sender = p.c.URL()
+	e.Recipient = p.c.URL()
 	p.o <- *e
 }
 

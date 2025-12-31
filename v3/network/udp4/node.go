@@ -19,7 +19,7 @@ const (
 	networkName = "udp4"
 )
 
-var _ polity.Node = (*Node)(nil)
+var _ polity.Connection = (*Node)(nil)
 
 type Node struct {
 	addr    *net.UDPAddr

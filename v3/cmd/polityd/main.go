@@ -25,27 +25,31 @@ type appState struct {
 	foo      string
 	me       *polity.Citizen
 	joinPeer *polity.Peer
-	node     polity.Node
+	node     polity.Connection
 }
 
 // a real app uses the lan back-end
 func newRealApp() *appState {
 
-	lNet := new(lan.Network)
-	err := lNet.Up()
+	node, err := lan.NewConn(nil)
 	if err != nil {
 		panic(err)
 	}
 	a := appState{
-		node: lNet.Spawn(),
+		node: node,
 	}
 	return &a
 }
 
 // a test app uses the mem back-end
-func newTestApp(mother polity.Network) *appState {
+func newTestApp() *appState {
+
+	node, err := lan.NewConn(nil)
+	if err != nil {
+		panic(err)
+	}
 	a := appState{
-		node: mother.Spawn(),
+		node: node,
 	}
 	return &a
 }
@@ -131,7 +135,7 @@ func (a *appState) Run(env hermeti.Env) {
 	if err != nil {
 		panic(err)
 	}
-	defer a.me.Node.Leave(ctx)
+	//defer a.me.Connection.Leave(ctx)
 	go func() {
 		for e := range errs {
 			fmt.Fprintln(env.ErrStream, "error ", e)

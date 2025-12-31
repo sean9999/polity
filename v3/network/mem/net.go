@@ -9,7 +9,7 @@ import (
 var _ polity.Network = (*Network)(nil)
 
 // A Network is a bunch of Nodes
-type Network map[url.URL]*Node
+type Network map[url.URL]*Conn
 
 func (n *Network) Up() error {
 	//if n == nil {
@@ -29,16 +29,16 @@ func NewNetwork() *Network {
 	return &m
 }
 
-func (n *Network) Map() map[url.URL]*Node {
+func (n *Network) Map() map[url.URL]*Conn {
 	return *n
 }
 
-func (n *Network) Set(k url.URL, v *Node) {
+func (n *Network) Set(k url.URL, v *Conn) {
 	m := *n
 	m[k] = v
 }
 
-func (n *Network) Get(k url.URL) (*Node, bool) {
+func (n *Network) Get(k url.URL) (*Conn, bool) {
 	for u, m := range *n {
 		if u.String() == k.String() {
 			return m, true
@@ -52,8 +52,8 @@ func (n *Network) Delete(k url.URL) {
 	delete(m, k)
 }
 
-func (n *Network) Spawn() polity.Node {
-	node := new(Node)
+func (n *Network) Spawn() polity.Connection {
+	node := new(Conn)
 	node.parent = n
 	return node
 }

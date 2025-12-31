@@ -20,11 +20,11 @@ func (f fakeRand) Read(p []byte) (n int, err error) {
 
 func TestNode(t *testing.T) {
 
-	t.Run("a Node at various lifecycle stages", func(t *testing.T) {
+	t.Run("a Connection at various lifecycle stages", func(t *testing.T) {
 
 		nt := NewNetwork()
 		assert.Len(t, nt.Map(), 0)
-		nd := nt.Spawn().(*Node)
+		nd := nt.Spawn().(*Conn)
 		assert.Len(t, nt.Map(), 0)
 
 		//	before acquiring an address
@@ -35,7 +35,7 @@ func TestNode(t *testing.T) {
 		assert.Error(t, err)
 
 		//	after acquiring an address
-		err = nd.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(1)).PublicKey())
+		err = nd.Establish(nil, delphi.NewKeyPair(fakeRand(1)).PublicKey())
 		require.NoError(t, err)
 		assert.Nil(t, nd.bytesListener)
 		assert.NotEmpty(t, nd.url)
@@ -52,7 +52,7 @@ func TestNode(t *testing.T) {
 		assert.Len(t, nt.Map(), 1)
 
 		//	trying to acquire address again
-		err = nd.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(1)).PublicKey())
+		err = nd.Establish(nil, delphi.NewKeyPair(fakeRand(1)).PublicKey())
 		assert.Error(t, err)
 
 		//	try to join after joining
@@ -69,19 +69,19 @@ func TestNode(t *testing.T) {
 
 	})
 
-	//t.Run("a Node sends a message to itself", func(t *testing.T) {
+	//t.Run("a Connection sends a message to itself", func(t *testing.T) {
 	//
 	//	nt := NewNetwork()
 	//	alice := nt.Spawn()
 	//
-	//	err := alice.AcquireAddress(nil, "alice")
+	//	err := alice.Establish(nil, "alice")
 	//	assert.NoError(t, err)
 	//	inbox, outbox, errs, err := alice.Listen()
 	//	assert.NoError(t, err)
 	//
 	//	e := github.com/sean9999/polity/v3.NewEnvelope(nil)
-	//	e.Sender = alice.Address()
-	//	e.Recipient = alice.Address()
+	//	e.Sender = alice.URL()
+	//	e.Recipient = alice.URL()
 	//	e.Letter.PlainText = []byte("hi there")
 	//
 	//	for range 2 {
@@ -105,10 +105,10 @@ func TestNode(t *testing.T) {
 	//	alice := nt.Spawn()
 	//	bob := nt.Spawn()
 	//
-	//	err := alice.AcquireAddress(nil, "alice")
+	//	err := alice.Establish(nil, "alice")
 	//	require.NoError(t, err)
 	//
-	//	err = bob.AcquireAddress(nil, "bob")
+	//	err = bob.Establish(nil, "bob")
 	//	require.NoError(t, err)
 	//
 	//	_, outbox, aliceErrors, err := alice.Listen()
@@ -118,8 +118,8 @@ func TestNode(t *testing.T) {
 	//	assert.NoError(t, err)
 	//
 	//	e := github.com/sean9999/polity/v3.NewEnvelope(nil)
-	//	e.Sender = alice.Address()
-	//	e.Recipient = bob.Address()
+	//	e.Sender = alice.URL()
+	//	e.Recipient = bob.URL()
 	//
 	//	for range 2 {
 	//		select {
@@ -141,7 +141,7 @@ func TestNode(t *testing.T) {
 	//t.Run("alice receives garbage", func(t *testing.T) {
 	//	nt := NewNetwork()
 	//	alice := nt.Spawn()
-	//	alice.AcquireAddress(nil, "alice")
+	//	alice.Establish(nil, "alice")
 	//	_, _, errs, err := alice.Listen()
 	//	assert.NoError(t, err)
 	//	msg := []byte("i am a malformed envelope")
@@ -156,7 +156,7 @@ func TestNode(t *testing.T) {
 	//	}
 	//})
 
-	//t.Run("a second Node", func(t *testing.T) {
+	//t.Run("a second Connection", func(t *testing.T) {
 	//
 	//	nt := NewNetwork()
 	//	assert.Len(t, nt.Map(), 0)
@@ -166,7 +166,7 @@ func TestNode(t *testing.T) {
 	//	assert.Equal(t, "", nd.nickname)
 	//	assert.Nil(t, nd.selfAddr)
 	//	assert.Nil(t, nd.IncomingBytes)
-	//	nd.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(2)))
+	//	nd.Establish(nil, delphi.NewKeyPair(fakeRand(2)))
 	//	assert.Len(t, nt.Map(), 1)
 	//	assert.Nil(t, nd.IncomingBytes)
 	//	assert.NotNil(t, nd.selfAddr)
@@ -175,45 +175,45 @@ func TestNode(t *testing.T) {
 	//	assert.Equal(t, "crimson-meadow", nd.nickname)
 	//})
 	//
-	//t.Run("Node sends message to self", func(t *testing.T) {
+	//t.Run("Connection sends message to self", func(t *testing.T) {
 	//
-	//	Node := NewNetwork()
-	//	assert.Len(t, Node.Map(), 0)
+	//	Connection := NewNetwork()
+	//	assert.Len(t, Connection.Map(), 0)
 	//
-	//	Node := Node.Spawn()
-	//	require.NotNil(t, Node)
-	//	addr, err := Node.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(2)))
+	//	Connection := Connection.Spawn()
+	//	require.NotNil(t, Connection)
+	//	addr, err := Connection.Establish(nil, delphi.NewKeyPair(fakeRand(2)))
 	//	require.Nil(t, err)
-	//	assert.Equal(t, addr, *Node.selfAddr)
+	//	assert.Equal(t, addr, *Connection.selfAddr)
 	//
-	//	assert.Equal(t, "crimson-meadow", Node.nickname)
+	//	assert.Equal(t, "crimson-meadow", Connection.nickname)
 	//	msg := []byte("hello world")
 	//	go func() {
-	//		err = Node.SendBytes(nil, msg, addr)
+	//		err = Connection.SendBytes(nil, msg, addr)
 	//		require.Nil(t, err)
 	//	}()
-	//	got := <-Node.ReceiveBytes()
+	//	got := <-Connection.ReceiveBytes()
 	//	assert.Equal(t, msg, got)
 	//
 	//})
 	//
-	//t.Run("Node sends message to peer", func(t *testing.T) {
+	//t.Run("Connection sends message to peer", func(t *testing.T) {
 	//
-	//	Node := NewNetwork()
-	//	assert.Len(t, Node.Map(), 0)
+	//	Connection := NewNetwork()
+	//	assert.Len(t, Connection.Map(), 0)
 	//
-	//	crimson := Node.Spawn()
+	//	crimson := Connection.Spawn()
 	//	require.NotNil(t, crimson)
-	//	_, err := crimson.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(2)))
-	//	assert.Len(t, Node.Map(), 1)
+	//	_, err := crimson.Establish(nil, delphi.NewKeyPair(fakeRand(2)))
+	//	assert.Len(t, Connection.Map(), 1)
 	//	require.Nil(t, err)
 	//	assert.Equal(t, "crimson-meadow", crimson.nickname)
 	//	crimson.Connect(nil)
 	//
-	//	dawn := Node.Spawn()
+	//	dawn := Connection.Spawn()
 	//	require.NotNil(t, crimson)
-	//	dawnAddr, err := dawn.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(1)))
-	//	assert.Len(t, Node.Map(), 2)
+	//	dawnAddr, err := dawn.Establish(nil, delphi.NewKeyPair(fakeRand(1)))
+	//	assert.Len(t, Connection.Map(), 2)
 	//	require.Nil(t, err)
 	//	assert.Equal(t, "falling-dawn", dawn.nickname)
 	//	dawn.Connect(nil)
@@ -227,21 +227,21 @@ func TestNode(t *testing.T) {
 	//
 	//t.Run("volley", func(t *testing.T) {
 	//
-	//	Node := NewNetwork()
-	//	assert.Len(t, Node.Map(), 0)
+	//	Connection := NewNetwork()
+	//	assert.Len(t, Connection.Map(), 0)
 	//
-	//	crimson := Node.Spawn()
+	//	crimson := Connection.Spawn()
 	//	require.NotNil(t, crimson)
-	//	_, err := crimson.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(2)))
-	//	assert.Len(t, Node.Map(), 1)
+	//	_, err := crimson.Establish(nil, delphi.NewKeyPair(fakeRand(2)))
+	//	assert.Len(t, Connection.Map(), 1)
 	//	require.Nil(t, err)
 	//	assert.Equal(t, "crimson-meadow", crimson.nickname)
 	//	crimson.Connect(nil)
 	//
-	//	dawn := Node.Spawn()
+	//	dawn := Connection.Spawn()
 	//	require.NotNil(t, crimson)
-	//	dawnAddr, err := dawn.AcquireAddress(nil, delphi.NewKeyPair(fakeRand(1)))
-	//	assert.Len(t, Node.Map(), 2)
+	//	dawnAddr, err := dawn.Establish(nil, delphi.NewKeyPair(fakeRand(1)))
+	//	assert.Len(t, Connection.Map(), 2)
 	//	require.Nil(t, err)
 	//	assert.Equal(t, "falling-dawn", dawn.nickname)
 	//	dawn.Connect(nil)

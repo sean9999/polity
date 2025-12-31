@@ -19,9 +19,9 @@ import (
 // An Oracle is an oracle.Principal.
 type Oracle = oracle.Principal
 
-// A Citizen is a Node with an Oracle.
+// A Citizen is a Connection with an Oracle.
 type Citizen struct {
-	Node
+	Connection
 	*Oracle
 	Peers    PeerSet
 	Profiles *ProfileSet
@@ -33,39 +33,39 @@ func (c *Citizen) AsPeer() *Peer {
 	return &Peer{orc}
 }
 
-func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
+func NewCitizen(randy io.Reader, out io.Writer, conn Connection) *Citizen {
 	orc := oracle.NewPrincipal(randy)
 	return &Citizen{
-		Node:   node,
-		Oracle: orc,
-		Peers:  NewPeerSet(orc.Peers),
-		Log:    log.New(out, "", 0),
+		Connection: conn,
+		Oracle:     orc,
+		Peers:      NewPeerSet(orc.Peers),
+		Log:        log.New(out, "", 0),
 	}
 }
 
-func (c *Citizen) AcquireAddress(ctx context.Context, pk delphi.PublicKey) error {
-	err := c.Node.AcquireAddress(ctx, pk)
+func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
+	err := c.Connection.Establish(ctx, kp)
 	if err != nil {
 		return fmt.Errorf("failed to acquire address: %w", err)
 	}
-	c.Props["addr"] = c.Address().String()
+	c.Props["addr"] = c.URL().String()
 	return nil
 }
 
 // Shutdown sends a signed message to self, telling us to shut down
 func (c *Citizen) Shutdown() {
-	e := c.Compose(nil, c.Address())
+	e := c.Compose(nil, c.URL())
 	e.Letter.SetSubject(subject.DieNow)
 	e.Letter.PlainText = []byte(subject.DieNow)
 	_ = c.Send(nil, nil, e.Letter, e.Recipient)
 }
 
 func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
-	c.Node.Leave(ctx)
+	err := c.Connection.Close()
 	close(inbox)
 	close(outbox)
 	close(errs)
-	return nil
+	return err
 }
 
 //func (c *Citizen) loadProgram(prog Program) error {
@@ -104,22 +104,18 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	if c.Oracle == nil {
 		return nil, nil, nil, errors.New("no oracle")
 	}
-	if c.Node == nil {
+	if c.Connection == nil {
 		return nil, nil, nil, errors.New("no network")
 	}
 
 	//	before joining a network, one must acquire an address.
-	err := c.AcquireAddress(ctx, c.Oracle.KeyPair.PublicKey())
+	err := c.Establish(ctx, c.Oracle.KeyPair)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("could not join. %w", err)
 	}
 
 	//	incoming and outgoing channels
 	errs := make(chan error)
-	incomingBytes, err := c.Node.Listen(ctx)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not join. %w", err)
-	}
 	inbox := make(chan Envelope)
 	outbox := make(chan Envelope)
 
@@ -134,22 +130,19 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	//	our user will decide what to do with it then.
 	//	if the incoming bytes channel is closed, we close inbox.
 	go func() {
-		for bin := range incomingBytes {
-			e := new(Envelope)
-			err := e.Deserialize(bin)
+		buf := make([]byte, 1024)
+		for {
+			i, _, err := c.Connection.ReadFrom(buf)
 			if err != nil {
 				errs <- err
-				continue
+			}
+			e := new(Envelope)
+			err = e.Deserialize(buf[:i])
+			if err != nil {
+				errs <- err
 			}
 			inbox <- *e
-			//	in addition to inbox,
-			//	send the envelope to any plugin that is registered to handle this subject
-			//programs := c.ProgramsThatHandle.ProgramsThatHandle(e.Letter.Subject())
-			//for _, prog := range programs {
-			//	go prog.Accept(*e)
-			//}
 		}
-		//close(inbox)
 	}()
 
 	//	range over outbox, which is a channel of Envelope which our user has decided they want to send.
@@ -175,7 +168,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 			//	errs <- errors.New("nil recipient")
 			//	continue
 			//}
-			//err = c.Node.Send(ctx, bin, *envelope.Recipient)
+			//err = c.Connection.Send(ctx, bin, *envelope.Recipient)
 			//if err != nil {
 			//	errs <- err
 			//	continue
@@ -190,7 +183,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 func (c *Citizen) Compose(r io.Reader, recipient *url.URL) *Envelope {
 	e := NewEnvelope(r)
 	e.Recipient = recipient
-	e.Sender = c.Address()
+	e.Sender = c.URL()
 	return e
 }
 
@@ -216,7 +209,7 @@ func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, reci
 		return err
 	}
 
-	err = c.Node.Send(ctx, bin, *recipient)
+	_, err = c.Connection.WriteTo(bin, c.Connection.UrlToAddr(*recipient))
 	if err != nil {
 		return err
 	}
