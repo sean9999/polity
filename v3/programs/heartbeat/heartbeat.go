@@ -12,20 +12,20 @@ import (
 
 var _ programs.Program = (*heartbeat)(nil)
 
-const period = 3 * time.Second
+const period = 1 * time.Second
 
 type heartbeat struct {
 	citizen *polity.Citizen
 	errs    chan error
-	done    chan struct{}
 	outbox  chan polity.Envelope
+	inbox   chan polity.Envelope
 }
 
-func (h *heartbeat) Initialize(citizen *polity.Citizen, outbox chan polity.Envelope, errs chan error) error {
+func (h *heartbeat) Init(citizen *polity.Citizen, inbox chan polity.Envelope, outbox chan polity.Envelope, errs chan error) error {
 	h.citizen = citizen
 	h.errs = errs
-	h.done = make(chan struct{})
 	h.outbox = outbox
+	h.inbox = inbox
 	return nil
 }
 
@@ -35,17 +35,7 @@ func (h *heartbeat) Subjects() []subject.Subject {
 	}
 }
 
-func (h *heartbeat) Accept(e polity.Envelope) {
-	p := polity.PeerFromURL(e.Sender)
-	i, _ := e.Letter.GetHeader("i")
-	msg := fmt.Sprintf("hello heartbeat from %s for the %s(n)th time\n", p.NickName(), i)
-	h.citizen.Log.Println(msg)
-}
-
 func (h *heartbeat) Run(ctx context.Context) {
-
-	//	this program is done when this function exits
-	defer programs.Free(h)
 
 	var i int
 	l := polity.NewLetter(nil)
@@ -53,9 +43,18 @@ func (h *heartbeat) Run(ctx context.Context) {
 	l.PlainText = []byte("hello heartbeat")
 	t := time.NewTicker(period)
 
+	go func() {
+		for e := range h.inbox {
+			p := polity.PeerFromURL(e.Sender)
+			i, _ := e.Letter.GetHeader("i")
+			msg := fmt.Sprintf("hello heartbeat from %s for the %s(n)th time\n", p.NickName(), i)
+			h.citizen.Log.Println(msg)
+		}
+	}()
+
 	for {
 		select {
-		case <-h.done:
+		case <-ctx.Done():
 			t.Stop()
 			return
 		case <-t.C:
@@ -64,17 +63,17 @@ func (h *heartbeat) Run(ctx context.Context) {
 			e := h.citizen.Compose(nil, h.citizen.URL())
 			e.Letter = l
 			h.outbox <- *e
+			if i > 3 {
+				t.Stop()
+				return
+			}
 		}
 	}
 
 }
 
 func (h *heartbeat) Shutdown() {
-	h.done <- struct{}{}
-}
-
-func (h *heartbeat) Name() string {
-	return "heartbeat"
+	h.citizen.Log.Println("heartbeat shutdown")
 }
 
 func init() {

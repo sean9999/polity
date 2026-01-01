@@ -2,6 +2,7 @@ package bootup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/sean9999/polity/v3"
@@ -18,15 +19,20 @@ var _ programs.Program = (*proc)(nil)
 type proc struct {
 	c *polity.Citizen
 	o chan polity.Envelope
+	i chan polity.Envelope
 	e chan error
 }
 
-func (p *proc) Initialize(c *polity.Citizen, outbox chan polity.Envelope, errs chan error) error {
+func (p *proc) Init(c *polity.Citizen, inbox chan polity.Envelope, outbox chan polity.Envelope, errs chan error) error {
+
+	if c == nil {
+		return errors.New("nil citizen")
+	}
+
 	p.c = c
 	p.o = outbox
 	p.e = errs
-	p.o = outbox
-	p.e = errs
+	p.i = inbox
 	return nil
 }
 
@@ -37,35 +43,14 @@ func (p *proc) Subjects() []subject.Subject {
 	return s
 }
 
-func (p *proc) Accept(e polity.Envelope) {
-	p.c.Log.Println(string(e.Letter.Body()))
-
-	//	once we've printed out our boot message. We're done. Let's go away
-	p.Shutdown()
-}
-
 func (p *proc) Run(_ context.Context) {
 	me := p.c
-
-	//	this is a little circuitous.
-	//	We could have simple done p.c.Log.Println("greetings!"),
-	//	not sent anything to outbox and not done anything in Accept().
-	//	But whatevs.
-	e := polity.NewEnvelope(nil)
-	e.Letter.SetSubject(subject.BootUp)
 	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Node.URL())
-	e.Letter.PlainText = []byte(greeting)
-	e.Sender = p.c.URL()
-	e.Recipient = p.c.URL()
-	p.o <- *e
+	p.c.Log.Println(greeting)
 }
 
 func (p *proc) Shutdown() {
-	programs.Free(p)
-}
-
-func (p *proc) Name() string {
-	return "bootup"
+	p.c.Log.Println("goodbye from bootup")
 }
 
 func init() {

@@ -152,12 +152,13 @@ func (a *appState) Run(env hermeti.Env) {
 		outbox <- *e
 	}
 
-	//	initialize and run every program in the registry
+	//	Initialize and run every program in the registry.
+	//  Any initialization failure means we crash.
 	registry := programs.Registry
-	for name, program := range registry {
-		err := program.Initialize(a.me, outbox, errs)
+	for program, subjs := range registry.Programs {
+		err := program.Init(a.me, outbox, errs)
 		if err != nil {
-			a.me.Log.Panicf("error initializing program %q: %v", name, err)
+			a.me.Log.Panicf("error initializing program for %q: %v", subjs, err)
 		}
 		go program.Run(ctx)
 	}
@@ -171,7 +172,8 @@ outer:
 			//	Every program registered to handle this subject gets this message.
 			progs := registry.ProgramsThatHandle(e.Letter.Subject())
 			for _, prog := range progs {
-				go prog.Accept(e)
+				//	TODO: is this adequately parallel?
+				prog.Inbox <- e
 			}
 
 		case subject.DieNow:

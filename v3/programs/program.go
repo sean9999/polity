@@ -3,41 +3,81 @@ package programs
 import (
 	"context"
 	"slices"
+	"sync"
 
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/subject"
 )
 
-type registry map[string]Program
-
-var Registry = make(registry)
-
-func Register(program Program) {
-	Registry[program.Name()] = program
+type registry struct {
+	Programs map[*SurProgram][]subject.Subject
+	Subjects map[subject.Subject][]*SurProgram
+	mu       *sync.RWMutex
 }
 
-func (reg registry) ProgramsThatHandle(subj string) []Program {
-	programs := make([]Program, 0, len(reg))
-	for _, prog := range reg {
-		if slices.Contains(prog.Subjects(), subject.Subject(subj)) {
-			programs = append(programs, prog)
-		}
+var Registry = registry{
+	Programs: make(map[*SurProgram][]subject.Subject),
+	Subjects: make(map[subject.Subject][]*SurProgram),
+	mu:       &sync.RWMutex{},
+}
+
+func Register(p Program) {
+	Registry.mu.Lock()
+	defer Registry.mu.Unlock()
+	sp := &SurProgram{
+		Program: p,
+		Inbox:   make(chan polity.Envelope),
 	}
-	return programs
+	Registry.Programs[sp] = p.Subjects()
+	for _, s := range p.Subjects() {
+		Registry.Subjects[s] = append(Registry.Subjects[s], sp)
+	}
+}
+
+func Deregister(p *SurProgram) {
+	Registry.mu.Lock()
+	defer Registry.mu.Unlock()
+	delete(Registry.Programs, p)
+	for _, s := range p.Subjects() {
+		Registry.Subjects[s] = slices.DeleteFunc(Registry.Subjects[s], func(sprog *SurProgram) bool {
+			return p == sprog
+		})
+	}
+}
+
+func (reg registry) ProgramsThatHandle(subj string) []*SurProgram {
+	reg.mu.RLock()
+	defer reg.mu.RUnlock()
+	return reg.Subjects[subject.Subject(subj)]
+}
+
+// A SurProgram is a structure that encapsulates a Program
+type SurProgram struct {
+	Program
+	Inbox chan polity.Envelope
+}
+
+func (sp *SurProgram) Init(citizen *polity.Citizen, outbox chan polity.Envelope, errs chan error) error {
+	sp.Inbox = make(chan polity.Envelope)
+	return sp.Program.Init(citizen, sp.Inbox, outbox, errs)
+}
+
+func (sp *SurProgram) Shutdown() {
+	sp.Program.Shutdown()
+	close(sp.Inbox)
+	Deregister(sp)
+}
+
+func (sp *SurProgram) Run(ctx context.Context) {
+	sp.Program.Run(ctx)
+	sp.Shutdown()
 }
 
 type Program interface {
-	Initialize(citizen *polity.Citizen, outbox chan polity.Envelope, errs chan error) error
-	Subjects() []subject.Subject
-	Accept(polity.Envelope)
+	Init(citizen *polity.Citizen, inbox, outbox chan polity.Envelope, errs chan error) error
 	Run(context.Context)
-	Shutdown() // Shutdown should probably call Free(), but if you want to be a memory-leaky jerk, up to you
-	Name() string
-}
-
-// Free frees a program from the registry, making it forgotten.
-func Free(p Program) {
-	delete(Registry, p.Name())
+	Subjects() []subject.Subject
+	Shutdown()
 }
 
 //func ProgramFrom(thing any) (Program, error) {

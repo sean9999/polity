@@ -24,7 +24,7 @@ package polity
 //type Program interface {
 //	Initialize(citizen *Citizen, inbox chan Envelope, outbox chan Envelope, errs chan error) error
 //	Subjects() []subject.Subject
-//	Accept(Envelope)
+//	accept(Envelope)
 //	Run(context.Context)
 //	Shutdown()
 //	Name() string
