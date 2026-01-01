@@ -3,6 +3,7 @@ package lan
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -24,6 +25,27 @@ type Node struct {
 	url *url.URL
 }
 
+func (n *Node) LocalAddr() net.Addr {
+	if n.UDPConn == nil {
+		return nil
+	}
+	return n.UDPConn.LocalAddr()
+}
+
+func (n *Node) ReadFrom(b []byte) (int, net.Addr, error) {
+	if n.UDPConn == nil {
+		return 0, nil, fmt.Errorf("no UDPConn")
+	}
+	return n.UDPConn.ReadFrom(b)
+}
+
+func (n *Node) WriteTo(b []byte, addr net.Addr) (int, error) {
+	if n.UDPConn == nil {
+		return 0, fmt.Errorf("no UDPConn")
+	}
+	return n.UDPConn.WriteTo(b, addr)
+}
+
 func (n *Node) UrlToAddr(u url.URL) (net.Addr, error) {
 	p, err := strconv.ParseInt(u.Port(), 10, 32)
 	if err != nil {
@@ -41,6 +63,9 @@ func (n *Node) URL() *url.URL {
 }
 
 func (n *Node) Disconnect() error {
+	if n.UDPConn == nil {
+		return fmt.Errorf("no UDPConn")
+	}
 	err := n.UDPConn.Close()
 	if err != nil {
 		return err
@@ -50,6 +75,10 @@ func (n *Node) Disconnect() error {
 }
 
 func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) error {
+
+	if n.UDPConn != nil {
+		return errors.New("already connected")
+	}
 
 	udpAddr := new(net.UDPAddr)
 	key := pair.PublicKey()

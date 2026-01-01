@@ -50,13 +50,7 @@ func (n *memConn) WriteTo(bytes []byte, addr net.Addr) (int, error) {
 		sender:    n.addr,
 		recipient: addr,
 	}
-
-	if recipientNode == nil {
-		return 0, errors.New("nil node")
-	}
-	if recipientNode == nil {
-		return 0, errors.New("nil conn")
-	}
+	
 	if recipientNode.inbox == nil {
 		return 0, errors.New("nil inbox")
 	}

@@ -160,3 +160,7 @@ func TestAsPeer(t *testing.T) {
 	alice.Peers.Remove(*bob.AsPeer())
 	assert.Equal(t, 0, alice.Peers.Len())
 }
+
+func TestNode_contract(t *testing.T) {
+	polity.WellBehavedNode(t, new(Node))
+}

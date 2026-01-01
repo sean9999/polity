@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/polity/v3"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,16 @@ func bobKeys(t testing.TB) delphi.KeyPair {
 	t.Helper()
 	kp := delphi.NewKeyPair(fakeRand(2))
 	return kp
+}
+
+func TestNode_contract(t *testing.T) {
+
+	network := make(Network)
+	assert.Len(t, network.Map(), 0)
+	node := network.Spawn()
+
+	polity.WellBehavedNode(t, node)
+	
 }
 
 func TestNode(t *testing.T) {
@@ -130,6 +141,29 @@ func TestNode(t *testing.T) {
 
 		// the message should remain intact after passage
 		assert.Equal(t, msg, bin[:i])
+
+	})
+
+	t.Run("no inbox", func(t *testing.T) {
+		// create alice
+		network := make(Network)
+		assert.Len(t, network.Map(), 0)
+		alice := network.Spawn()
+		assert.Empty(t, alice.url)
+
+		//	alice connects
+		err := alice.Connect(nil, aliceKeys(t))
+		assert.NoError(t, err)
+		assert.NotNil(t, alice.memConn)
+
+		msg := []byte("hello world")
+
+		//	artificially nil out inbox
+		alice.inbox = nil
+
+		//	write message
+		_, err = alice.WriteTo(msg, alice.LocalAddr())
+		assert.Error(t, err)
 
 	})
 

@@ -283,5 +283,9 @@ func TestLetter_Verify_SuccessAndFailurePaths(t *testing.T) {
 }
 
 func TestLetter_Encrypt(t *testing.T) {
-	
+
 }
+
+//func TestLetter_Serialize_panic(t *testing.T) {
+//	l := NewLetter(nil)
+//}

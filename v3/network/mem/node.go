@@ -25,6 +25,13 @@ type Node struct {
 	addr   net.Addr
 }
 
+func (n *Node) LocalAddr() net.Addr {
+	if n.memConn == nil {
+		return nil
+	}
+	return n.memConn.LocalAddr()
+}
+
 func (n *Node) ReadFrom(b []byte) (int, net.Addr, error) {
 	if n.memConn == nil {
 		return 0, nil, errors.New("node is disconnected")
@@ -48,20 +55,20 @@ func (n *Node) Disconnect() error {
 	if n.memConn == nil {
 		return errors.New("node is already disconnected")
 	}
-	if n.inbox == nil {
-		return errors.New("inbox is already nil")
-	}
 
 	// deregister from parent Network
 	n.parent.Delete(n.LocalAddr())
+
+	n.addr = nil
+	n.url = nil
 
 	err := n.Close()
 	if err != nil {
 		return err
 	}
+
 	n.memConn = nil
-	n.addr = nil
-	n.url = nil
+
 	return nil
 }
 

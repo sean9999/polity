@@ -74,11 +74,11 @@ coverage-check:
 	@go test -coverprofile=coverage.out ./... > /dev/null
 	@COVERAGE=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//'); \
 	echo "Total coverage: $$COVERAGE%"; \
-	if [ "$$(echo "$$COVERAGE < 70" | bc -l)" -eq 1 ]; then \
-		echo "❌ Coverage below 70% threshold"; \
+	if [ "$$(echo "$$COVERAGE < 90" | bc -l)" -eq 1 ]; then \
+		echo "❌ Coverage below 90% threshold"; \
 		exit 1; \
 	else \
-		echo "✅ Coverage meets 70% threshold"; \
+		echo "✅ Coverage meets 90% threshold"; \
 	fi
 
 .PHONY: test coverage coverage-summary coverage-html coverage-check plugins
