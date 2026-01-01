@@ -44,7 +44,7 @@ func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
 }
 
 func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
-	_, err := c.Node.Connect(ctx, kp)
+	err := c.Node.Connect(ctx, kp)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (c *Citizen) Shutdown() {
 }
 
 func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
-	err := c.Node.Connection().Close()
+	err := c.Node.Disconnect()
 	close(inbox)
 	close(outbox)
 	close(errs)
@@ -129,7 +129,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	go func() {
 		buf := make([]byte, 1024)
 		for {
-			i, _, err := c.Node.Connection().ReadFrom(buf)
+			i, _, err := c.Node.ReadFrom(buf)
 			if err != nil {
 				errs <- err
 			}
@@ -211,7 +211,7 @@ func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, reci
 		return err
 	}
 
-	_, err = c.Node.Connection().WriteTo(bin, addr)
+	_, err = c.Node.WriteTo(bin, addr)
 	if err != nil {
 		return err
 	}

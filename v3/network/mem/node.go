@@ -3,6 +3,7 @@ package mem
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 
@@ -10,13 +11,32 @@ import (
 	"github.com/sean9999/polity/v3"
 )
 
+const (
+	scheme = "memnet"
+)
+
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
 	parent *Network
-	conn   *Conn
+	*memConn
 	url    *url.URL
 	pubKey delphi.PublicKey
+	addr   net.Addr
+}
+
+func (n *Node) ReadFrom(b []byte) (int, net.Addr, error) {
+	if n.memConn == nil {
+		return 0, nil, errors.New("node is disconnected")
+	}
+	return n.memConn.ReadFrom(b)
+}
+
+func (n *Node) WriteTo(b []byte, a net.Addr) (int, error) {
+	if n.memConn == nil {
+		return 0, errors.New("node is disconnected")
+	}
+	return n.memConn.WriteTo(b, a)
 }
 
 func (n *Node) URL() *url.URL {
@@ -25,34 +45,34 @@ func (n *Node) URL() *url.URL {
 
 func (n *Node) Disconnect() error {
 
-	if n.conn == nil {
+	if n.memConn == nil {
 		return errors.New("node is already disconnected")
 	}
-
-	if n.conn.inbox == nil {
+	if n.inbox == nil {
 		return errors.New("inbox is already nil")
 	}
 
-	// deregister
-	myAddr := n.Connection().LocalAddr()
-	n.parent.Delete(myAddr)
+	// deregister from parent Network
+	n.parent.Delete(n.LocalAddr())
 
-	err := n.conn.Close()
+	err := n.Close()
 	if err != nil {
 		return err
 	}
-	n.conn = nil
+	n.memConn = nil
+	n.addr = nil
+	n.url = nil
 	return nil
 }
 
-func (n *Node) Connect(_ context.Context, pair delphi.KeyPair) (polity.Connection, error) {
+func (n *Node) Connect(_ context.Context, pair delphi.KeyPair) error {
 
-	if n.conn != nil {
-		return n.conn, errors.New("already connected")
+	if n.memConn != nil {
+		return errors.New("already connected")
 	}
 
+	//	create unique URL and address
 	username := pair.PublicKey().String()
-	scheme := "memnet"
 	host := "memory"
 	u := url.URL{
 		Scheme: scheme,
@@ -61,29 +81,25 @@ func (n *Node) Connect(_ context.Context, pair delphi.KeyPair) (polity.Connectio
 	}
 	addr, err := n.UrlToAddr(u)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("could not connect. %w", err)
 	}
 
 	_, exists := n.parent.Get(addr)
 	if exists {
-		return nil, errors.New("address already taken")
+		return fmt.Errorf("could not connect becausse address %q is already taken", addr)
 	}
 
-	conn := new(Conn)
-	conn.parent = n.parent
+	conn := new(memConn)
+	conn.node = n
 	conn.addr = addr
 	conn.inbox = make(chan packet)
 
-	n.conn = conn
+	n.memConn = conn
 	n.pubKey = pair.PublicKey()
 	n.parent.Set(addr, n)
 	n.url = &u
 
-	return conn, nil
-}
-
-func (n *Node) Connection() polity.Connection {
-	return n.conn
+	return nil
 }
 
 func (n *Node) UrlToAddr(url url.URL) (net.Addr, error) {
@@ -93,9 +109,8 @@ func (n *Node) UrlToAddr(url url.URL) (net.Addr, error) {
 		return nil, err
 	}
 
-	a := net.UnixAddr{
-		Name: delphi.PublicKey(k).Nickname(),
-		Net:  url.Scheme,
+	a := memAddr{
+		nickname: delphi.PublicKey(k).Nickname(),
 	}
 	return &a, nil
 }
