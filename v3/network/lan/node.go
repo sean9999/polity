@@ -13,11 +13,15 @@ import (
 	"github.com/sean9999/polity/v3"
 )
 
+const (
+	networkName = "udp4"
+)
+
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
-	conn *Conn
-	url  *url.URL
+	*net.UDPConn
+	url *url.URL
 }
 
 func (n *Node) UrlToAddr(u url.URL) (net.Addr, error) {
@@ -32,24 +36,20 @@ func (n *Node) UrlToAddr(u url.URL) (net.Addr, error) {
 	return &addr, nil
 }
 
-func (n *Node) Connection() polity.Connection {
-	return n.conn
-}
-
 func (n *Node) URL() *url.URL {
 	return n.url
 }
 
 func (n *Node) Disconnect() error {
-	err := n.conn.Close()
+	err := n.UDPConn.Close()
 	if err != nil {
 		return err
 	}
-	n.conn = nil
+	n.url = nil
 	return nil
 }
 
-func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) (polity.Connection, error) {
+func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) error {
 
 	udpAddr := new(net.UDPAddr)
 	key := pair.PublicKey()
@@ -58,7 +58,7 @@ func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) (polity.Connect
 
 	ip, _, err := getLan(ctx)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("could not get LAN. %w", err)
 	}
 
 	udpAddr.Port = idealPort
@@ -66,44 +66,39 @@ func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) (polity.Connect
 
 	ipAddr, err := netip.ParseAddrPort(udpAddr.String())
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("could not parse address. %w", err)
 	}
 	idealDestinationAddr := net.UDPAddrFromAddrPort(ipAddr)
 
 	udpConn, err := net.ListenUDP(networkName, idealDestinationAddr)
 	if err != nil {
-		return nil, fmt.Errorf("could not establish connection. %w", err)
+		return fmt.Errorf("could not establish connection. %w", err)
 	}
 	//defer udpConn.Close()
 	_, err = udpConn.WriteToUDP([]byte("cool"), idealDestinationAddr)
 	if err != nil {
 		udpConn.Close()
-		return nil, fmt.Errorf("could not establish connection. %w", err)
+		return fmt.Errorf("could not write to connection. %w", err)
 	}
 	buf := make([]byte, 1024)
 	i, err := udpConn.Read(buf)
 	if err != nil {
 		udpConn.Close()
-		return nil, fmt.Errorf("could not establish connection. %w", err)
+		return fmt.Errorf("could not read from connection. %w", err)
 	}
 	cool := bytes.Equal(buf[:i], []byte("cool"))
 	if !cool {
 		udpConn.Close()
-		return nil, fmt.Errorf("so not cool: %s", string(buf[:i]))
+		return fmt.Errorf("%s is not cool", string(buf[:i]))
 	}
 	u, err := AddrToUrl(*idealDestinationAddr)
 	if err != nil {
 		udpConn.Close()
-		return nil, fmt.Errorf("could not establish connection. %w", err)
-	}
-
-	conn := Conn{
-		UDPConn: udpConn,
-		node:    n,
+		return fmt.Errorf("could not convert %s to URL. %w", idealDestinationAddr, err)
 	}
 
 	u.User = url.User(key.String())
 	n.url = &u
-	n.conn = &conn
-	return n.conn, nil
+	n.UDPConn = udpConn
+	return nil
 }

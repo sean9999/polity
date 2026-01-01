@@ -39,31 +39,31 @@ func TestNode(t *testing.T) {
 		assert.Len(t, network.Map(), 0)
 		node := network.Spawn()
 
-		//	before acquiring an address, connection is nil
-		assert.Empty(t, node.url)
-		assert.Nil(t, node.conn)
+		//	before acquiring an address connection is nil
+		assert.Nil(t, node.url)
+		assert.Nil(t, node.memConn)
 
 		//	After establishing a connection,
 		//	we should have a URL, and our Network should have one Node (us).
-		conn, err := node.Connect(nil, aliceKeys(t))
+		err := node.Connect(nil, aliceKeys(t))
 		require.NoError(t, err)
 		assert.NotEmpty(t, node.url)
-		assert.NotEmpty(t, conn.LocalAddr())
+		assert.NotEmpty(t, node.LocalAddr())
 		assert.Len(t, network.Map(), 1)
 
-		//	trying to connect again
-		// should return the existing connection, and an error
-		conn, err = node.Connect(nil, aliceKeys(t))
+		// trying to connect again should return an error,
+		// but leave the connection intact.
+		err = node.Connect(nil, aliceKeys(t))
 		assert.Error(t, err)
-		assert.NotNil(t, conn)
+		assert.NotNil(t, node.memConn)
 
 		//	close and then see that your connection is closed.
 		err = node.Disconnect()
 		assert.NoError(t, err)
-		assert.Nil(t, conn.(*Conn).inbox)
+		assert.Nil(t, node.memConn)
 
 		//	try to read from a closed connection and see that it fails
-		i, a, err := conn.ReadFrom(new(bytes.Buffer).Bytes())
+		i, a, err := node.ReadFrom(new(bytes.Buffer).Bytes())
 		assert.Error(t, err)
 		assert.Empty(t, i)
 		assert.Nil(t, a)
@@ -79,21 +79,21 @@ func TestNode(t *testing.T) {
 		assert.Empty(t, alice.url)
 
 		//	alice connects
-		conn, err := alice.Connect(nil, aliceKeys(t))
+		err := alice.Connect(nil, aliceKeys(t))
 		assert.NoError(t, err)
-		assert.NotNil(t, conn)
+		assert.NotNil(t, alice.memConn)
 
 		msg := []byte("hello world")
 
 		//	write message
-		i, err := alice.conn.WriteTo(msg, alice.Connection().LocalAddr())
+		i, err := alice.WriteTo(msg, alice.LocalAddr())
 
-		//	read message, and compare
+		//	read message and compare to original
 		bin := make([]byte, 64)
-		i, addr, err := conn.ReadFrom(bin)
+		i, addr, err := alice.ReadFrom(bin)
 		assert.NotEmpty(t, i)
 		assert.NoError(t, err)
-		assert.Equal(t, addr, conn.LocalAddr())
+		assert.Equal(t, addr, alice.LocalAddr())
 		assert.Equal(t, msg, bin[:i])
 
 		//	alice disconnects
@@ -110,25 +110,25 @@ func TestNode(t *testing.T) {
 		bob := network.Spawn()
 
 		//	connect them
-		bobConn, err := bob.Connect(nil, bobKeys(t))
+		err := bob.Connect(nil, bobKeys(t))
 		assert.NoError(t, err)
-		aliceConn, err := alice.Connect(nil, aliceKeys(t))
+		err = alice.Connect(nil, aliceKeys(t))
 		assert.NoError(t, err)
 
 		msg := []byte("hello world")
 
 		//	write to Alice's connection, bound for bob
-		i, err := aliceConn.WriteTo(msg, bobConn.LocalAddr())
+		i, err := alice.WriteTo(msg, bob.LocalAddr())
 		assert.NoError(t, err)
 		assert.NotEqual(t, 0, i)
 
 		//	read from Bob's connection, verifying sender
 		bin := make([]byte, 64)
-		i, addr, err := bobConn.ReadFrom(bin)
+		i, addr, err := bob.ReadFrom(bin)
 		assert.NoError(t, err)
-		assert.Equal(t, addr, alice.Connection().LocalAddr())
+		assert.Equal(t, addr, alice.LocalAddr())
 
-		// message should be intact
+		// the message should remain intact after passage
 		assert.Equal(t, msg, bin[:i])
 
 	})

@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	aliceCli  hermeti.CLI[*appState]
+	aliceCli  hermeti.CLI[*state]
 	aliceJoin string
-	//bobCli    hermeti.CLI[*appState]
+	//bobCli    hermeti.CLI[*state]
 	//bobJoin   string
 )
 
@@ -26,7 +26,7 @@ func (d deterministicRandomness) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*appState] {
+func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*state] {
 	randy := deterministicRandomness(seed)
 	env.Randomness = randy
 	app := newTestApp()
