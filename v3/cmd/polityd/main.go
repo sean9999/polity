@@ -156,13 +156,10 @@ func (a *appState) Run(env hermeti.Env) {
 	registry := programs.Registry
 	for name, program := range registry {
 		err := program.Initialize(a.me, outbox, errs)
-
 		if err != nil {
 			a.me.Log.Panicf("error initializing program %q: %v", name, err)
 		}
-
 		go program.Run(ctx)
-
 	}
 
 outer:
