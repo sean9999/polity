@@ -24,3 +24,5 @@ bin/
 !.idea/dictionaries
 .idea/
 
+.DS_Store
+
