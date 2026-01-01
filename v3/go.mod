@@ -5,7 +5,7 @@ go 1.25
 require (
 	github.com/sean9999/go-oracle/v3 v3.0.7
 	github.com/sean9999/go-stable-map v1.5.2
-	github.com/sean9999/hermeti v0.6.1
+	github.com/sean9999/hermeti v0.7.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	v.io/x/lib v0.1.21
@@ -19,8 +19,8 @@ require (
 	github.com/sean9999/pear v0.0.5 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
