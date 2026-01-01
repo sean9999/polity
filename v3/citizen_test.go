@@ -198,7 +198,7 @@ func TestCitizen_AsPeer(t *testing.T) {
 
 // badListener acquires an address, but can't start a listener
 type badListener struct {
-	polity.Connection
+	polity.Node
 }
 
 func (b badListener) AcquireAddress(_ context.Context, _ any) error {
