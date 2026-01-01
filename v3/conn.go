@@ -8,10 +8,20 @@ import (
 	"github.com/sean9999/go-oracle/v3/delphi"
 )
 
-// A Connection is a network connection and is used by Citizen as transport layer
+// A Node is a participant on a network with a unique URL.
+type Node interface {
+	URL() *url.URL // the address of the Connection, including username
+	Connect(ctx context.Context, pair delphi.KeyPair) (Connection, error)
+	Disconnect() error
+	Connection() Connection
+	UrlToAddr(url.URL) (net.Addr, error)
+}
+
+// A Connection is a subset of net.PacketConn, with a reference to its parent Node
 type Connection interface {
-	URL() *url.URL                                               // the address of the Connection, inclcuding username
-	UrlToAddr(url.URL) net.Addr                                  // this connection's way of translating url.URL to net.Addr
-	Establish(ctx context.Context, keyPair delphi.KeyPair) error // establishes a connection using private information
-	net.PacketConn
+	ReadFrom([]byte) (int, net.Addr, error)
+	WriteTo([]byte, net.Addr) (int, error)
+	LocalAddr() net.Addr
+	Close() error
+	Node() Node
 }

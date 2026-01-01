@@ -1,44 +1,32 @@
 package mem
 
 import (
-	"net/url"
-
-	"github.com/sean9999/polity/v3"
+	"net"
 )
 
-var _ polity.Network = (*Network)(nil)
-
 // A Network is a bunch of Nodes
-type Network map[url.URL]*Conn
+type Network map[net.Addr]*Node
 
 func (n *Network) Up() error {
-	//if n == nil {
-	//	return errors.New("nil network")
-	//}
 	return nil
 }
 
-// Down brings down a Network by forgetting all its Nodes
+// Down brings a Network down by forgetting all its Nodes
 func (n *Network) Down() {
 	m := *n
 	clear(m)
 }
 
-func NewNetwork() *Network {
-	m := make(Network)
-	return &m
-}
-
-func (n *Network) Map() map[url.URL]*Conn {
+func (n *Network) Map() map[net.Addr]*Node {
 	return *n
 }
 
-func (n *Network) Set(k url.URL, v *Conn) {
+func (n *Network) Set(k net.Addr, v *Node) {
 	m := *n
 	m[k] = v
 }
 
-func (n *Network) Get(k url.URL) (*Conn, bool) {
+func (n *Network) Get(k net.Addr) (*Node, bool) {
 	for u, m := range *n {
 		if u.String() == k.String() {
 			return m, true
@@ -47,13 +35,13 @@ func (n *Network) Get(k url.URL) (*Conn, bool) {
 	return nil, false
 }
 
-func (n *Network) Delete(k url.URL) {
+func (n *Network) Delete(k net.Addr) {
 	m := *n
 	delete(m, k)
 }
 
-func (n *Network) Spawn() polity.Connection {
-	node := new(Conn)
+func (n *Network) Spawn() *Node {
+	node := new(Node)
 	node.parent = n
 	return node
 }

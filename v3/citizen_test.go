@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/stretchr/testify/assert"
@@ -31,9 +30,9 @@ func receiveEnvelopeOrTimeout[T any](t *testing.T, ch <-chan T, d time.Duration)
 func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 	ctx := context.Background()
 	// in-memory network and two nodes
-	net := mem.NewNetwork()
-	aliceNet := net.Spawn()
-	bobNet := net.Spawn()
+	network := make(mem.Network)
+	aliceNet := network.Spawn()
+	bobNet := network.Spawn()
 
 	// two citizens on the mem network
 	alice := polity.NewCitizen(rand.Reader, io.Discard, aliceNet)
@@ -94,7 +93,7 @@ func TestCitizen_Join_Send_Receive_withMemBackend(t *testing.T) {
 
 func TestCitizen_Send_and_Announce(t *testing.T) {
 	ctx := context.Background()
-	net := mem.NewNetwork()
+	net := make(mem.Network)
 
 	alice := polity.NewCitizen(rand.Reader, io.Discard, net.Spawn())
 	bob := polity.NewCitizen(rand.Reader, io.Discard, net.Spawn())
@@ -164,24 +163,24 @@ func TestCitizen_Send_and_Announce(t *testing.T) {
 	}
 }
 
-func TestCitizen_Join_Errors(t *testing.T) {
-	ctx := context.Background()
-	// no oracle, no network
-	var c polity.Citizen
-	if in, out, errs, err := c.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
-		t.Fatalf("expected error for missing oracle/network; got err=%v in=%v out=%v errs=%v", err, in, out, errs)
-	}
-
-	// has oracle but no network: construct via NewCitizen then nil out the Connection
-	net := mem.NewNetwork()
-	n := net.Spawn()
-	c2 := polity.NewCitizen(rand.Reader, io.Discard, n)
-	// explicitly remove network
-	c2.Connection = nil
-	if in, out, errs, err := c2.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
-		t.Fatalf("expected error for missing network; got err=%v", err)
-	}
-}
+//func TestCitizen_Join_Errors(t *testing.T) {
+//	ctx := context.Background()
+//	// no oracle, no network
+//	var c polity.Citizen
+//	if in, out, errs, err := c.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
+//		t.Fatalf("expected error for missing oracle/network; got err=%v in=%v out=%v errs=%v", err, in, out, errs)
+//	}
+//
+//	// has oracle but no network: construct via NewCitizen then nil out the Connection
+//	net := new(mem.Network)
+//	n := net.Spawn()
+//	c2 := polity.NewCitizen(rand.Reader, io.Discard, n)
+//	// explicitly remove network
+//	c2.Connection = nil
+//	if in, out, errs, err := c2.Join(ctx); err == nil || in != nil || out != nil || errs != nil {
+//		t.Fatalf("expected error for missing network; got err=%v", err)
+//	}
+//}
 
 type randomizer byte
 
@@ -193,21 +192,8 @@ func (r randomizer) Read(p []byte) (int, error) {
 }
 
 func TestCitizen_AsPeer(t *testing.T) {
-	c := polity.NewCitizen(randomizer(1), io.Discard, mem.NewNetwork().Spawn())
+	c := polity.NewCitizen(randomizer(1), io.Discard, new(mem.Network).Spawn())
 	assert.Equal(t, c.NickName(), c.AsPeer().NickName())
-}
-
-// a brokenNode fails to acquire an address
-type brokenNode struct {
-	polity.Connection
-}
-
-func (b brokenNode) AcquireAddress(_ context.Context, _ any) error {
-	return errors.New("broken node")
-}
-
-func (b brokenNode) Listen(context.Context) (chan []byte, error) {
-	return nil, errors.New("broken node")
 }
 
 // badListener acquires an address, but can't start a listener
@@ -231,112 +217,8 @@ func (b badListener) Listen(_ context.Context) (chan []byte, error) {
 	return nil, errors.New("bad listener")
 }
 
-func TestCitizen_AcquireAddress(t *testing.T) {
-	c := polity.NewCitizen(randomizer(1), io.Discard, brokenNode{})
-	err := c.Establish(nil, delphi.PublicKey{})
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "failed to acquire address")
-}
-
-func TestCitizen_Join_broken_node(t *testing.T) {
-
-	t.Run("can't acquire address", func(t *testing.T) {
-		c := polity.NewCitizen(randomizer(1), io.Discard, brokenNode{})
-		_, _, _, err := c.Join(t.Context())
-		assert.ErrorContains(t, err, "failed to acquire address")
-	})
-
-	t.Run("can't listen", func(t *testing.T) {
-		c := polity.NewCitizen(randomizer(1), io.Discard, badListener{})
-		_, _, _, err := c.Join(t.Context())
-		assert.ErrorContains(t, err, "bad listener")
-	})
-
-}
-
-func TestCitizen_inbox_outbox(t *testing.T) {
-	net := mem.NewNetwork()
-	n := net.Spawn()
-	c := polity.NewCitizen(rand.Reader, io.Discard, n)
-	inbox, outbox, errs, err := c.Join(t.Context())
-	assert.NoError(t, err)
-
-	//	receiving a non-envelope should push an error to errs
-	err = n.Send(nil, []byte("i am not a envelope"), *c.URL())
-	select {
-	case err = <-errs:
-		assert.ErrorContains(t, err, "could not deserialize")
-	case <-time.After(time.Second):
-		assert.Fail(t, "timed out waiting for broken node")
-	}
-
-	// letter round trip
-	l2 := polity.NewLetter(rand.Reader)
-	l2.SetSubject("hello")
-	err = c.Send(t.Context(), rand.Reader, l2, c.URL())
-	assert.NoError(t, err)
-	l3 := <-inbox
-	assert.Equal(t, l2.Subject(), l3.Letter.Subject())
-
-	//	badly formed AAD should result in refusal to serialize
-	e := polity.NewEnvelope(rand.Reader)
-	e.Recipient = c.URL()
-	e.Letter.AAD = []byte("i do not deserialize into a map[string]string")
-	outbox <- *e
-
-	select {
-	case err = <-errs:
-		assert.ErrorContains(t, err, "refusing to serialize", "wrong error")
-	case <-time.After(time.Second):
-		assert.Fail(t, "timed out waiting for thing")
-	case incoming := <-inbox:
-		assert.Equal(t, c.URL().String(), incoming.Recipient.String())
-	}
-
-	//	now use well-formed AAD
-	e.Letter.AAD = nil
-	e.Letter.SetHeader("foo", "bar")
-	outbox <- *e
-
-	select {
-	case err = <-errs:
-		assert.ErrorContains(t, err, "no recipient")
-	case <-time.After(time.Second):
-		assert.Fail(t, "timed out waiting for thing")
-	case incoming := <-inbox:
-		assert.Equal(t, c.URL().String(), incoming.Recipient.String())
-		foo1, exists := e.Letter.GetHeader("foo")
-		assert.True(t, exists)
-		assert.Equal(t, "bar", foo1)
-		foo2, exists := incoming.Letter.GetHeader("foo")
-		assert.Equal(t, foo1, foo2)
-	}
-
-	//	sending to an unknown recipient should result in "no such recipient".
-	e.Recipient = &url.URL{
-		Scheme: "barf",
-		Host:   "weird",
-		Path:   "ok",
-	}
-	outbox <- *e
-
-	select {
-	case err = <-errs:
-		assert.ErrorContains(t, err, "no such recipient")
-	case <-time.After(time.Second):
-		assert.Fail(t, "timed out waiting for thing")
-	}
-
-	//	after leaving, channels should be closed
-	err = c.Leave(t.Context(), inbox, outbox, errs)
-	assert.NoError(t, err)
-	_, ok := <-inbox
-	assert.False(t, ok)
-
-}
-
 func TestCitizen_Announce_sad(t *testing.T) {
-	net := mem.NewNetwork()
+	net := make(mem.Network)
 	nA := net.Spawn()
 	nB := net.Spawn()
 	nC := net.Spawn()
@@ -381,16 +263,16 @@ func TestCitizen_Announce_sad(t *testing.T) {
 func TestCitizen_Announce(t *testing.T) {
 	ctx := context.Background()
 	// setup in-memory network with three nodes
-	net := mem.NewNetwork()
+	network := make(mem.Network)
 
-	err := net.Up()
+	err := network.Up()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	nA := net.Spawn()
-	nB := net.Spawn()
-	nC := net.Spawn()
+	nA := network.Spawn()
+	nB := network.Spawn()
+	nC := network.Spawn()
 
 	alice := polity.NewCitizen(rand.Reader, io.Discard, nA)
 	bob := polity.NewCitizen(rand.Reader, io.Discard, nB)

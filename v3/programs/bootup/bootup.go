@@ -39,20 +39,30 @@ func (p *proc) Subjects() []subject.Subject {
 
 func (p *proc) Accept(e polity.Envelope) {
 	p.c.Log.Println(string(e.Letter.Body()))
+
+	//	once we've printed out our boot message. We're done. Let's go away
+	p.Shutdown()
 }
 
 func (p *proc) Run(_ context.Context) {
 	me := p.c
+
+	//	this is a little circuitous.
+	//	We could have simple done p.c.Log.Println("greetings!"),
+	//	not sent anything to outbox and not done anything in Accept().
+	//	But whatevs.
 	e := polity.NewEnvelope(nil)
 	e.Letter.SetSubject(subject.BootUp)
-	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Connection.URL())
+	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Node.URL())
 	e.Letter.PlainText = []byte(greeting)
 	e.Sender = p.c.URL()
 	e.Recipient = p.c.URL()
 	p.o <- *e
 }
 
-func (p *proc) Shutdown() {}
+func (p *proc) Shutdown() {
+	programs.Free(p)
+}
 
 func (p *proc) Name() string {
 	return "bootup"

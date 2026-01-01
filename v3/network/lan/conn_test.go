@@ -19,13 +19,15 @@ func (r rando) Read(p []byte) (int, error) {
 
 func TestNewNode(t *testing.T) {
 
-	n, err := NewConn(nil)
-	assert.NoError(t, err)
+	n := new(Node)
+
+	//n, err := NewConn(nil)
+	//assert.NoError(t, err)
 	c := polity.NewCitizen(rando(5), io.Discard, n)
 	assert.NotNil(t, n)
 	assert.NotNil(t, c)
 	assert.Nil(t, n.URL())
-	err = c.Establish(nil, c.KeyPair)
+	err := c.Establish(nil, c.KeyPair)
 	assert.NoError(t, err)
 	assert.NotNil(t, n.URL())
 
@@ -34,7 +36,7 @@ func TestNewNode(t *testing.T) {
 func createCitizen(t testing.TB, seed int) *polity.Citizen {
 	t.Helper()
 
-	node, _ := NewConn(nil)
+	node := new(Node)
 	person := polity.NewCitizen(rando(seed), io.Discard, node)
 	return person
 }

@@ -21,7 +21,7 @@ type Oracle = oracle.Principal
 
 // A Citizen is a Connection with an Oracle.
 type Citizen struct {
-	Connection
+	Node
 	*Oracle
 	Peers    PeerSet
 	Profiles *ProfileSet
@@ -33,20 +33,20 @@ func (c *Citizen) AsPeer() *Peer {
 	return &Peer{orc}
 }
 
-func NewCitizen(randy io.Reader, out io.Writer, conn Connection) *Citizen {
+func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
 	orc := oracle.NewPrincipal(randy)
 	return &Citizen{
-		Connection: conn,
-		Oracle:     orc,
-		Peers:      NewPeerSet(orc.Peers),
-		Log:        log.New(out, "", 0),
+		Node:   node,
+		Oracle: orc,
+		Peers:  NewPeerSet(orc.Peers),
+		Log:    log.New(out, "", 0),
 	}
 }
 
 func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
-	err := c.Connection.Establish(ctx, kp)
+	_, err := c.Node.Connect(ctx, kp)
 	if err != nil {
-		return fmt.Errorf("failed to acquire address: %w", err)
+		return err
 	}
 	c.Props["addr"] = c.URL().String()
 	return nil
@@ -61,7 +61,7 @@ func (c *Citizen) Shutdown() {
 }
 
 func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
-	err := c.Connection.Close()
+	err := c.Node.Connection().Close()
 	close(inbox)
 	close(outbox)
 	close(errs)
@@ -104,9 +104,6 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	if c.Oracle == nil {
 		return nil, nil, nil, errors.New("no oracle")
 	}
-	if c.Connection == nil {
-		return nil, nil, nil, errors.New("no network")
-	}
 
 	//	before joining a network, one must acquire an address.
 	err := c.Establish(ctx, c.Oracle.KeyPair)
@@ -132,7 +129,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 	go func() {
 		buf := make([]byte, 1024)
 		for {
-			i, _, err := c.Connection.ReadFrom(buf)
+			i, _, err := c.Node.Connection().ReadFrom(buf)
 			if err != nil {
 				errs <- err
 			}
@@ -209,7 +206,12 @@ func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, reci
 		return err
 	}
 
-	_, err = c.Connection.WriteTo(bin, c.Connection.UrlToAddr(*recipient))
+	addr, err := c.Node.UrlToAddr(*recipient)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Node.Connection().WriteTo(bin, addr)
 	if err != nil {
 		return err
 	}

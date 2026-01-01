@@ -31,8 +31,13 @@ type Program interface {
 	Subjects() []subject.Subject
 	Accept(polity.Envelope)
 	Run(context.Context)
-	Shutdown()
+	Shutdown() // Shutdown should probably call Free(), but if you want to be a memory-leaky jerk, up to you
 	Name() string
+}
+
+// Free frees a program from the registry, making it forgotten.
+func Free(p Program) {
+	delete(Registry, p.Name())
 }
 
 //func ProgramFrom(thing any) (Program, error) {

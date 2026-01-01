@@ -1,13 +1,9 @@
 package mem
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"io"
-	"net/url"
+	"net"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
 	"github.com/sean9999/polity/v3"
 )
 
@@ -15,98 +11,70 @@ var _ polity.Connection = (*Conn)(nil)
 
 type Conn struct {
 	parent *Network
-	url    url.URL
-	inbox  io.ReadWriter
+	addr   net.Addr
+	inbox  chan packet
+	node   *Node
 }
 
-func (n *Conn) Nickname() string {
-	return n.url.User.String()
+type packet struct {
+	data      []byte
+	sender    net.Addr
+	recipient net.Addr
 }
 
-func (n *Conn) Establish(_ context.Context, kp delphi.KeyPair) error {
+func (n *Conn) ReadFrom(bin []byte) (int, net.Addr, error) {
+	if n.inbox == nil {
+		return 0, nil, errors.New("no inbox")
+	}
+	p := <-n.inbox
+	i := copy(bin, p.data)
+	return i, p.sender, nil
+}
 
-	pubKey := kp.PublicKey()
+func (n *Conn) WriteTo(bytes []byte, addr net.Addr) (int, error) {
 
-	if n.url.String() != "" {
-		return fmt.Errorf("already acquired an address: %s", n.url.String())
+	recipientNode, exists := n.parent.Get(addr)
+	if !exists {
+		return 0, errors.New("no such node")
 	}
-	u := url.URL{
-		Scheme: "memnet",
-		Host:   "memory",
-		User:   url.User(pubKey.String()),
+
+	p := packet{
+		data:      bytes,
+		sender:    n.addr,
+		recipient: addr,
 	}
-	_, alreadyExists := n.parent.Get(u)
-	if alreadyExists {
-		return errors.New("address already exists on Connection")
+
+	if recipientNode == nil {
+		return 0, errors.New("nil node")
 	}
-	n.url = u
-	n.parent.Set(u, n)
+	if recipientNode.conn == nil {
+		return 0, errors.New("nil conn")
+	}
+	if recipientNode.conn.inbox == nil {
+		return 0, errors.New("nil inbox")
+	}
+
+	//	TODO: block, or don't block?
+	go func() {
+		recipientNode.conn.inbox <- p
+	}()
+
+	return len(bytes), nil
+}
+
+func (n *Conn) LocalAddr() net.Addr {
+	return n.addr
+}
+
+func (n *Conn) Close() error {
+	if n.inbox == nil {
+		return errors.New("inbox is already nil")
+	}
+	close(n.inbox)
+	n.inbox = nil
 	return nil
 }
 
-func (n *Conn) Address() *url.URL {
-	if n.url.String() == "" {
-		return nil
-	}
-	return &n.url
+func (n *Conn) Node() polity.Node {
+	return n.node
 }
-
-//func (n *Conn) Send(_ context.Context, payload []byte, recipient url.URL) error {
-//	if recipient.String() == "" {
-//		return fmt.Errorf("no recipient")
-//	}
-//	rip, ok := n.parent.Get(recipient)
-//	if !ok {
-//		return fmt.Errorf("no such recipient: %s", recipient.String())
-//	}
-//	if rip.bytesListener == nil {
-//		return fmt.Errorf("nil BytesListener")
-//	}
-//	go func() {
-//		rip.bytesListener <- payload
-//	}()
-//	return nil
-//}
-
-func (n *Conn) Announce(ctx context.Context, bytes []byte, urls []url.URL) error {
-	var err error
-	for _, u := range urls {
-		er := n.Send(ctx, bytes, u)
-		if er != nil {
-			err = errors.Join(err, er)
-		}
-	}
-	return err
-}
-
-//func (n *Conn) Listen(_ context.Context) (chan []byte, error) {
-//
-//	if n.url.User.String() == "" {
-//		return nil, fmt.Errorf("no address")
-//	}
-//	if n.bytesListener != nil {
-//		return nil, fmt.Errorf("already joined")
-//	}
-//
-//	n.bytesListener = make(chan []byte)
-//	incomingBytes := make(chan []byte)
-//	go func() {
-//		for bin := range n.bytesListener {
-//			incomingBytes <- bin
-//		}
-//		close(incomingBytes)
-//	}()
-//	return incomingBytes, nil
-//}
-//
-//func (n *Conn) Leave(_ context.Context) error {
-//	if n.bytesListener == nil {
-//		return fmt.Errorf("already left or never joined")
-//	}
-//
-//	//	TODO: find out if race conditions could happen here.
-//	close(n.bytesListener)
-//	n.bytesListener = nil
-//	n.parent.Delete(n.url)
-//	return nil
-//}

@@ -44,6 +44,9 @@ func (h *heartbeat) Accept(e polity.Envelope) {
 
 func (h *heartbeat) Run(ctx context.Context) {
 
+	//	this program is done when this function exits
+	defer programs.Free(h)
+
 	var i int
 	l := polity.NewLetter(nil)
 	l.SetSubject("heartbeat")
@@ -61,14 +64,9 @@ func (h *heartbeat) Run(ctx context.Context) {
 			e := h.citizen.Compose(nil, h.citizen.URL())
 			e.Letter = l
 			h.outbox <- *e
-			//recipients := append(h.citizen.Peers.URLs(), *h.citizen.URL())
-			//err := h.citizen.Announce(ctx, nil, l, recipients)
-			//fmt.Println("announce heartbeat ", err)
-			//if err != nil {
-			//	h.errs <- err
-			//}
 		}
 	}
+
 }
 
 func (h *heartbeat) Shutdown() {

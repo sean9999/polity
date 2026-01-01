@@ -12,6 +12,7 @@ import (
 	"github.com/sean9999/go-oracle/v3"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
+	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/sean9999/polity/v3/programs"
 
 	"github.com/sean9999/polity/v3/subject"
@@ -25,31 +26,22 @@ type appState struct {
 	foo      string
 	me       *polity.Citizen
 	joinPeer *polity.Peer
-	node     polity.Connection
+	node     polity.Node
 }
 
 // a real app uses the lan back-end
 func newRealApp() *appState {
-
-	node, err := lan.NewConn(nil)
-	if err != nil {
-		panic(err)
-	}
 	a := appState{
-		node: node,
+		node: new(lan.Node),
 	}
 	return &a
 }
 
 // a test app uses the mem back-end
 func newTestApp() *appState {
-
-	node, err := lan.NewConn(nil)
-	if err != nil {
-		panic(err)
-	}
+	mother := make(mem.Network)
 	a := appState{
-		node: node,
+		node: mother.Spawn(),
 	}
 	return &a
 }
@@ -168,7 +160,9 @@ func (a *appState) Run(env hermeti.Env) {
 		if err != nil {
 			a.me.Log.Panicf("error initializing program %q: %v", name, err)
 		}
+
 		go program.Run(ctx)
+
 	}
 
 outer:
