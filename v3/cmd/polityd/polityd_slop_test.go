@@ -15,8 +15,8 @@ import (
 )
 
 func TestPolityd_Slop(t *testing.T) {
-	t.Run("newRealApp", func(t *testing.T) {
-		app := newRealApp()
+	t.Run("newLanApp", func(t *testing.T) {
+		app := newLanApp()
 		assert.NotNil(t, app.node)
 	})
 

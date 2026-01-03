@@ -13,6 +13,7 @@ import (
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
 	"github.com/sean9999/polity/v3/network/mem"
+	redmem "github.com/sean9999/polity/v3/network/redis"
 	"github.com/sean9999/polity/v3/programs"
 
 	"github.com/sean9999/polity/v3/subject"
@@ -29,8 +30,20 @@ type state struct {
 	node     polity.Node
 }
 
+func newRedisApp() *state {
+	redisServer := new(redmem.Network)
+	err := redisServer.Up(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	node := redisServer.Spawn()
+	return &state{
+		node: node,
+	}
+}
+
 // a real app uses the lan back-end
-func newRealApp() *state {
+func newLanApp() *state {
 	a := state{
 		node: new(lan.Node),
 	}
@@ -123,7 +136,7 @@ func (app *state) Run(env hermeti.Env) {
 
 	ctx := context.Background()
 
-	inbox, outbox, errs, err := app.me.Join(nil)
+	inbox, outbox, errs, err := app.me.Join(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -184,7 +197,8 @@ outer:
 }
 
 func main() {
-	app := newRealApp()
+	//app := newLanApp()
+	app := newRedisApp()
 	cli := hermeti.NewRealCli(app)
 	cli.Run()
 }
