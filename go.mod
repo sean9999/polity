@@ -18,9 +18,19 @@ require (
 require (
 	github.com/amazon-ion/ion-go v1.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/dave/astrid v0.0.0-20170323122508-8c2895878b14 // indirect
+	github.com/dave/brenda v1.1.0 // indirect
+	github.com/dave/courtney v0.4.4 // indirect
+	github.com/dave/patsy v0.0.0-20210517141501-957256f50cba // indirect
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/mod v0.23.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 )
+
+tool github.com/dave/courtney

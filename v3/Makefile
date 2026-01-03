@@ -78,11 +78,10 @@ publish:
 	GOPROXY=https://proxy.golang.org,direct go list -m ${REPO}@${SEMVER}
 
 test:
-	go test ./...
+	go test -coverprofile=coverage.out ./...
 
 coverage:
-	go test -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
+	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated:"
 	@echo "  - Text summary: go tool cover -func=coverage.out"
 	@echo "  - HTML report: open coverage.html"

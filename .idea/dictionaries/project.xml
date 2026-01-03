@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>bin/polityd</w>
+      <w>coverprofile</w>
       <w>flargs</w>
       <w>fset</w>
       <w>goproxy</w>
