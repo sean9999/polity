@@ -62,23 +62,23 @@ func nilNode[N Node](t testing.TB, freshNode N) {
 	t.Helper()
 
 	//	before connecting, a Node should return nil for URL and LocalAddr
-	assert.Empty(t, freshNode.URL())
-	assert.Nil(t, freshNode.LocalAddr())
+	assert.Empty(t, freshNode.URL(), "url should be empty")
+	assert.Nil(t, freshNode.LocalAddr(), "local addr should be nil")
 
 	//	attempting to read should fail
 	i, addr, err := freshNode.ReadFrom(make([]byte, 1024))
-	assert.Error(t, err)
-	assert.Nil(t, addr)
+	assert.Error(t, err, "reading from a nil node should fail")
+	assert.Nil(t, addr, "addr should be nil")
 	assert.Equal(t, 0, i)
 
 	//	attempting to read should fail
 	i, err = freshNode.WriteTo(make([]byte, 1024), freshNode.LocalAddr())
-	assert.Error(t, err)
+	assert.Error(t, err, "writing to a nil node should fail")
 	assert.Equal(t, 0, i)
 
 	//	attempting to disconnect should fail
 	err = freshNode.Disconnect()
-	assert.Error(t, err)
+	assert.Error(t, err, "disconnecting a nil node should fail")
 
 }
 
@@ -89,25 +89,25 @@ func goodNode[N Node](t testing.TB, freshNode N) {
 	kp := delphi.NewKeyPair(rand.Reader)
 
 	//	a good node should have a URL and LocalAddr
-	assert.NotNil(t, freshNode.URL())
-	assert.NotNil(t, freshNode.LocalAddr())
+	assert.NotNil(t, freshNode.URL(), "url should not be nil")
+	assert.NotNil(t, freshNode.LocalAddr(), "local addr should not be nil")
 
 	//	write to works
 	msg := []byte("hello world")
 	_, err := freshNode.WriteTo(msg, freshNode.LocalAddr())
-	assert.NoError(t, err)
+	assert.NoError(t, err, "writing to a connected node should not return an error", err)
 
 	//	read from works
 	i, addr, err := freshNode.ReadFrom(make([]byte, 1024))
-	assert.NoError(t, err)
-	assert.NotNil(t, addr)
+	assert.NoError(t, err, "reading from a connected node should not return an error", err)
+	assert.NotNil(t, addr, "addr should not be nil")
 	assert.NotEqual(t, 0, i)
 
 	err = freshNode.Connect(ctx, kp)
 	assert.Error(t, err, "attempting to connect with an already-connected node should fail")
 
-	//	despite that, connection should be intact
-	assert.NotNil(t, freshNode.URL())
-	assert.NotNil(t, freshNode.LocalAddr())
+	//	despite that, the connection should be intact
+	assert.NotNil(t, freshNode.URL(), "url should not be nil")
+	assert.NotNil(t, freshNode.LocalAddr(), "local addr should not be nil")
 
 }
