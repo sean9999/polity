@@ -168,10 +168,10 @@ func (app *state) Run(env hermeti.Env) {
 	//	Initialize and run every program in the registry.
 	//  Any initialization failure means we crash.
 	registry := programs.Registry
-	for program, subjs := range registry.Programs {
+	for program, subjects := range registry.Programs {
 		err := program.Init(app.me, outbox, errs)
 		if err != nil {
-			app.me.Log.Panicf("error initializing program for %q: %v", subjs, err)
+			app.me.Log.Panicf("error initializing program for %q: %v", subjects, err)
 		}
 		go program.Run(ctx)
 	}

@@ -110,7 +110,7 @@ func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) error {
 
 	u := url.URL{
 		Scheme: "redis",
-		User:   url.User(pair.PublicKey().Nickname()),
+		User:   url.User(pair.PublicKey().String()),
 		Host:   "inbox",
 	}
 	n.url = &u
