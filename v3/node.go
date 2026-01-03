@@ -18,7 +18,7 @@ type Node interface {
 	PacketConn
 	URL() *url.URL // the address of the Connection, including username
 	Connect(ctx context.Context, pair delphi.KeyPair) error
-	Disconnect() error
+	Disconnect() error // TODO: we don't need both Disconnect and Close
 	UrlToAddr(url.URL) (net.Addr, error)
 }
 
@@ -52,7 +52,7 @@ func WellBehavedNode[N Node](t testing.TB, freshNode N) {
 
 		//	close
 		err = freshNode.Close()
-		require.NoError(t, err)
+		require.NoError(t, err, "closing a connected node should not return an error", err)
 
 	}
 
@@ -103,9 +103,8 @@ func goodNode[N Node](t testing.TB, freshNode N) {
 	assert.NotNil(t, addr)
 	assert.NotEqual(t, 0, i)
 
-	//	attempting to connect with an already-connected node should fail
 	err = freshNode.Connect(ctx, kp)
-	assert.Error(t, err)
+	assert.Error(t, err, "attempting to connect with an already-connected node should fail")
 
 	//	despite that, connection should be intact
 	assert.NotNil(t, freshNode.URL())
