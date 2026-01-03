@@ -7,13 +7,23 @@ import (
 	"time"
 
 	"github.com/sean9999/hermeti"
+	"github.com/sean9999/polity/v3/network/mem"
 	"github.com/stretchr/testify/assert"
 )
 
+// a test app uses the mem back-end
+func newTestApp() *polityd {
+	mother := make(mem.Network)
+	a := polityd{
+		node: mother.Spawn(),
+	}
+	return &a
+}
+
 var (
-	aliceCli  hermeti.CLI[*state]
+	aliceCli  hermeti.CLI[*polityd]
 	aliceJoin string
-	//bobCli    hermeti.CLI[*state]
+	//bobCli    hermeti.CLI[*polityd]
 	//bobJoin   string
 )
 
@@ -26,7 +36,7 @@ func (d deterministicRandomness) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*state] {
+func createCitizen(seed byte, env hermeti.Env) hermeti.CLI[*polityd] {
 	randy := deterministicRandomness(seed)
 	env.Randomness = randy
 	app := newTestApp()

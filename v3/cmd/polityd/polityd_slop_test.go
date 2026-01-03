@@ -15,13 +15,9 @@ import (
 )
 
 func TestPolityd_Slop(t *testing.T) {
-	t.Run("newLanApp", func(t *testing.T) {
-		app := newLanApp()
-		assert.NotNil(t, app.node)
-	})
 
 	t.Run("Init errors", func(t *testing.T) {
-		app := &state{node: nil}
+		app := &polityd{node: nil}
 		env := hermeti.TestEnv()
 		err := app.Init(&env)
 		assert.Error(t, err)
