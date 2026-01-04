@@ -14,19 +14,32 @@ type Network struct {
 	rdb *redis.Client
 }
 
-func (n *Network) Up(ctx context.Context) error {
+func ServerIsRunning(ctx context.Context) bool {
+	n := new(Network)
+	err := n.Up(ctx)
+	if err != nil {
+		return false
+	}
+	n.Down()
+	return true
+}
 
+func (n *Network) Down() error {
+	return n.rdb.Close()
+}
+
+func (n *Network) Up(ctx context.Context) error {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", redisHost, redisPort),
-		Password: "", // no password
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 		Protocol: 2,
 	})
-	n.rdb = rdb
 	err := rdb.Ping(ctx).Err()
 	if err != nil {
 		return fmt.Errorf("can't find a redis server on %s:%d. %w", redisHost, redisPort, err)
 	}
+	n.rdb = rdb
 	return nil
 }
 

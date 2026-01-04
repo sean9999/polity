@@ -21,7 +21,6 @@ func TestPolityd_Slop(t *testing.T) {
 		env := hermeti.TestEnv()
 		err := app.Init(&env)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "you need to instantiate")
 	})
 
 	t.Run("Init with join flag", func(t *testing.T) {

@@ -22,6 +22,10 @@ func TestNode(t *testing.T) {
 
 	ctx := t.Context()
 
+	if !ServerIsRunning(ctx) {
+		t.Skip("redis server is not running")
+	}
+
 	redisServer := new(Network)
 	err := redisServer.Up(ctx)
 	require.NoError(t, err)
@@ -72,6 +76,10 @@ func TestNode(t *testing.T) {
 }
 
 func TestNode_wellBehaved(t *testing.T) {
+
+	if !ServerIsRunning(t.Context()) {
+		t.Skip("redis server is not running")
+	}
 
 	redisServer := new(Network)
 	err := redisServer.Up(t.Context())

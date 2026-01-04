@@ -23,6 +23,11 @@ func (d *dog) UnmarshalBinary(b []byte) error {
 }
 
 func TestNetwork(t *testing.T) {
+
+	if !ServerIsRunning(t.Context()) {
+		t.Skip("redis server is not running")
+	}
+
 	n := new(Network)
 	err := n.Up(t.Context())
 	assert.NoError(t, err)
@@ -30,6 +35,11 @@ func TestNetwork(t *testing.T) {
 }
 
 func TestNetwork_Up(t *testing.T) {
+
+	if !ServerIsRunning(t.Context()) {
+		t.Skip("redis server is not running")
+	}
+
 	n := new(Network)
 	err := n.Up(t.Context())
 	require.NoError(t, err)
