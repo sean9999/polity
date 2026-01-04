@@ -3,6 +3,7 @@ module github.com/sean9999/polity/v3
 go 1.25.5
 
 require (
+	github.com/0xAX/notificator v0.0.0-20220220101646-ee9b8921e557
 	github.com/oleksandr/bonjour v0.0.0-20210301155756-30f43c61b915
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/sean9999/go-oracle/v3 v3.0.7
