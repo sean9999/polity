@@ -18,7 +18,6 @@ type Node interface {
 	PacketConn
 	URL() *url.URL // the address of the Connection, including username
 	Connect(ctx context.Context, pair delphi.KeyPair) error
-	Disconnect() error // TODO: we don't need both Disconnect and Close
 	UrlToAddr(url.URL) (net.Addr, error)
 }
 
@@ -77,7 +76,7 @@ func nilNode[N Node](t testing.TB, freshNode N) {
 	assert.Equal(t, 0, i)
 
 	//	attempting to disconnect should fail
-	err = freshNode.Disconnect()
+	err = freshNode.Close()
 	assert.Error(t, err, "disconnecting a nil node should fail")
 
 }

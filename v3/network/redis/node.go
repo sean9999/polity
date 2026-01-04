@@ -83,10 +83,6 @@ func (n *Node) LocalAddr() net.Addr {
 	return n.addr
 }
 
-func (n *Node) Disconnect() error {
-	return n.Close()
-}
-
 func (n *Node) Close() error {
 	if n.addr == nil {
 		return errors.New("nothing to close")

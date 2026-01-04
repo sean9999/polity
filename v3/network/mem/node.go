@@ -50,7 +50,7 @@ func (n *Node) URL() *url.URL {
 	return n.url
 }
 
-func (n *Node) Disconnect() error {
+func (n *Node) Close() error {
 
 	if n.memConn == nil {
 		return errors.New("node is already disconnected")

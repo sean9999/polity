@@ -62,7 +62,7 @@ func (n *Node) URL() *url.URL {
 	return n.url
 }
 
-func (n *Node) Disconnect() error {
+func (n *Node) Close() error {
 	if n.UDPConn == nil {
 		return fmt.Errorf("no UDPConn")
 	}

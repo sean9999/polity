@@ -3,6 +3,8 @@ module github.com/sean9999/polity/v3
 go 1.25.5
 
 require (
+	github.com/oleksandr/bonjour v0.0.0-20210301155756-30f43c61b915
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/sean9999/go-oracle/v3 v3.0.7
 	github.com/sean9999/go-stable-map v1.5.2
 	github.com/sean9999/hermeti v0.7.0
@@ -19,8 +21,8 @@ require (
 	github.com/google/licensecheck v0.3.1 // indirect
 	github.com/google/safehtml v0.0.3-0.20211026203422-d6f0e11a5516 // indirect
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
+	github.com/miekg/dns v1.1.61 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/redis/go-redis/v9 v9.17.2 // indirect
 	github.com/sean9999/pear v0.0.5 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect

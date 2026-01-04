@@ -61,7 +61,7 @@ func (c *Citizen) Shutdown() {
 }
 
 func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
-	err := c.Node.Disconnect()
+	err := c.Node.Close()
 	close(inbox)
 	close(outbox)
 	close(errs)

@@ -27,7 +27,7 @@ func TestMem_Slop(t *testing.T) {
 
 	t.Run("Node Disconnect error", func(t *testing.T) {
 		node := net.Spawn()
-		err := node.Disconnect()
+		err := node.Close()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "disconnected")
 	})

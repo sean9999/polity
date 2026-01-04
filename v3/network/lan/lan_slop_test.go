@@ -14,7 +14,7 @@ import (
 func TestLan_Slop(t *testing.T) {
 	t.Run("isPrivate", func(t *testing.T) {
 		assert.False(t, isPrivate(nil))
-		
+
 		_, subnet1, _ := net.ParseCIDR("192.168.1.1/24")
 		assert.True(t, isPrivate(subnet1))
 
@@ -22,7 +22,7 @@ func TestLan_Slop(t *testing.T) {
 		assert.False(t, isPrivate(subnet2))
 
 		assert.False(t, isPrivate(&net.IPNet{IP: nil}))
-		
+
 		ipv6 := net.ParseIP("2001:db8::1")
 		assert.False(t, isPrivate(&net.IPNet{IP: ipv6}))
 	})
@@ -49,7 +49,7 @@ func TestLan_Slop(t *testing.T) {
 		// We need a real UDPConn to test Close
 		pc, _ := net.ListenPacket("udp4", "127.0.0.1:0")
 		node := &Node{UDPConn: pc.(*net.UDPConn)}
-		err := node.Disconnect()
+		err := node.Close()
 		assert.NoError(t, err)
 		assert.Nil(t, node.URL())
 	})
