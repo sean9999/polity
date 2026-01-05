@@ -22,7 +22,8 @@ var _ polity.Node = (*Node)(nil)
 
 type Node struct {
 	*net.UDPConn
-	url *url.URL
+	url   *url.URL
+	IFace *net.Interface
 }
 
 func (n *Node) LocalAddr() net.Addr {
@@ -85,13 +86,14 @@ func (n *Node) Connect(ctx context.Context, pair delphi.KeyPair) error {
 
 	idealPort := uint64ToEphemeralPort(keyToUint64(key))
 
-	ip, _, err := getLan(ctx)
+	iFace, ip, _, err := getLan(ctx)
 	if err != nil {
 		return fmt.Errorf("could not get LAN. %w", err)
 	}
 
 	udpAddr.Port = idealPort
 	udpAddr.IP = ip
+	n.IFace = iFace
 
 	ipAddr, err := netip.ParseAddrPort(udpAddr.String())
 	if err != nil {

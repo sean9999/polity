@@ -1,4 +1,4 @@
-package bonjour
+package main
 
 import (
 	"io"
@@ -44,12 +44,12 @@ func createCitizen(t testing.TB, seed int) *polity.Citizen {
 
 func createAlice(t testing.TB) *polity.Citizen {
 	t.Helper()
-	return createCitizen(t, 1)
+	return createCitizen(t, 11)
 }
 
 func createBob(t testing.TB) *polity.Citizen {
 	t.Helper()
-	return createCitizen(t, 2)
+	return createCitizen(t, 12)
 }
 
 func TestThing(t *testing.T) {
@@ -84,7 +84,7 @@ func TestThing(t *testing.T) {
 	h := <-aliceIn
 	assert.Contains(t, string(h.Letter.PlainText), "there")
 
-	time.Sleep(150 * time.Second)
+	time.Sleep(10 * time.Second)
 
 }
 

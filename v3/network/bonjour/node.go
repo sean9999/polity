@@ -1,21 +1,24 @@
-package bonjour
+package main
 
 import (
 	"context"
 	"errors"
 	"net"
 
-	"github.com/oleksandr/bonjour"
+	"github.com/hashicorp/mdns"
+
 	"github.com/sean9999/go-oracle/v3/delphi"
 	"github.com/sean9999/polity/v3"
 	"github.com/sean9999/polity/v3/network/lan"
 )
 
+var x = mdns.Lookup
+
 var _ polity.Node = (*Node)(nil)
 
 type Node struct {
 	*lan.Node
-	*bonjour.Server
+	svr *mdns.Server
 }
 
 func NewNode() *Node {
@@ -33,18 +36,32 @@ func (n *Node) Connect(ctx context.Context, kp delphi.KeyPair) error {
 	port := n.Node.LocalAddr().(*net.UDPAddr).Port
 	//host := n.Node.LocalAddr().(*net.UDPAddr).IP.String()
 
-	bonjourServer, err := bonjour.Register(kp.PublicKey().Nickname(), "_polity._udp", "", port, []string{"pubkey=" + kp.PublicKey().String(), "version=v3.0.2"}, nil)
+	ips := []net.IP{
+		n.Node.LocalAddr().(*net.UDPAddr).IP,
+		net.ParseIP("10.0.0.68"),
+	}
+
+	//info := []string{"My awesome service", "foo", "pubkey", kp.PublicKey().String()}
+
+	info := []string{"My awesome service"}
+
+	service, err := mdns.NewMDNSService("billie", "_polity._udp", "local.", "", port, ips, info)
 	if err != nil {
 		return err
 	}
-	n.Server = bonjourServer
+
+	server, err := mdns.NewServer(&mdns.Config{Zone: service})
+	if err != nil {
+		return err
+	}
+	n.svr = server
 	return nil
 }
 
 func (n *Node) Close() error {
-	if n.Server == nil {
+	if n.svr == nil {
 		return errors.New("nothing to close")
 	}
-	n.Server.Shutdown()   // stop advertising
+	n.svr.Shutdown()      // stop advertising
 	return n.Node.Close() // close connection
 }

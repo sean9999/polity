@@ -75,21 +75,37 @@ func AddrToUrl(addr net.UDPAddr) (url.URL, error) {
 	}, nil
 }
 
-func getLan(_ context.Context) (net.IP, *net.IPNet, error) {
+func thisKindToThatKind(x netstate.NetworkInterface) *net.Interface {
+	iFaces, err := net.Interfaces()
+	if err != nil {
+		return nil
+	}
+	for _, iFace := range iFaces {
+		if iFace.Index == x.Index() {
+			return &iFace
+		}
+	}
+	return nil
+}
+
+func getLan(_ context.Context) (*net.Interface, net.IP, *net.IPNet, error) {
 	state, err := netstate.GetAccessibleIPs()
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not get LAN ip. %w", err)
+		return nil, nil, nil, fmt.Errorf("could not get LAN ip. %w", err)
 	}
 	candidates := state.Filter(netstate.IsUnicastIPv4)
 	for _, candidate := range candidates {
+
 		for _, addr := range candidate.Interface().Addrs() {
 			_, subnet, _ := net.ParseCIDR(addr.String())
 			if isPrivate(subnet) {
 				for _, a := range candidate.Interface().Addrs() {
-					return net.ParseCIDR(a.String())
+					iFace := thisKindToThatKind(candidate.Interface())
+					ip, ipNet, err := net.ParseCIDR(a.String())
+					return iFace, ip, ipNet, err
 				}
 			}
 		}
 	}
-	return nil, nil, net.InvalidAddrError("no suitable device found")
+	return nil, nil, nil, net.InvalidAddrError("no suitable device found")
 }
