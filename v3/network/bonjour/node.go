@@ -1,8 +1,9 @@
-package main
+package bonjour
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/hashicorp/mdns"
@@ -12,7 +13,9 @@ import (
 	"github.com/sean9999/polity/v3/network/lan"
 )
 
-var x = mdns.Lookup
+const (
+	mdnsServiceName = "_polity._udp"
+)
 
 var _ polity.Node = (*Node)(nil)
 
@@ -28,24 +31,21 @@ func NewNode() *Node {
 }
 
 func (n *Node) Connect(ctx context.Context, kp delphi.KeyPair) error {
+
 	lanErr := n.Node.Connect(ctx, kp)
 	if lanErr != nil {
 		return lanErr
 	}
 
 	port := n.Node.LocalAddr().(*net.UDPAddr).Port
-	//host := n.Node.LocalAddr().(*net.UDPAddr).IP.String()
 
 	ips := []net.IP{
 		n.Node.LocalAddr().(*net.UDPAddr).IP,
-		net.ParseIP("10.0.0.68"),
 	}
 
-	//info := []string{"My awesome service", "foo", "pubkey", kp.PublicKey().String()}
+	info := []string{fmt.Sprintf("pubkey: %s", kp.PublicKey().String())}
 
-	info := []string{"My awesome service"}
-
-	service, err := mdns.NewMDNSService("billie", "_polity._udp", "local.", "", port, ips, info)
+	service, err := mdns.NewMDNSService(kp.PublicKey().Nickname(), mdnsServiceName, "", "", port, ips, info)
 	if err != nil {
 		return err
 	}
@@ -62,6 +62,15 @@ func (n *Node) Close() error {
 	if n.svr == nil {
 		return errors.New("nothing to close")
 	}
-	n.svr.Shutdown()      // stop advertising
-	return n.Node.Close() // close connection
+	var err error
+	err = n.svr.Shutdown() // stop advertising
+	if err != nil {
+		err = errors.Join(err, err)
+	}
+	n.svr = nil
+	err = n.Node.Close() // close connection
+	if err != nil {
+		err = errors.Join(err, err)
+	}
+	return err
 }

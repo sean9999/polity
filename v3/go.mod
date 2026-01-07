@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/0xAX/notificator v0.0.0-20220220101646-ee9b8921e557
+	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/mdns v1.0.6
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/sean9999/go-oracle/v3 v3.0.7
@@ -16,6 +17,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
