@@ -39,7 +39,7 @@ func TestNode_contract(t *testing.T) {
 	node := network.Spawn()
 
 	polity.WellBehavedNode(t, node)
-	
+
 }
 
 func TestNode(t *testing.T) {
@@ -69,7 +69,7 @@ func TestNode(t *testing.T) {
 		assert.NotNil(t, node.memConn)
 
 		//	close and then see that your connection is closed.
-		err = node.Disconnect()
+		err = node.Close()
 		assert.NoError(t, err)
 		assert.Nil(t, node.memConn)
 
@@ -108,7 +108,7 @@ func TestNode(t *testing.T) {
 		assert.Equal(t, msg, bin[:i])
 
 		//	alice disconnects
-		err = alice.Disconnect()
+		err = alice.Close()
 		assert.NoError(t, err)
 
 	})

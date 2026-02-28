@@ -66,7 +66,4 @@ func TestLan_Slop(t *testing.T) {
 		}
 	})
 
-	t.Run("getLan coverage", func(t *testing.T) {
-		_, _, _ = getLan(context.Background())
-	})
 }

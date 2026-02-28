@@ -3,7 +3,7 @@ package subject
 import "testing"
 
 func TestSubject_String(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name string
 		in   Subject
 		want string
@@ -14,7 +14,6 @@ func TestSubject_String(t *testing.T) {
 	}
 	for _, tc := range cases {
 		// capture range var
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			got := tc.in.String()
 			if got != tc.want {
@@ -25,7 +24,7 @@ func TestSubject_String(t *testing.T) {
 }
 
 func TestFrom(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		name string
 		in   string
 		want Subject
@@ -36,7 +35,6 @@ func TestFrom(t *testing.T) {
 	}
 	for _, tc := range cases {
 		// capture range var
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			got := From(tc.in)
 			if got != tc.want {
