@@ -4,6 +4,7 @@ import (
 	_ "context"
 	"os"
 	"testing"
+	"testing/cryptotest"
 	"time"
 
 	"github.com/sean9999/hermeti"
@@ -79,12 +80,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestCitizen_fallingDawn_boots(t *testing.T) {
+
+	cryptotest.SetGlobalRandom(t, 1)
+
 	out, err := aliceCli.Env.CaptureOutput()
 	if err != nil {
 		panic(err)
 	}
 
-	assert.Contains(t, out.String(), "falling-dawn")
+	assert.Contains(t, out.String(), "weathered-grass")
 	assert.Contains(t, out.String(), "a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c")
 	assert.Contains(t, out.String(), "polityd -join=")
 	aliceJoin = aliceCli.App.me.URL().String()
