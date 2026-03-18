@@ -4,7 +4,7 @@ BRANCH := $$(git branch --show-current)
 REF := $$(git describe --dirty --tags --always)
 
 info:
-	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(REPO) $(SEMVER) $(BRANCH) $(REF)
+	@printf "REPO:\t%s\nSEMVER:\t%s\nBRANCH:\t%s\nREF:\t%s\n" $(MODULE) $(SEMVER) $(BRANCH) $(REF)
 
 binaries: bin/polityd bin/polity
 	mkdir -p bin
@@ -43,7 +43,7 @@ docs: pkgsite
 	pkgsite -open .
 
 publish:
-	GOPROXY=https://proxy.golang.org,direct go list -m ${REPO}@${SEMVER}
+	GOPROXY=https://proxy.golang.org,direct go list -m ${MODULE}@${SEMVER}
 
 test:
 	go test ./...

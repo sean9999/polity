@@ -1,0 +1,238 @@
+package polity
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"sync"
+
+	"github.com/sean9999/go-oracle/v4"
+	"github.com/sean9999/go-oracle/v4/delphi"
+
+	"io"
+	"net/url"
+)
+
+// An Oracle is an oracle.Principal.
+type Oracle = oracle.Principal
+
+// A Citizen is a Connection with an Oracle.
+type Citizen struct {
+	Node
+	*Oracle
+	Peers    PeerSet
+	Profiles *ProfileSet
+	Log      *log.Logger
+}
+
+func (c *Citizen) AsPeer() *Peer {
+	orc := c.Oracle.AsPeer()
+	return &Peer{orc}
+}
+
+func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
+	orc := oracle.NewPrincipal(randy)
+	return &Citizen{
+		Node:   node,
+		Oracle: orc,
+		Peers:  NewPeerSet(orc.Peers),
+		Log:    log.New(out, "", 0),
+	}
+}
+
+func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
+	err := c.Node.Connect(ctx, kp)
+	if err != nil {
+		return err
+	}
+	c.Props["addr"] = c.URL().String()
+	return nil
+}
+
+// Shutdown sends a signed message to self, telling us to shut down
+func (c *Citizen) Shutdown() {
+	e := c.Compose(nil, c.URL())
+	e.Letter.SetSubject(subject.DieNow)
+	e.Letter.PlainText = []byte(subject.DieNow)
+	_ = c.Send(nil, nil, e.Letter, e.Recipient)
+}
+
+func (c *Citizen) Leave(ctx context.Context, inbox chan Envelope, outbox chan Envelope, errs chan error) error {
+	err := c.Node.Close()
+	close(inbox)
+	close(outbox)
+	close(errs)
+	return err
+}
+
+//func (c *Citizen) loadProgram(prog Program) error {
+//	if prog == nil {
+//		return errors.New("program cannot be nil")
+//	}
+//	_, exists := c.ProgramsThatHandle[prog.Name()]
+//	if exists {
+//		return errors.New("plugin already registered")
+//	}
+//	c.ProgramsThatHandle[prog.Name()] = prog
+//	return nil
+//}
+
+//func (c *Citizen) LoadPlugins() error {
+//
+//	programs := make([]Program, 0, len(c.ProgramsThatHandle))
+//	programs[0] = new(Heartbeat)
+//
+//	for _, prog := range programs {
+//		err := prog.Initialize(c)
+//		if err != nil {
+//			return err
+//		}
+//		err = c.loadProgram(prog)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
+
+func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan error, error) {
+
+	//	An uninitiated citizen is no citizen at all.
+	if c.Oracle == nil {
+		return nil, nil, nil, errors.New("no oracle")
+	}
+
+	//	before joining a network, one must acquire an address.
+	err := c.Establish(ctx, c.Oracle.KeyPair)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not join. %w", err)
+	}
+
+	//	incoming and outgoing channels
+	errs := make(chan error)
+	inbox := make(chan Envelope)
+	outbox := make(chan Envelope)
+
+	//err = c.LoadPlugins()
+	//if err != nil {
+	//	return nil, nil, nil, fmt.Errorf("could not load plugins. %w", err)
+	//}
+
+	//	range over incoming bytes.
+	//	marshal them to Envelope.
+	//	pipe to our inbox, which is a channel of Envelope.
+	//	our user will decide what to do with it then.
+	//	if the incoming bytes channel is closed, we close inbox.
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			i, _, err := c.Node.ReadFrom(buf)
+			if err != nil {
+				errs <- err
+			}
+			e := new(Envelope)
+			err = e.Deserialize(buf[:i])
+			if err != nil {
+				errs <- err
+			}
+			inbox <- *e
+		}
+	}()
+
+	//	range over outbox, which is a channel of Envelope which our user has decided they want to send.
+	//	marshal to bytes and send along to outgoingBytes, which takes bytes and a destination address.
+	//	I don't know how an Envelope would fail to serialize, but we nevertheless check and send
+	//	to the errs channel if that happens.
+	//	if outbox gets closed, we close outgoingBytes.
+	go func() {
+		for envelope := range outbox {
+
+			err := c.Send(ctx, nil, envelope.Letter, envelope.Recipient)
+			if err != nil {
+				errs <- err
+				continue
+			}
+
+			//bin, err := envelope.Serialize()
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
+			//if envelope.Recipient == nil {
+			//	errs <- errors.New("nil recipient")
+			//	continue
+			//}
+			//err = c.Connection.Send(ctx, bin, *envelope.Recipient)
+			//if err != nil {
+			//	errs <- err
+			//	continue
+			//}
+		}
+	}()
+
+	return inbox, outbox, errs, nil
+}
+
+// Compose is a convenience function to create an Envelope intended for a particular recipient
+func (c *Citizen) Compose(r io.Reader, recipient *url.URL) *Envelope {
+	e := NewEnvelope(r)
+	e.Recipient = recipient
+	e.Sender = c.URL()
+	return e
+}
+
+// ComposePlain is an even more convenient convenience function.
+func (c *Citizen) ComposePlain(recipient *url.URL, str string) *Envelope {
+	e := c.Compose(nil, recipient)
+	e.Letter.PlainText = []byte(str)
+	e.Letter.SetSubject("plain message")
+	return e
+}
+
+func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, recipient *url.URL) error {
+
+	if recipient == nil {
+		return errors.New("no recipient")
+	}
+
+	e := c.Compose(randy, recipient)
+	e.Letter = letter
+
+	bin, err := e.Serialize()
+	if err != nil {
+		return err
+	}
+
+	addr, err := c.Node.UrlToAddr(*recipient)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Node.WriteTo(bin, addr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Citizen) Announce(ctx context.Context, randy io.Reader, letter Letter, recipients []url.URL) error {
+	wg := new(sync.WaitGroup)
+	wg.Add(len(recipients))
+	errs := make(chan error, len(recipients))
+	for _, recipient := range recipients {
+		go func() {
+			errs <- c.Send(ctx, randy, letter, &recipient)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	var err error
+	for e := range errs {
+		if e != nil {
+			err = errors.Join(err, e)
+		}
+	}
+	return err
+}
