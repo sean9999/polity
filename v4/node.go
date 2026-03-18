@@ -2,12 +2,12 @@ package polity
 
 import (
 	"context"
-	"crypto/rand"
+
 	"net"
 	"net/url"
 	"testing"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +36,7 @@ func WellBehavedNode[N Node](t testing.TB, freshNode N) {
 	t.Helper()
 
 	ctx := t.Context()
-	kp := delphi.NewKeyPair(rand.Reader)
+	kp := delphi.NewKeyPair()
 
 	//	a fresh node should not be able to do much
 	nilNode(t, freshNode)
@@ -84,7 +84,7 @@ func goodNode[N Node](t testing.TB, freshNode N) {
 	t.Helper()
 
 	ctx := t.Context()
-	kp := delphi.NewKeyPair(rand.Reader)
+	kp := delphi.NewKeyPair()
 
 	//	a good node should have a URL and LocalAddr
 	assert.NotNil(t, freshNode.URL(), "url should not be nil")

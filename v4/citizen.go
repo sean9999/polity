@@ -17,12 +17,12 @@ import (
 // An Oracle is an oracle.Principal.
 type Oracle = oracle.Principal
 
-// A Citizen is a Connection with an Oracle.
+// A Citizen is a [Node] and an Oracle.
 type Citizen struct {
 	Node
 	*Oracle
 	Peers    PeerSet
-	Profiles *ProfileSet
+	Dossiers *Bureau
 	Log      *log.Logger
 }
 
@@ -32,7 +32,7 @@ func (c *Citizen) AsPeer() *Peer {
 }
 
 func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
-	orc := oracle.NewPrincipal(randy)
+	orc := oracle.NewPrincipal()
 	return &Citizen{
 		Node:   node,
 		Oracle: orc,
@@ -53,8 +53,8 @@ func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
 // Shutdown sends a signed message to self, telling us to shut down
 func (c *Citizen) Shutdown() {
 	e := c.Compose(nil, c.URL())
-	e.Letter.SetSubject(subject.DieNow)
-	e.Letter.PlainText = []byte(subject.DieNow)
+	e.Letter.SetSubject(SubjDieNow)
+	e.Letter.PlainText = []byte(SubjDieNow)
 	_ = c.Send(nil, nil, e.Letter, e.Recipient)
 }
 
