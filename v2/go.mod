@@ -1,3 +1,4 @@
+// Deprecated: Use github.com/sean9999/polity/v4 instead.
 module github.com/sean9999/polity/v2
 
 go 1.25

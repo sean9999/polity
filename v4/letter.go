@@ -62,14 +62,11 @@ func (letter *Letter) Equal(f Letter) bool {
 	return true
 }
 
-func NewLetter(r io.Reader) Letter {
-	msg := new(message.Message)
-	var headers map[string]string
-	letter := Letter{
-		Message: *msg,
-		headers: headers,
+func NewLetter() Letter {
+	return Letter{
+		Message: message.Message{},
+		headers: make(map[string]string),
 	}
-	return letter
 }
 
 type Verifier interface {

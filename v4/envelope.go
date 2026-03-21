@@ -2,13 +2,12 @@ package polity
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-// An Envelope is a Letter with a recipient and sender
+// An Envelope is a Letter with a recipient and/or sender
 type Envelope struct {
 	Letter    Letter   `json:"letter" msgpack:"letter"`
 	Sender    *url.URL `json:"sender,omitempty" msgpack:"sender"`
@@ -36,8 +35,8 @@ func (e *Envelope) Deserialize(p []byte) error {
 	return msgpack.Unmarshal(p, e)
 }
 
-func NewEnvelope(r io.Reader) *Envelope {
+func NewEnvelope() *Envelope {
 	e := new(Envelope)
-	e.Letter = NewLetter(r)
+	e.Letter = NewLetter()
 	return e
 }

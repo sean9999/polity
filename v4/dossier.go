@@ -12,9 +12,11 @@ type Dossier struct {
 	Alive  bool
 }
 
-// A Bureau is an indexed collection of Dossiers.
+// A Bureau is a collection of Dossiers.
 type Bureau map[delphi.PublicKey]Dossier
 
+// SetAliveness sets aliveness on a Dossier
+// TODO: is this needed?
 func (vs *Bureau) SetAliveness(pubKey delphi.PublicKey, alive bool) error {
 	if vs == nil || *vs == nil {
 		return errors.New("nil ProfileSet")

@@ -17,7 +17,7 @@ import (
 // An Oracle is an oracle.Principal.
 type Oracle = oracle.Principal
 
-// A Citizen is a [Node] and an Oracle.
+// A Citizen is a Node and an Oracle, with knowledge of peers
 type Citizen struct {
 	Node
 	*Oracle
@@ -31,7 +31,7 @@ func (c *Citizen) AsPeer() *Peer {
 	return &Peer{orc}
 }
 
-func NewCitizen(randy io.Reader, out io.Writer, node Node) *Citizen {
+func NewCitizen(out io.Writer, node Node) *Citizen {
 	orc := oracle.NewPrincipal()
 	return &Citizen{
 		Node:   node,
@@ -52,7 +52,7 @@ func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
 
 // Shutdown sends a signed message to self, telling us to shut down
 func (c *Citizen) Shutdown() {
-	e := c.Compose(nil, c.URL())
+	e := c.Compose(c.URL())
 	e.Letter.SetSubject(SubjDieNow)
 	e.Letter.PlainText = []byte(SubjDieNow)
 	_ = c.Send(nil, nil, e.Letter, e.Recipient)
@@ -175,16 +175,17 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 }
 
 // Compose is a convenience function to create an Envelope intended for a particular recipient
-func (c *Citizen) Compose(r io.Reader, recipient *url.URL) *Envelope {
-	e := NewEnvelope(r)
+func (c *Citizen) Compose(recipient *url.URL) *Envelope {
+	e := NewEnvelope()
 	e.Recipient = recipient
 	e.Sender = c.URL()
 	return e
 }
 
-// ComposePlain is an even more convenient convenience function.
+// ComposePlain is an even more convenient function,
+// using Compose to create a plain-text Letter in an Envelope.
 func (c *Citizen) ComposePlain(recipient *url.URL, str string) *Envelope {
-	e := c.Compose(nil, recipient)
+	e := c.Compose(recipient)
 	e.Letter.PlainText = []byte(str)
 	e.Letter.SetSubject("plain message")
 	return e
@@ -196,7 +197,7 @@ func (c *Citizen) Send(ctx context.Context, randy io.Reader, letter Letter, reci
 		return errors.New("no recipient")
 	}
 
-	e := c.Compose(randy, recipient)
+	e := c.Compose(recipient)
 	e.Letter = letter
 
 	bin, err := e.Serialize()
