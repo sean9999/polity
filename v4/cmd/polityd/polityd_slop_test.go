@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/sean9999/hermeti"
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/polity/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +17,7 @@ func TestPolityd_Slop(t *testing.T) {
 
 	t.Run("Init errors", func(t *testing.T) {
 		app := &polityd{node: nil}
-		env := hermeti.TestEnv()
-		err := app.Init(&env)
+		err := app.Init(new(hermeti.TestEnv()))
 		assert.Error(t, err)
 	})
 
@@ -39,7 +37,7 @@ func TestPolityd_Slop(t *testing.T) {
 		env := hermeti.TestEnv()
 
 		// Create a temporary PEM file
-		privKey := polity.NewCitizen(rand.Reader, io.Discard, nil).KeyPair
+		privKey := polity.NewCitizen(io.Discard, nil).KeyPair
 		privBytes := privKey.Bytes()
 		block := &pem.Block{Type: "ORACLE PRIVATE KEY", Bytes: privBytes}
 		pemData := pem.EncodeToMemory(block)
@@ -63,7 +61,7 @@ func TestPolityd_Slop(t *testing.T) {
 		app.Init(&env)
 
 		// ensure we have a keypair
-		app.me.KeyPair = delphi.NewKeyPair(rand.Reader)
+		app.me.KeyPair = delphi.NewKeyPair()
 
 		// Start Run in a goroutine
 		go app.Run(env)
@@ -71,8 +69,8 @@ func TestPolityd_Slop(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 
 		// Send DieNow to app.me
-		e := app.me.Compose(rand.Reader, app.me.URL())
-		e.Letter.SetSubject(subject.DieNow)
+		e := app.me.Compose(app.me.URL())
+		e.Letter.SetSubject(polity.SubjDieNow)
 		e.Letter.PlainText = []byte("goodbye")
 
 		// We need to bypass the outbox/inbox flow and send directly to the node's parent network if it was connected.

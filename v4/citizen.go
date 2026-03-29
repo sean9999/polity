@@ -53,7 +53,10 @@ func (c *Citizen) Establish(ctx context.Context, kp delphi.KeyPair) error {
 // Shutdown sends a signed message to self, telling us to shut down
 func (c *Citizen) Shutdown() {
 	e := c.Compose(c.URL())
-	e.Letter.SetSubject(SubjDieNow)
+	err := e.Letter.SetSubject(SubjDieNow)
+	if err != nil {
+		return
+	}
 	e.Letter.PlainText = []byte(SubjDieNow)
 	_ = c.Send(nil, nil, e.Letter, e.Recipient)
 }

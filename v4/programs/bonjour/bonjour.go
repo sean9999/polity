@@ -5,10 +5,9 @@ import (
 	"strconv"
 
 	"github.com/grandcat/zeroconf"
-	"github.com/sean9999/go-oracle/v3/delphi"
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/programs"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/go-oracle/v4/delphi"
+	"github.com/sean9999/polity/v4"
+	"github.com/sean9999/polity/v4/programs"
 )
 
 const (
@@ -56,9 +55,9 @@ func (h *prog) Init(citizen *polity.Citizen, inbox chan polity.Envelope, outbox 
 	return nil
 }
 
-func (h *prog) Subjects() []subject.Subject {
-	return []subject.Subject{
-		subject.BootUp,
+func (h *prog) Subjects() []polity.Subject {
+	return []polity.Subject{
+		polity.SubjBootUp,
 	}
 }
 
@@ -68,7 +67,7 @@ func (h *prog) Run(ctx context.Context) {
 
 	for ad := range h.adverts {
 		h.citizen.Log.Println("advertising", ad)
-		
+
 	}
 
 }

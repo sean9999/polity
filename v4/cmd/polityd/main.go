@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/sean9999/hermeti"
-	"github.com/sean9999/polity/v3/network/lan"
-	redmem "github.com/sean9999/polity/v3/network/redis"
+	"github.com/sean9999/polity/v4/network/lan"
+	redmem "github.com/sean9999/polity/v4/network/redis"
 )
 
 // newRedisApp initializes a polityd app backed by redis

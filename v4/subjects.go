@@ -1,13 +1,17 @@
 package polity
 
-type subject string
+type Subject string
+
+func (s Subject) String() string {
+	return string(s)
+}
 
 const (
-	SubjDieNow            subject = "die now"
-	SubjBootUp            subject = "boot up"
-	SubjLetsBeFriends     subject = "let's be friends"
-	SubjIamAlive          subject = "i am alive"
-	SubjTheseAreMyFriends subject = "these are my friends"
-	SubjHowAreYou         subject = "how are you?"
-	SubjStatusReport      subject = "status report"
+	SubjDieNow            Subject = "die now"
+	SubjBootUp            Subject = "boot up"
+	SubjLetsBeFriends     Subject = "let's be friends"
+	SubjIamAlive          Subject = "i am alive"
+	SubjTheseAreMyFriends Subject = "these are my friends"
+	SubjHowAreYou         Subject = "how are you?"
+	SubjStatusReport      Subject = "status report"
 )

@@ -5,14 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
+
 	"io/fs"
 	"net/url"
 
 	"github.com/sean9999/go-oracle/v4"
 	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/sean9999/hermeti"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/pembag"
 	"github.com/sean9999/polity/v4"
 	"github.com/sean9999/polity/v4/programs"
 )
@@ -44,24 +44,23 @@ func (app *polityd) Init(env *hermeti.Env) error {
 		if err != nil {
 			return err
 		}
-		pems := new(polity.PemBag)
-		_, err = io.Copy(pems, f)
+		pems, err := pembag.From(f)
 		if err != nil {
 			return err
 		}
-		privs, exist := pems.Get("ORACLE PRIVATE KEY")
-		if exist {
-			//	TODO: maybe panic if there is more than one priv key
-			privPem := privs[0]
-			privBytes := privPem.Bytes
-			kp := new(delphi.KeyPair)
-			_, err = kp.Write(privBytes)
-			if err != nil {
-				return err
-			}
-			app.me.KeyPair = *kp
+		privs := pems.OfType("ORACLE PRIVATE KEY")
+
+		//	TODO: maybe panic if there is more than one priv key
+		privPem := privs[0]
+		privBytes := privPem.Bytes
+		kp := new(delphi.KeyPair)
+		_, err = kp.Write(privBytes)
+		if err != nil {
+			return err
 		}
-		peerPems, _ := pems.Get("ORACLE PEER")
+		app.me.KeyPair = *kp
+
+		peerPems := pems.OfType("ORACLE PEER")
 		for _, thisPem := range peerPems {
 			p := new(polity.Peer)
 			err := p.Deserialize(thisPem.Bytes)
@@ -115,8 +114,8 @@ func (app *polityd) Run(env hermeti.Env) {
 	//	if we started with '-join=somePeer', send that peer app message
 	if app.joinPeer != nil {
 		fmt.Fprintf(env.OutStream, "attempt to join %s on the %s network\n\n", app.joinPeer.NickName(), app.joinPeer.Address().Hostname())
-		e := app.me.Compose(env.Randomness, app.joinPeer.Address())
-		e.Letter.SetSubject(subject.IamAlive)
+		e := app.me.Compose(app.joinPeer.Address())
+		e.Letter.SetSubject(polity.SubjIamAlive)
 		e.Letter.PlainText = []byte(`
 			I'm joining you.
 			You may already know me, or not.
@@ -154,7 +153,7 @@ outer:
 				prog.Inbox <- e
 			}
 
-		case subject.DieNow:
+		case polity.SubjDieNow:
 			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
 			break outer
 		}

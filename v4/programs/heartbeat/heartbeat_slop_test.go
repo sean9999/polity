@@ -2,15 +2,14 @@ package heartbeat
 
 import (
 	"context"
-	"crypto/rand"
 	"io"
 	"net"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
-	"github.com/sean9999/polity/v3"
+	"github.com/sean9999/go-oracle/v4/delphi"
+	"github.com/sean9999/polity/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +24,7 @@ func (m mockNode) UrlToAddr(u url.URL) (net.Addr, error) {
 }
 
 func TestHeartbeat_Slop(t *testing.T) {
-	c := polity.NewCitizen(rand.Reader, io.Discard, mockNode{})
+	c := polity.NewCitizen(io.Discard, mockNode{})
 	h := new(heartbeat)
 	inbox := make(chan polity.Envelope, 1)
 	outbox := make(chan polity.Envelope, 10)
@@ -46,8 +45,8 @@ func TestHeartbeat_Slop(t *testing.T) {
 		defer cancel()
 
 		// Send an incoming heartbeat to cover the goroutine
-		kp := delphi.NewKeyPair(rand.Reader)
-		l := polity.NewLetter(rand.Reader)
+		kp := delphi.NewKeyPair()
+		l := polity.NewLetter()
 		l.SetHeader("i", "1")
 		u, _ := url.Parse("test://" + kp.PublicKey().String() + "@localhost")
 		e := &polity.Envelope{Letter: l, Sender: u}

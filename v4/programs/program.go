@@ -5,19 +5,18 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/polity/v4"
 )
 
 type registry struct {
-	Programs map[*SurProgram][]subject.Subject
-	Subjects map[subject.Subject][]*SurProgram
+	Programs map[*SurProgram][]polity.Subject
+	Subjects map[polity.Subject][]*SurProgram
 	mu       *sync.RWMutex
 }
 
 var Registry = registry{
-	Programs: make(map[*SurProgram][]subject.Subject),
-	Subjects: make(map[subject.Subject][]*SurProgram),
+	Programs: make(map[*SurProgram][]polity.Subject),
+	Subjects: make(map[polity.Subject][]*SurProgram),
 	mu:       &sync.RWMutex{},
 }
 
@@ -48,7 +47,7 @@ func Deregister(p *SurProgram) {
 func (reg registry) ProgramsThatHandle(subj string) []*SurProgram {
 	reg.mu.RLock()
 	defer reg.mu.RUnlock()
-	return reg.Subjects[subject.Subject(subj)]
+	return reg.Subjects[polity.Subject(subj)]
 }
 
 // A SurProgram is a structure that encapsulates a Program
@@ -76,7 +75,7 @@ func (sp *SurProgram) Run(ctx context.Context) {
 type Program interface {
 	Init(citizen *polity.Citizen, inbox, outbox chan polity.Envelope, errs chan error) error
 	Run(context.Context)
-	Subjects() []subject.Subject
+	Subjects() []polity.Subject
 	Shutdown()
 }
 

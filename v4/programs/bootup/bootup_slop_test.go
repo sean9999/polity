@@ -1,12 +1,11 @@
 package bootup
 
 import (
-	"crypto/rand"
 	"io"
 	"net/url"
 	"testing"
 
-	"github.com/sean9999/polity/v3"
+	"github.com/sean9999/polity/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,7 @@ func (m mockNode) URL() *url.URL {
 }
 
 func TestBootup_Slop(t *testing.T) {
-	c := polity.NewCitizen(rand.Reader, io.Discard, mockNode{})
+	c := polity.NewCitizen(io.Discard, mockNode{})
 	p := new(proc)
 
 	t.Run("Init", func(t *testing.T) {

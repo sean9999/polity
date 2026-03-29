@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/polity/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 type mockProg struct {
-	subjects       []subject.Subject
+	subjects       []polity.Subject
 	initCalled     bool
 	runCalled      bool
 	shutdownCalled bool
@@ -25,7 +24,7 @@ func (m *mockProg) Init(citizen *polity.Citizen, inbox, outbox chan polity.Envel
 func (m *mockProg) Run(ctx context.Context) {
 	m.runCalled = true
 }
-func (m *mockProg) Subjects() []subject.Subject {
+func (m *mockProg) Subjects() []polity.Subject {
 	return m.subjects
 }
 func (m *mockProg) Shutdown() {
@@ -33,7 +32,7 @@ func (m *mockProg) Shutdown() {
 }
 
 func TestPrograms_Slop(t *testing.T) {
-	p := &mockProg{subjects: []subject.Subject{"test"}}
+	p := &mockProg{subjects: []polity.Subject{"test"}}
 
 	t.Run("Register and ProgramsThatHandle", func(t *testing.T) {
 		Register(p)
@@ -44,7 +43,7 @@ func TestPrograms_Slop(t *testing.T) {
 
 	t.Run("SurProgram Init/Run/Shutdown", func(t *testing.T) {
 		sp := &SurProgram{Program: p}
-		citizen := polity.NewCitizen(nil, io.Discard, nil)
+		citizen := polity.NewCitizen(io.Discard, nil)
 		outbox := make(chan polity.Envelope, 1)
 		errs := make(chan error, 1)
 

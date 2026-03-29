@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/programs"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/polity/v4"
+	"github.com/sean9999/polity/v4/programs"
 )
 
 var _ programs.Program = (*heartbeat)(nil)
@@ -29,8 +28,8 @@ func (h *heartbeat) Init(citizen *polity.Citizen, inbox chan polity.Envelope, ou
 	return nil
 }
 
-func (h *heartbeat) Subjects() []subject.Subject {
-	return []subject.Subject{
+func (h *heartbeat) Subjects() []polity.Subject {
+	return []polity.Subject{
 		"heartbeat",
 	}
 }
@@ -38,7 +37,7 @@ func (h *heartbeat) Subjects() []subject.Subject {
 func (h *heartbeat) Run(ctx context.Context) {
 
 	var i int
-	l := polity.NewLetter(nil)
+	l := polity.NewLetter()
 	l.SetSubject("heartbeat")
 	l.PlainText = []byte("hello heartbeat")
 	t := time.NewTicker(period)
@@ -60,7 +59,7 @@ func (h *heartbeat) Run(ctx context.Context) {
 		case <-t.C:
 			i++
 			l.SetHeader("i", fmt.Sprintf("%d", i))
-			e := h.citizen.Compose(nil, h.citizen.URL())
+			e := h.citizen.Compose(h.citizen.URL())
 			e.Letter = l
 			h.outbox <- *e
 			if i > 3 {

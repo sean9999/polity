@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sean9999/polity/v3"
-	"github.com/sean9999/polity/v3/programs"
-	"github.com/sean9999/polity/v3/subject"
+	"github.com/sean9999/polity/v4"
+	"github.com/sean9999/polity/v4/programs"
 )
 
 /*
@@ -36,9 +35,9 @@ func (p *proc) Init(c *polity.Citizen, inbox chan polity.Envelope, outbox chan p
 	return nil
 }
 
-func (p *proc) Subjects() []subject.Subject {
-	s := []subject.Subject{
-		subject.BootUp,
+func (p *proc) Subjects() []polity.Subject {
+	s := []polity.Subject{
+		polity.SubjBootUp,
 	}
 	return s
 }

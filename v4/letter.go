@@ -14,7 +14,7 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
-// A Letter is a message.Message, but with a subject and headers.
+// A Letter is a message.Message, but with a Subject and headers.
 // Headers are stored in the message's AAD field.
 // Subject is too. It's stored in the "pemType" key.
 // It is an error to have AAD data that cannot be marshaled into a map[string, string].
@@ -125,10 +125,14 @@ func decodeAAD(data []byte) (map[string]string, error) {
 	return m, nil
 }
 
-func encodeAAD(m map[string]string) ([]byte, error) {
+func encodeAAD(m map[string]string) []byte {
 	lexMap := stablemap.NewLexicalMap[string, string]()
 	lexMap.Incorporate(m)
-	return lexMap.MarshalBinary()
+	data, err := lexMap.MarshalBinary()
+	if err != nil {
+		panic(err)
+	}
+	return data
 }
 
 func (letter *Letter) Headers() (map[string]string, error) {
@@ -141,10 +145,7 @@ func (letter *Letter) Headers() (map[string]string, error) {
 }
 
 func (letter *Letter) Serialize() []byte {
-	aad, err := encodeAAD(letter.headers)
-	if err != nil {
-		panic(err)
-	}
+	aad := encodeAAD(letter.headers)
 	letter.Message.AAD = aad
 	return letter.Message.Serialize()
 }
@@ -164,31 +165,25 @@ func (letter *Letter) GetHeader(key string) (string, bool) {
 	return v, ok
 }
 
-func (letter *Letter) SetHeaders(m map[string]string) error {
+func (letter *Letter) SetHeaders(m map[string]string) {
 	if m == nil {
 		letter.Message.AAD = nil
-		return nil
+		return
 	}
 	letter.headers = m
-	aad, err := encodeAAD(m)
-	if err != nil {
-		return err
-	}
+	aad := encodeAAD(m)
 	letter.Message.AAD = aad
-	return nil
 }
 
-func (letter *Letter) SetHeader(k, v string) error {
+func (letter *Letter) SetHeader(k, v string) {
 	if letter.headers == nil {
 		letter.headers = make(map[string]string, 1)
 	}
 	letter.headers[k] = v
-	aad, err := encodeAAD(letter.headers)
-	if err != nil {
-		return err
-	}
+	aad := encodeAAD(letter.headers)
+
 	letter.Message.AAD = aad
-	return nil
+
 }
 
 func (letter *Letter) Subject() string {
@@ -196,6 +191,6 @@ func (letter *Letter) Subject() string {
 	return str
 }
 
-func (letter *Letter) SetSubject(str string) error {
-	return letter.SetHeader("pemType", str)
+func (letter *Letter) SetSubject(subj Subject) {
+	letter.SetHeader("pemType", string(subj))
 }
