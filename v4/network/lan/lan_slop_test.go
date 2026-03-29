@@ -2,12 +2,11 @@ package lan
 
 import (
 	"context"
-	"crypto/rand"
 	"net"
 	"net/url"
 	"testing"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,7 +56,7 @@ func TestLan_Slop(t *testing.T) {
 	t.Run("Connect failure - no LAN", func(t *testing.T) {
 		// This might fail depending on the environment, which is expected.
 		node := &Node{}
-		kp := delphi.NewKeyPair(rand.Reader)
+		kp := delphi.NewKeyPair()
 		err := node.Connect(context.Background(), kp)
 		// We don't assert error or no-error here specifically because it depends on environment,
 		// but we want to cover the lines.

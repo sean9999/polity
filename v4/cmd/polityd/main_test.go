@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/sean9999/hermeti"
-	"github.com/sean9999/polity/v3/network/mem"
+	"github.com/sean9999/polity/v4/network/mem"
 	"github.com/stretchr/testify/assert"
 )
 

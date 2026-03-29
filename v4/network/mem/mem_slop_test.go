@@ -2,11 +2,10 @@ package mem
 
 import (
 	"context"
-	"crypto/rand"
 	"net/url"
 	"testing"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +16,7 @@ func TestMem_Slop(t *testing.T) {
 		assert.NoError(t, net.Up())
 
 		node := net.Spawn()
-		kp := delphi.NewKeyPair(rand.Reader)
+		kp := delphi.NewKeyPair()
 		node.Connect(context.Background(), kp)
 
 		assert.Equal(t, 1, len(net.Map()))
@@ -34,7 +33,7 @@ func TestMem_Slop(t *testing.T) {
 
 	t.Run("Node Connect errors", func(t *testing.T) {
 		node := net.Spawn()
-		kp := delphi.NewKeyPair(rand.Reader)
+		kp := delphi.NewKeyPair()
 		err := node.Connect(context.Background(), kp)
 		assert.NoError(t, err)
 
@@ -51,7 +50,7 @@ func TestMem_Slop(t *testing.T) {
 
 	t.Run("Node URL and other stuff", func(t *testing.T) {
 		node := net.Spawn()
-		kp := delphi.NewKeyPair(rand.Reader)
+		kp := delphi.NewKeyPair()
 		node.Connect(context.Background(), kp)
 
 		assert.NotNil(t, node.URL())
@@ -69,7 +68,7 @@ func TestMem_Slop(t *testing.T) {
 
 	t.Run("memConn WriteTo errors", func(t *testing.T) {
 		node1 := net.Spawn()
-		kp1 := delphi.NewKeyPair(rand.Reader)
+		kp1 := delphi.NewKeyPair()
 		node1.Connect(context.Background(), kp1)
 
 		_, err := node1.WriteTo([]byte("hi"), &memAddr{nickname: "no-one"})
@@ -78,7 +77,7 @@ func TestMem_Slop(t *testing.T) {
 
 		// nil inbox on recipient
 		node2 := net.Spawn()
-		kp2 := delphi.NewKeyPair(rand.Reader)
+		kp2 := delphi.NewKeyPair()
 		node2.Connect(context.Background(), kp2)
 		node2.memConn.inbox = nil
 		_, err = node1.WriteTo([]byte("hi"), node2.LocalAddr())
@@ -88,7 +87,7 @@ func TestMem_Slop(t *testing.T) {
 
 	t.Run("Close twice", func(t *testing.T) {
 		node := net.Spawn()
-		kp := delphi.NewKeyPair(rand.Reader)
+		kp := delphi.NewKeyPair()
 		node.Connect(context.Background(), kp)
 		err := node.Close()
 		assert.NoError(t, err)

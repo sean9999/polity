@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sean9999/go-oracle/v3/delphi"
+	"github.com/sean9999/go-oracle/v4/delphi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
