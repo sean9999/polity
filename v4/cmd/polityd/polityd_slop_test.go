@@ -22,8 +22,9 @@ func TestPolityd_Slop(t *testing.T) {
 	})
 
 	t.Run("Init with join flag", func(t *testing.T) {
-		app := newTestApp()
 		env := hermeti.TestEnv()
+		app := newTestApp(env)
+
 		u := "memnet://a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c@memory"
 		env.Args = []string{"polityd", "-join=" + u}
 		err := app.Init(&env)
@@ -33,8 +34,8 @@ func TestPolityd_Slop(t *testing.T) {
 	})
 
 	t.Run("Init with file flag", func(t *testing.T) {
-		app := newTestApp()
 		env := hermeti.TestEnv()
+		app := newTestApp(env)
 
 		// Create a temporary PEM file
 		privKey := polity.NewCitizen(io.Discard, nil).KeyPair
@@ -53,12 +54,12 @@ func TestPolityd_Slop(t *testing.T) {
 	})
 
 	t.Run("Run with joinPeer and DieNow", func(t *testing.T) {
-		app := newTestApp()
 		env := hermeti.TestEnv()
 		env.Randomness = rand.Reader
+		app := newTestApp(env)
 		uStr := "memnet://a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c@memory"
 		env.Args = []string{"polityd", "-join=" + uStr}
-		app.Init(&env)
+		_ = app.Init(&env)
 
 		// ensure we have a keypair
 		app.me.KeyPair = delphi.NewKeyPair()
@@ -79,7 +80,7 @@ func TestPolityd_Slop(t *testing.T) {
 
 		bin, _ := e.Serialize()
 		addr, _ := app.me.UrlToAddr(*app.me.URL())
-		app.me.WriteTo(bin, addr)
+		_, _ = app.me.WriteTo(bin, addr)
 
 		time.Sleep(100 * time.Millisecond)
 		// If it reached here without hanging, it probably worked.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 
 	"io/fs"
 	"net/url"
@@ -22,6 +23,7 @@ type polityd struct {
 	me       *polity.Citizen
 	joinPeer *polity.Peer
 	node     polity.Node
+	output   io.ReadWriter
 }
 
 func (app *polityd) Init(env *hermeti.Env) error {
@@ -153,7 +155,7 @@ outer:
 				prog.Inbox <- e
 			}
 
-		case polity.SubjDieNow:
+		case string(polity.SubjDieNow):
 			fmt.Fprintln(env.OutStream, string(e.Letter.Body()))
 			break outer
 		}
