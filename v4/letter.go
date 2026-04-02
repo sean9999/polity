@@ -75,9 +75,9 @@ type Verifier interface {
 }
 
 func (letter *Letter) Verify(v Verifier) error {
-	senderStr, exists := letter.headers["pubkey"]
-	if !exists {
-		return errors.New("no public senderKey")
+	senderKey, err := letter.SenderPublicKey()
+	if err != nil {
+		return err
 	}
 
 	//	if there is a recipient_pubkey, it must be mine
@@ -89,16 +89,23 @@ func (letter *Letter) Verify(v Verifier) error {
 		}
 	}
 
-	senderKey, err := delphi.KeyFromString(senderStr)
-	if err != nil {
-		return err
-	}
-	pubkey := delphi.PublicKey(senderKey)
-	ok := letter.Message.Verify(pubkey.Signing(), v)
+	ok := letter.Message.Verify(senderKey.Signing(), v)
 	if !ok {
 		return errors.New("verify failed")
 	}
 	return nil
+}
+
+func (letter *Letter) SenderPublicKey() (delphi.PublicKey, error) {
+	senderStr, exists := letter.headers["pubkey"]
+	if !exists {
+		return delphi.PublicKey{}, errors.New("no public senderKey")
+	}
+	senderKey, err := delphi.KeyFromString(senderStr)
+	if err != nil {
+		return delphi.PublicKey{}, err
+	}
+	return delphi.PublicKey(senderKey), nil
 }
 
 type kv struct {

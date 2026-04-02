@@ -29,6 +29,7 @@
         <method importPath="github.com/sean9999/polity/v3" receiver="*Letter" name="SetSubject" />
         <method importPath="github.com/sean9999/polity/v3" receiver="*Letter" name="SetHeader" />
         <method importPath="net" receiver="*UDPConn" name="Close" />
+        <method importPath="github.com/sean9999/polity/v4/util" receiver="*Canary" name="Close" />
       </methods>
     </inspection_tool>
   </profile>

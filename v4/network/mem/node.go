@@ -62,7 +62,7 @@ func (n *Node) Close() error {
 	n.addr = nil
 	n.url = nil
 
-	err := n.Close()
+	err := n.memConn.Close()
 	if err != nil {
 		return err
 	}

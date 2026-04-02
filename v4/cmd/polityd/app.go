@@ -23,7 +23,7 @@ type polityd struct {
 	me       *polity.Citizen
 	joinPeer *polity.Peer
 	node     polity.Node
-	output   io.ReadWriter
+	output   io.ReadWriter // log output
 }
 
 func (app *polityd) Init(env *hermeti.Env) error {

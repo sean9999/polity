@@ -52,7 +52,7 @@ func TestPolityd_Slop(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, privKey.PublicKey().String(), app.me.KeyPair.PublicKey().String())
 	})
-
+	
 	t.Run("Run with joinPeer and DieNow", func(t *testing.T) {
 		env := hermeti.TestEnv()
 		env.Randomness = rand.Reader

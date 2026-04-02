@@ -14,4 +14,5 @@ const (
 	SubjTheseAreMyFriends Subject = "these are my friends"
 	SubjHowAreYou         Subject = "how are you?"
 	SubjStatusReport      Subject = "status report"
+	SubjTrustUpdate       Subject = "trust update"
 )

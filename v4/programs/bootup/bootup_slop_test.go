@@ -39,4 +39,12 @@ func TestBootup_Slop(t *testing.T) {
 		p.Run(t.Context())
 		p.Shutdown()
 	})
+
+	t.Run("bootupGreeting includes trust guidance", func(t *testing.T) {
+		msg := bootupGreeting("alice", "memnet://peer@memory")
+		assert.Contains(t, msg, "polityd -join=memnet://peer@memory")
+		assert.Contains(t, msg, "polityd -trust-auth=memnet://peer@memory")
+		assert.Contains(t, msg, "polityd -trust-block=memnet://peer@memory")
+		assert.Contains(t, msg, "polityd -trust-auth-now=memnet://peer@memory")
+	})
 }

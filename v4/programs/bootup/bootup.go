@@ -44,7 +44,7 @@ func (p *proc) Subjects() []polity.Subject {
 
 func (p *proc) Run(_ context.Context) {
 	me := p.c
-	greeting := fmt.Sprintf("hi! i'm %s. You can join me with:\n\npolityd -join=%s\n", me.Oracle.NickName(), me.Node.URL())
+	greeting := bootupGreeting(me.Oracle.NickName(), me.Node.URL().String())
 	p.c.Log.Println(greeting)
 }
 
@@ -54,4 +54,16 @@ func (p *proc) Shutdown() {
 
 func init() {
 	programs.Register(new(proc))
+}
+
+func bootupGreeting(nickname, joinURL string) string {
+	return fmt.Sprintf(`hi! i'm %s. You can join me with:
+
+polityd -join=%s
+
+Trust controls:
+  polityd -trust-auth=%s
+  polityd -trust-block=%s
+  polityd -trust-auth-now=%s
+`, nickname, joinURL, joinURL, joinURL, joinURL)
 }

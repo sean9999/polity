@@ -86,9 +86,6 @@ func TestThing(t *testing.T) {
 }
 
 func TestEnvelope_encrypt_decrypt(t *testing.T) {
-
-	randomness := rando(1)
-
 	alice := createAlice(t)
 	bob := createBob(t)
 
@@ -99,7 +96,7 @@ func TestEnvelope_encrypt_decrypt(t *testing.T) {
 	assert.NotNil(t, e.Letter.PlainText)
 	assert.Nil(t, e.Letter.CipherText)
 
-	err := e.Letter.Encrypt(randomness, bob.KeyPair.PublicKey(), alice.KeyPair)
+	err := e.Letter.Encrypt(bob.KeyPair.PublicKey(), alice.KeyPair)
 	assert.NoError(t, err)
 
 	assert.Nil(t, e.Letter.PlainText)

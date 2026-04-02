@@ -26,21 +26,8 @@ func newTestApp(env hermeti.Env) *polityd {
 	return &a
 }
 
-type deterministicRandomness byte
-
-func (d deterministicRandomness) Read(p []byte) (int, error) {
-	for i := range p {
-		p[i] = byte(d)
-	}
-	return len(p), nil
-}
-
 func createCitizen(t *testing.T, seed byte, env hermeti.Env) hermeti.CLI[*polityd] {
-
 	cryptotest.SetGlobalRandom(t, uint64(seed))
-	randy := deterministicRandomness(seed)
-
-	env.Randomness = randy
 	app := newTestApp(env)
 	cli := hermeti.NewCLI(&env, app)
 	return *cli
@@ -49,25 +36,14 @@ func createCitizen(t *testing.T, seed byte, env hermeti.Env) hermeti.CLI[*polity
 var env hermeti.Env
 
 func setup() error {
-
 	env = hermeti.TestEnv()
-
 	err := env.MountDir("../../testdata")
 	if err != nil {
 		return err
 	}
 	env.Args = []string{"polityd"}
-
-	//deferredFunctions = make([]func(), 0)
-
 	return nil
 }
-
-//func teardown() {
-//	for _, fn := range deferredFunctions {
-//		fn()
-//	}
-//}
 
 func TestMain(m *testing.M) {
 
@@ -77,23 +53,18 @@ func TestMain(m *testing.M) {
 	}
 
 	exitVal := m.Run()
-	//teardown()
 	os.Exit(exitVal)
 }
 
 func TestCitizen_delicateStar_boots(t *testing.T) {
-
 	aliceCli := createCitizen(t, 1, env)
 	t.Cleanup(aliceCli.App.me.Shutdown)
-
 	out, err := aliceCli.Env.CaptureOutput()
 	if err != nil {
 		panic(err)
 	}
-
 	go aliceCli.Run()
 	time.Sleep(time.Second)
-
 	assert.Contains(t, out.String(), "delicate-star")
 	assert.Contains(t, out.String(), "ce083a23682c9d8d00430b0289dce6dd59fed5dcb906d9e66f1148ded2722043e1084cc90e5c218f3eaea876c59356842c618b5f7b67ba8a7296e1e329737ca8")
 	assert.Contains(t, out.String(), "polityd -join=")
