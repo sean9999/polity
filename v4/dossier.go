@@ -2,6 +2,7 @@ package polity
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/sean9999/go-oracle/v4/delphi"
@@ -22,12 +23,19 @@ func NewBureau() Bureau {
 	return make(Bureau)
 }
 
+var ErrPeerNotFound = errors.New("peer not found")
+
+var ErrNilBureau = errors.New("uninitialized bureau")
+
 // SetAliveness sets aliveness on a Dossier
 // TODO: is this needed?
 func (m Bureau) SetAliveness(pubKey delphi.PublicKey, alive bool) error {
+	if m == nil {
+		return ErrNilBureau
+	}
 	_, exists := m[pubKey]
 	if !exists {
-		return errors.New("vital does not exist")
+		return fmt.Errorf("%w: %s", ErrPeerNotFound, pubKey.Nickname())
 	}
 	d := m[pubKey]
 	d.PubKey = pubKey

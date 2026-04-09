@@ -2,7 +2,6 @@ package polity
 
 import (
 	"context"
-
 	"net"
 	"net/url"
 	"testing"

@@ -53,6 +53,9 @@ func (c *Canary) WatchFor(_ context.Context, str string) bool {
 		if strings.Contains(src, str) {
 			return true
 		}
+		if c.closed {
+			return false
+		}
 	}
 	return false
 }

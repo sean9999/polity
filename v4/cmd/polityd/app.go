@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-
 	"io/fs"
 	"net/url"
 
@@ -26,7 +25,13 @@ type polityd struct {
 	output   io.ReadWriter // log output
 }
 
+var ErrNoArgs = errors.New("no environment args")
+
 func (app *polityd) Init(env *hermeti.Env) error {
+
+	if len(env.Args) == 0 {
+		return ErrNoArgs
+	}
 
 	if app.node == nil {
 		return errors.New("you need to attach a node to polityd before calling Init")
