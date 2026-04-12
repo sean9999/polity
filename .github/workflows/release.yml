@@ -1,0 +1,36 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - run: make binaries
+        working-directory: "v4"
+      - run: zip -r binaries.zip bin/
+        working-directory: "v4"
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            binaries.zip
+            README.md
+            relase_notes.txt
