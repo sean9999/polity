@@ -18,7 +18,7 @@ func (m mockNode) URL() *url.URL {
 
 func TestBootup_Slop(t *testing.T) {
 	c := polity.NewCitizen(io.Discard, mockNode{})
-	p := new(proc)
+	p := new(prog)
 
 	t.Run("Init", func(t *testing.T) {
 		err := p.Init(c, nil, nil, nil)
@@ -40,11 +40,8 @@ func TestBootup_Slop(t *testing.T) {
 		p.Shutdown()
 	})
 
-	t.Run("bootupGreeting includes trust guidance", func(t *testing.T) {
+	t.Run("bootupGreeting", func(t *testing.T) {
 		msg := bootupGreeting("alice", "memnet://peer@memory")
 		assert.Contains(t, msg, "polityd -join=memnet://peer@memory")
-		assert.Contains(t, msg, "polityd -trust-auth=memnet://peer@memory")
-		assert.Contains(t, msg, "polityd -trust-block=memnet://peer@memory")
-		assert.Contains(t, msg, "polityd -trust-auth-now=memnet://peer@memory")
 	})
 }

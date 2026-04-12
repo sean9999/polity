@@ -1,6 +1,7 @@
 package polity
 
 import (
+	"encoding/pem"
 	"errors"
 	"net/url"
 
@@ -75,13 +76,25 @@ func PublicKeyFromURL(u *url.URL) (delphi.PublicKey, error) {
 	return delphi.PublicKey(key), nil
 }
 
-func SenderMatchesURL(signer delphi.PublicKey, u *url.URL) error {
-	urlKey, err := PublicKeyFromURL(u)
-	if err != nil {
-		return err
+//func SenderMatchesURL(signer delphi.PublicKey, u *url.URL) error {
+//	urlKey, err := PublicKeyFromURL(u)
+//	if err != nil {
+//		return err
+//	}
+//	if signer != urlKey {
+//		return errors.New("sender public key does not match sender url")
+//	}
+//	return nil
+//}
+
+func (p Peer) ToPem() pem.Block {
+	b := pem.Block{
+		Type: "POLITY PEER",
+		Headers: map[string]string{
+			"nick": p.NickName(),
+			"addr": p.Address().String(),
+		},
+		Bytes: p.PublicKey.Bytes(),
 	}
-	if signer != urlKey {
-		return errors.New("sender public key does not match sender url")
-	}
-	return nil
+	return b
 }

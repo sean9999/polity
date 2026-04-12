@@ -93,7 +93,7 @@ func (n *Node) Connect(_ context.Context, pair delphi.KeyPair) error {
 
 	_, exists := n.parent.Get(addr)
 	if exists {
-		return fmt.Errorf("could not connect becausse address %q is already taken", addr)
+		return fmt.Errorf("could not connect because address %q is already taken", addr)
 	}
 
 	conn := new(memConn)

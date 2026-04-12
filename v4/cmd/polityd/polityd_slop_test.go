@@ -16,7 +16,7 @@ import (
 func TestPolityd_Slop(t *testing.T) {
 
 	t.Run("Init errors", func(t *testing.T) {
-		app := &polityd{node: nil}
+		app := &appState{node: nil}
 		err := app.Init(new(hermeti.TestEnv()))
 		assert.Error(t, err)
 	})
@@ -26,7 +26,7 @@ func TestPolityd_Slop(t *testing.T) {
 		app := newTestApp(env)
 
 		u := "memnet://a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c@memory"
-		env.Args = []string{"polityd", "-join=" + u}
+		env.Args = []string{"appState", "-join=" + u}
 		err := app.Init(&env)
 		assert.NoError(t, err)
 		assert.NotNil(t, app.joinPeer)
@@ -47,7 +47,7 @@ func TestPolityd_Slop(t *testing.T) {
 		f.Write(pemData)
 		f.Close()
 
-		env.Args = []string{"polityd", "-file=test.pem"}
+		env.Args = []string{"appState", "-file=test.pem"}
 		err := app.Init(&env)
 		assert.NoError(t, err)
 		assert.Equal(t, privKey.PublicKey().String(), app.me.KeyPair.PublicKey().String())
@@ -58,7 +58,7 @@ func TestPolityd_Slop(t *testing.T) {
 		env.Randomness = rand.Reader
 		app := newTestApp(env)
 		uStr := "memnet://a4e09292b651c278b9772c569f5fa9bb13d906b46ab68c9df9dc2b4409f8a2098a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c@memory"
-		env.Args = []string{"polityd", "-join=" + uStr}
+		env.Args = []string{"appState", "-join=" + uStr}
 		_ = app.Init(&env)
 
 		// ensure we have a keypair

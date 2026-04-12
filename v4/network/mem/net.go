@@ -7,6 +7,11 @@ import (
 // A Network is a bunch of Nodes
 type Network map[net.Addr]*Node
 
+func NewNetwork() Network {
+	n := make(Network)
+	return n
+}
+
 func (n *Network) Up() error {
 	return nil
 }

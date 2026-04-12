@@ -2,6 +2,7 @@ package polity
 
 import (
 	"context"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
@@ -79,7 +80,7 @@ func (c *Citizen) Join(ctx context.Context) (chan Envelope, chan Envelope, chan 
 		return nil, nil, nil, errors.New("no oracle")
 	}
 
-	//	before joining a network, one must acquire an address.
+	//	before joining a network, acquire an address.
 	err := c.Establish(ctx, c.Oracle.KeyPair)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("could not join. %w", err)
@@ -183,5 +184,29 @@ func (c *Citizen) Announce(ctx context.Context, letter Letter, recipients []url.
 			err = errors.Join(err, e)
 		}
 	}
+	return err
+}
+
+func (c *Citizen) PrivateKeyToPem() pem.Block {
+	b := pem.Block{
+		Type: "POLITY PRINCIPAL",
+		Headers: map[string]string{
+			"nick": c.NickName(),
+			"addr": c.LocalAddr().String(),
+		},
+		Bytes: c.KeyPair.Bytes(),
+	}
+	return b
+}
+
+func (c *Citizen) Export(w io.Writer) error {
+	b := c.Peers.ToPemBag()
+	self := c.PrivateKeyToPem()
+	b.Add(self)
+	for peer := range c.Peers.Iter() {
+		p := peer.ToPem()
+		b.Add(p)
+	}
+	_, err := io.Copy(w, b)
 	return err
 }

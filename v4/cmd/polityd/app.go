@@ -17,7 +17,7 @@ import (
 	"github.com/sean9999/polity/v4/programs"
 )
 
-type polityd struct {
+type appState struct {
 	foo      string
 	me       *polity.Citizen
 	joinPeer *polity.Peer
@@ -27,19 +27,19 @@ type polityd struct {
 
 var ErrNoArgs = errors.New("no environment args")
 
-func (app *polityd) Init(env *hermeti.Env) error {
+func (app *appState) Init(env *hermeti.Env) error {
 
 	if len(env.Args) == 0 {
 		return ErrNoArgs
 	}
 
 	if app.node == nil {
-		return errors.New("you need to attach a node to polityd before calling Init")
+		return errors.New("you need to attach a node to appState before calling Init")
 	}
 
 	app.me = polity.NewCitizen(env.OutStream, app.node)
 	app.me.Log.SetOutput(env.OutStream)
-	fSet := flag.NewFlagSet("polityd", flag.ExitOnError)
+	fSet := flag.NewFlagSet("appState", flag.ExitOnError)
 	fSet.Int("verbosity", 1, "verbosity level")
 
 	//	are we initializing from app private key?
@@ -103,7 +103,7 @@ func (app *polityd) Init(env *hermeti.Env) error {
 	return fSet.Parse(env.Args[1:])
 }
 
-func (app *polityd) Run(env hermeti.Env) {
+func (app *appState) Run(env hermeti.Env) {
 
 	ctx := context.Background()
 

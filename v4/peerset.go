@@ -6,6 +6,7 @@ import (
 
 	"github.com/sean9999/go-oracle/v4"
 	"github.com/sean9999/go-oracle/v4/delphi"
+	"github.com/sean9999/pembag"
 )
 
 type PeerSet struct {
@@ -80,4 +81,13 @@ func (ps *PeerSet) Get(pubKey delphi.PublicKey) *Peer {
 	p := new(Peer)
 	p.Props = props
 	return p
+}
+
+func (ps PeerSet) ToPemBag() pembag.Bag {
+	b := make(pembag.Bag, 0, ps.Len())
+	for peer := range ps.Iter() {
+		p := peer.ToPem()
+		b.Add(p)
+	}
+	return b
 }

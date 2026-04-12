@@ -18,9 +18,9 @@ import (
 )
 
 // a test app uses the mem back-end
-func newTestApp(env hermeti.Env) *polityd {
+func newTestApp(env hermeti.Env) *appState {
 	mother := make(mem.Network)
-	a := polityd{
+	a := appState{
 		node: mother.Spawn(),
 	}
 	citizen := polity.NewCitizen(env.OutStream, a.node)
@@ -60,7 +60,7 @@ func refreshRegistry() {
 	}
 }
 
-func createCitizen(t *testing.T, seed byte, env hermeti.Env) hermeti.CLI[*polityd] {
+func createCitizen(t *testing.T, seed byte, env hermeti.Env) hermeti.CLI[*appState] {
 	refreshRegistry()
 	cryptotest.SetGlobalRandom(t, uint64(seed))
 	app := newTestApp(env)
@@ -71,7 +71,7 @@ func createCitizen(t *testing.T, seed byte, env hermeti.Env) hermeti.CLI[*polity
 func createEnv(t testing.TB) hermeti.Env {
 	t.Helper()
 	env := hermeti.TestEnv()
-	env.Args = []string{"polityd"}
+	env.Args = []string{"appState"}
 	return env
 }
 
@@ -87,7 +87,7 @@ func TestCitizen_delicateStar_boots(t *testing.T) {
 	time.Sleep(time.Second)
 	assert.Contains(t, out.String(), "delicate-star")
 	assert.Contains(t, out.String(), "ce083a23682c9d8d00430b0289dce6dd59fed5dcb906d9e66f1148ded2722043e1084cc90e5c218f3eaea876c59356842c618b5f7b67ba8a7296e1e329737ca8")
-	assert.Contains(t, out.String(), "polityd -join=")
+	assert.Contains(t, out.String(), "appState -join=")
 	join := alice.App.me.URL().String()
 	assert.Equal(t, "memnet://ce083a23682c9d8d00430b0289dce6dd59fed5dcb906d9e66f1148ded2722043e1084cc90e5c218f3eaea876c59356842c618b5f7b67ba8a7296e1e329737ca8@memory", join)
 }
